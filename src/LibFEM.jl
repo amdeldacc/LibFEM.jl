@@ -607,4 +607,4 @@ function D3_TrussElementStress(E, L, thetax, thetay, thetaz, u)
     return E / L * [-Cx -Cy -Cz Cx Cy Cz] * u
 end
 export D3_TrussElementStress
-end #module
+end # module

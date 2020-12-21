@@ -1,12 +1,4 @@
 module LibFEM
-function d1_spring_assemble(K, k, i, j)
-    K[i, i] = K[i, i] + k[1, 1]
-    K[i, j] = K[i, j] + k[1, 2]
-    K[j, i] = K[j, i] + k[2, 1]
-    K[j, j] = K[j, j] + k[2, 2]
-    return K
-end
-export d1_spring_assemble
 """
 function prototype: d1_spring_assemble(K,k,i,j)
 This function assembles the element stiffness
@@ -15,6 +7,14 @@ global stiffness matrix K.
 This function returns the global stiffness matrix K
 after the element stiffness matrix k is assembled.
 """
+function d1_spring_assemble(K, k, i, j)
+    K[i, i] = K[i, i] + k[1, 1]
+    K[i, j] = K[i, j] + k[1, 2]
+    K[j, i] = K[j, i] + k[2, 1]
+    K[j, j] = K[j, j] + k[2, 2]
+    return K
+end
+export d1_spring_assemble
 function d1_spring_elementforce(k, u)
     #function prototype: d1_spring_elementforce(k,u)
     #This function returns the element nodal force
@@ -56,8 +56,8 @@ function d1_truss_elementforce(k, u)
     return k * u
 end
 export d1_truss_elementforce
-function d1_truss_elementStiffness(E, A, L)
-    #function prototype: D1_TrussElementStiffness(E,A,L)
+function d1_truss_elementstiffness(E, A, L)
+    #function prototype: d1_truss_elementstiffness(E,A,L)
     #This function returns the element
     #stiffness matrix for a linear bar with
     #modulus of elasticity E; cross-sectional
@@ -65,27 +65,27 @@ function d1_truss_elementStiffness(E, A, L)
     #element stiffness matrix is 2 x 2.
     return [E * A / L -E * A / L; -E * A / L E * A / L]
 end
-export D1_TrussElementStiffness
-function D1_TrussElementStress(k, u, A)
-    #function prototype: D1_TrussElementStress(k,u,A)
+export d1_truss_elementstiffness
+function d1_truss_elementstress(k, u, A)
+    #function prototype: d1_truss_elementstress(k,u,A)
     #This function returns the element nodal
     #stress vector given the element stiffness
     #matrix k; the element nodal displacement
     #vector u; & the cross-sectional area A.
     return k * u / A
 end
-export D1_TrussElementStress
-function D1_TrussElementStrain(L, u)
-    #function prototype: D1_TrussElementStress(k,u,A)
+export d1_truss_elementstress
+function d1_truss_elementstrain(L, u)
+    #function prototype: d1_truss_elementstrain(k,u,A)
     #This function returns the element nodal
     #stress vector given the element stiffness
     #matrix k; the element nodal displacement
     #vector u; & the cross-sectional area A.
     return 1/L * u 
 end
-export D1_TrussElementStrain
-function D2_BeamAssemble(K, k, i, j)
-    #function prototype: D2_BeamAssemble(K,k,i,j)
+export d1_truss_elementstrain
+function d2_beam_assemble(K, k, i, j)
+    #function prototype: d2_beam_assemble(K,k,i,j)
     #This function assembles the element stiffness
     #matrix k of the plane beam element with nodes
     #i & j into the global stiffness matrix K.
@@ -130,9 +130,9 @@ function D2_BeamAssemble(K, k, i, j)
     K[3*j, 3*j] = K[3*j, 3*j] + k[6, 6]
     return K
 end
-export D2_BeamAssemble
-function D2_BeamElementAxialDiagram(f, L)
-    #function prototype: D2_BeamElementAxialDiagram(f, L)
+export d2_beam_assemble
+function d2_beam_elementaxialdiagram(f, L)
+    #function prototype: d2_beam_elementaxialdiagram(f, L)
     #This function plots the axial force
     #diagram for the plane beam element
     #with nodal force vector f & length L.
@@ -144,9 +144,9 @@ function D2_BeamElementAxialDiagram(f, L)
     y1 = [0 0]'
     plot(x, y1, 'k')
 end
-export D2_BeamElementAxialDiagram
-function D2_BeamElementForce(E, A, I, L, theta, u)
-    #function prototype D2_BeamElementForce(E,A,I,L,theta,u)
+export d2_beam_elementaxialdiagram
+function d2_beam_elementforce(E, A, I, L, theta, u)
+    #function prototype d2_beam_elementforce(E,A,I,L,theta,u)
     #This function returns the element force
     #vector given the modulus of elasticity E
     #the cross-sectional area A; the moment of
@@ -179,18 +179,18 @@ function D2_BeamElementForce(E, A, I, L, theta, u)
     ]
     return kprime * T * u
 end
-export D2_BeamElementForce
-function D2_BeamElementLength(x1, y1, x2, y2)
-    #function prototype: D2_BeamElementLength(x1,y1,x2,y2)
+export d2_beam_elementforce
+function d2_beam_elementlength(x1, y1, x2, y2)
+    #function prototype: d2_beam_elementlength(x1,y1,x2,y2)
     #This function returns the length of the
     #plane beam element whose first node has
     #coordinates [x1,y1] & second node has
     #coordinates [x2,y2].
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
 end
-export D2_BeamElementLength
-function D2_BeamElementMomentDiagram(f, L)
-    #function prototype: D2_BeamElementMomentDiagram(f, L)
+export d2_beam_elementlength
+function d2_beam_elementmomentdiagram(f, L)
+    #function prototype: d2_beam_elementmomentdiagram(f, L)
     #This function plots the bending
     #moment diagram for the plane beam
     #element with nodal force vector f & length L.
@@ -202,9 +202,9 @@ function D2_BeamElementMomentDiagram(f, L)
     y1 = [0 0]'
     plot(x, y1, 'k')
 end
-export D2_BeamElementMomentDiagram
-function D2_BeamElementShearDiagram(f, L)
-    #function prototype: D2_BeamElementShearDiagram(f, L)
+export d2_beam_elementmomentdiagram
+function d2_beam_elementsheardiagram(f, L)
+    #function prototype: d2_beam_elementsheardiagram(f, L)
     #This function plots the shear force
     #diagram for the plane beam element
     #with nodal force vector f & length L.
@@ -216,9 +216,9 @@ function D2_BeamElementShearDiagram(f, L)
     y1 = [0 0]'
     plot(x, y1, 'k')
 end
-export D2_BeamElementShearDiagram
-function D2_BeamElementStiffness(E, A, I, L, theta)
-    #function prototype: D2_BeamElementStiffness(E,A,I,L,theta)
+export d2_beam_elementsheardiagram
+function d2_beam_elementstiffness(E, A, I, L, theta)
+    #function prototype: d2_beam_elementstiffness(E,A,I,L,theta)
     #This function returns the element
     #stiffness matrix for a plane beam
     #element with modulus of elasticity E;
@@ -243,9 +243,9 @@ function D2_BeamElementStiffness(E, A, I, L, theta)
         -w4 w5 2 * I w4 -w5 4 * I
     ]
 end
-export D2_BeamElementStiffness
-function D2_SpringAssemble(K, k, i, j)
-    #function prototype: D2_SpringAssemble(K,k,i,j)
+export d2_beam_elementstiffness
+function d2_spring_assemble(K, k, i, j)
+    #function prototype:  d2_spring_assemble(K,k,i,j)
     #This function assembles the element stiffness
     #matrix k of the 2D spring element with nodes
     #i & j into the global stiffness matrix K.
@@ -270,9 +270,9 @@ function D2_SpringAssemble(K, k, i, j)
     K[2*j, 2*j] = K[2*j, 2*j] + k[4, 4]
     return K
 end
-export D2_SpringAssemble
-function D2_SpringElementForce(k, theta, u)
-    #function prototype: D2_SpringElementForce(k,theta,u)
+export  d2_spring_assemble
+function d2_spring_elementforce(k, theta, u)
+    #function prototype: d2_spring_elementforce(k,theta,u)
     #This function returns the element force
     #given the stiffness k &
     #the angle theta [in degrees], and the
@@ -282,9 +282,9 @@ function D2_SpringElementForce(k, theta, u)
     S = sin(x)
     return k * [-C -S C S] * u
 end
-export D2_SpringElementForce
-function D2_SpringElementStiffness(k, theta)
-    #function prototype: D2_SpringElementStiffness(k,theta)
+export d2_spring_elementforce
+function d2_spring_elementstiffness(k, theta)
+    #function prototype: d2_spring_elementstiffness(k,theta)
     #This function returns the element
     #stiffness matrix for a 2D spring
     #with stiffness k &
@@ -301,7 +301,7 @@ function D2_SpringElementStiffness(k, theta)
         -C * S -S * S C * S S * S
     ]
 end
-export D2_SpringElementStiffness
+export d2_spring_elementstiffness
 function D2_TrussAssemble(K, k, i, j)
     #function prototype : D2_TrussAssemble(K,k,i,j)
     #This function assembles the element stiffness

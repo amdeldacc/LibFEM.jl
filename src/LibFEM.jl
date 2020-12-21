@@ -1,5 +1,5 @@
 module LibFEM
-"""
+r"""
 function declaration: d1\_spring\_assemble(K,k,i,j)
 This function assembles the element stiffness
 matrix k of the spring with nodes i & j into the

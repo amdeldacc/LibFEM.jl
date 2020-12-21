@@ -1,6 +1,7 @@
 module LibFEM
 """
-function declaration: d1_spring_assemble(K,k,i,j)
+    function declaration: d1_spring_assemble(K,k,i,j)
+
 This function assembles the element stiffness
 matrix k of the spring with nodes i & j into the
 global stiffness matrix K.

@@ -302,7 +302,7 @@ function d2_spring_elementstiffness(k, theta)
     ]
 end
 export d2_spring_elementstiffness
-function D2_TrussAssemble(K, k, i, j)
+function d2_truss_assemble(K, k, i, j)
     #function prototype : D2_TrussAssemble(K,k,i,j)
     #This function assembles the element stiffness
     #matrix k of the plane truss element with nodes
@@ -328,9 +328,9 @@ function D2_TrussAssemble(K, k, i, j)
     K[2*j, 2*j] = K[2*j, 2*j] + k[4, 4]
     return K
 end
-export D2_TrussAssemble
-function D2_TrussElementForce(E, A, L, theta, u)
-    #function prototype: D2_TrussElementForce(E,A,L,theta,u)
+export d2_truss_assemble
+function d2_truss_elementforce(E, A, L, theta, u)
+    #function prototype: d2_truss_elementforce(E,A,L,theta,u)
     #This function returns the element force
     #given the modulus of elasticity E; the
     #cross-sectional area A; the length L;
@@ -341,18 +341,18 @@ function D2_TrussElementForce(E, A, L, theta, u)
     S = sin(x)
     return E * A / L * [-C -S C S] * u
 end
-export D2_TrussElementForce
-function D2_TrussElementLength(x1, y1, x2, y2)
-    #function prototype: D2_TrussElementLength(x1,y1,x2,y2)
+export d2_truss_elementforce
+function d2_truss_elementlength(x1, y1, x2, y2)
+    #function prototype: d2_truss_elementlength(x1,y1,x2,y2)
     #This function returns the length of the
     #plane truss element whose first node has
     #coordinates [x1,y1] & second node has
     #coordinates [x2,y2].
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
 end
-export D2_TrussElementLength
-function D2_TrussElementStiffness(E, A, L, theta)
-    #function prototype: D2_TrussElementStiffness(E,A,L,theta)
+export d2_truss_elementlength
+function d2_truss_elementstiffness(E, A, L, theta)
+    #function prototype: d2_truss_elementstiffness(E,A,L,theta)
     #This function returns the element
     #stiffness matrix for a plane truss
     #element with modulus of elasticity E;
@@ -370,9 +370,9 @@ function D2_TrussElementStiffness(E, A, L, theta)
         -C * S -S * S C * S S * S
     ]
 end
-export D2_TrussElementStiffness
-function D2_TrussElementStrain(L, theta, u)
-    #function prototype D2_TrussElementStrain(L,theta,u)
+export d2_truss_elementstiffness
+function d2_truss_elementstrain(L, theta, u)
+    #function prototype d2_truss_elementstrain(L,theta,u)
     #This function returns the element strain
     #given the length L,the angle theta [in degrees]
     #and the element nodal displacement vector u.
@@ -381,9 +381,9 @@ function D2_TrussElementStrain(L, theta, u)
     S = sin(x)
     return 1 / L * [-C -S C S] * u
 end
-export D2_TrussElementStrain
-function D2_TrussElementStress(E, L, theta, u)
-    #function prototype: D2_TrussElementStress(E,L,theta,u)
+export d2_truss_elementstrain
+function d2_truss_elementstress(E, L, theta, u)
+    #function prototype: d2_truss_elementstress(E,L,theta,u)
     #This function returns the element stress
     #given the modulus of elasticity E; the
     #the length L; the angle theta (in
@@ -394,9 +394,9 @@ function D2_TrussElementStress(E, L, theta, u)
     S = sin(x)
     return E / L * [-C -S C S] * u
 end
-export D2_TrussElementStress
-function D3_SpringAssemble(K, k, i, j)
-    #function prototype: D3_SpringAssemble(K,k,i,j)
+export d2_truss_elementstress
+function d3_spring_assemble(K, k, i, j)
+    #function prototype: d3_spring_assemble(K,k,i,j)
     #This function assembles the element stiffness
     #matrix k of the 3D spring element with nodes
     #i & j into the global stiffness matrix K.
@@ -441,9 +441,9 @@ function D3_SpringAssemble(K, k, i, j)
     K[3*j, 3*j] = K[3*j, 3*j] + k[6, 6]
     return K
 end
-export D3_SpringAssemble
-function D3_SpringElementForce(k, thetax, thetay, thetaz, u)
-    #function prototype: D3_SpringElementForce(k,thetax,thetay,thetaz,u)
+export d3_spring_assemble
+function d3_spring_elementforce(k, thetax, thetay, thetaz, u)
+    #function prototype: d3_spring_elementforce(k,thetax,thetay,thetaz,u)
     #This function returns the element force
     #given the stiffness k;
     #the angles thetax; thetay; thetaz
@@ -457,9 +457,9 @@ function D3_SpringElementForce(k, thetax, thetay, thetaz, u)
     Cz = cos(v)
     return k * [-Cx -Cy -Cz Cx Cy Cz] * u
 end
-export D3_SpringElementForce
-function D3_SpringElementStiffness(k, thetax, thetay, thetaz)
-    #function prototype: D3_SpringElementStiffness(k,thetax,thetay,thetaz)
+export d3_spring_elementforce
+function d3_spring_elementstiffness(k, thetax, thetay, thetaz)
+    #function prototype: d3_spring_elementstiffness(k,thetax,thetay,thetaz)
     #This function returns the element
     #stiffness matrix for a 3D spring
     #element with stiffness k;
@@ -479,9 +479,9 @@ function D3_SpringElementStiffness(k, thetax, thetay, thetaz)
     ]
     return k * [w -w; -w w]
 end
-export D3_SpringElementStiffness
-function D3_TrussAssemble(K, k, i, j)
-    #function prototype: D3_TrussAssemble(K,k,i,j)
+export d3_spring_elementstiffness
+function d3_truss_assemble(K, k, i, j)
+    #function prototype: d3_truss_assemble(K,k,i,j)
     #This function assembles the element stiffness
     #matrix k of the space truss element with nodes
     #i & j into the global stiffness matrix K.
@@ -526,9 +526,9 @@ function D3_TrussAssemble(K, k, i, j)
     K[3*j, 3*j] = K[3*j, 3*j] + k[6, 6]
     return K
 end
-export D3_TrussAssemble
-function D3_TrussElementForce(E, A, L, thetax, thetay, thetaz, u)
-    #function prototype: D3_TrussElementForce(E,A,L,thetax,thetay,thetaz,u)
+export d3_truss_assemble
+function d3_truss_elementforce(E, A, L, thetax, thetay, thetaz, u)
+    #function prototype: d3_truss_elementforce(E,A,L,thetax,thetay,thetaz,u)
     #This function returns the element force
     #given the modulus of elasticity E; the
     #cross-sectional area A; the length L;
@@ -543,9 +543,9 @@ function D3_TrussElementForce(E, A, L, thetax, thetay, thetaz, u)
     Cz = cos(v)
     return E * A / L * [-Cx -Cy -Cz Cx Cy Cz] * u
 end
-export D3_TrussElementForce
-function D3_TrussElementLength(x1, y1, z1, x2, y2, z2)
-    #function prototype: D3_TrussElementLength(x1,y1,z1,x2,y2,z2)
+export d3_truss_elementforce
+function d3_truss_elementlength(x1, y1, z1, x2, y2, z2)
+    #function prototype: d3_truss_elementlength(x1,y1,z1,x2,y2,z2)
     #This function returns the length of the
     #space truss element whose first node has
     #coordinates [x1,y1,z1] & second node has
@@ -554,9 +554,9 @@ function D3_TrussElementLength(x1, y1, z1, x2, y2, z2)
         (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1),
     )
 end
-export D3_TrussElementLength
-function D3_TrussElementStiffness(E, A, L, thetax, thetay, thetaz)
-    #function prototype: D3_TrussElementStiffness(E,A,L,thetax,thetay,thetaz)
+export d3_truss_elementlength
+function d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)
+    #function prototype: d3_truss_elementstiffness(E,A,L,thetax,thetay,thetaz)
     #This function returns the element
     #stiffness matrix for a space truss
     #element with modulus of elasticity E;
@@ -577,9 +577,9 @@ function D3_TrussElementStiffness(E, A, L, thetax, thetay, thetaz)
     ]
     return E * A / L * [w -w; -w w]
 end
-export D3_TrussElementStiffness
-function D3_TrussElementStrain(L, thetax, thetay, thetaz, u)
-    #function prototype: D3_TrussElementStrain(L,thetax,thetay,thetaz,u)
+export d3_truss_elementstiffness
+function d3_truss_elementstrain(L, thetax, thetay, thetaz, u)
+    #function prototype: export d3_truss_elementstrain(L,thetax,thetay,thetaz,u)
     #This function returns the element strain
     #the length L; the angles thetax; thetay;
     #thetaz [in degrees], & the element
@@ -592,9 +592,9 @@ function D3_TrussElementStrain(L, thetax, thetay, thetaz, u)
     Cz = cos(v)
     return 1 / L * [-Cx -Cy -Cz Cx Cy Cz] * u
 end
-export D3_TrussElementStrain
-function D3_TrussElementStress(E, L, thetax, thetay, thetaz, u)
-    #function prototype: D3_TrussElementStress(E,L,thetax,thetay,thetaz,u)
+export d3_truss_elementstrain
+function d3_truss_elementstress(E, L, thetax, thetay, thetaz, u)
+    #function prototype: d3_truss_elementstress(E,L,thetax,thetay,thetaz,u)
     #This function returns the element stress
     #given the modulus of elasticity E; the
     #length L; the angles thetax; thetay;
@@ -608,5 +608,5 @@ function D3_TrussElementStress(E, L, thetax, thetay, thetaz, u)
     Cz = cos(v)
     return E / L * [-Cx -Cy -Cz Cx Cy Cz] * u
 end
-export D3_TrussElementStress
+export d3_truss_elementstress
 end #module

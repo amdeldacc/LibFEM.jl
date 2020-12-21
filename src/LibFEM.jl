@@ -1,37 +1,39 @@
 module LibFEM
-function D1_SpringAssemble(K, k, i, j)
-    #function prototype: D1_SpringAssemble(K,k,i,j)
-    #This function assembles the element stiffness
-    #matrix k of the spring with nodes i & j into the
-    #global stiffness matrix K.
-    #This function returns the global stiffness matrix K
-    #after the element stiffness matrix k is assembled.
+function d1_spring_assemble(K, k, i, j)
     K[i, i] = K[i, i] + k[1, 1]
     K[i, j] = K[i, j] + k[1, 2]
     K[j, i] = K[j, i] + k[2, 1]
     K[j, j] = K[j, j] + k[2, 2]
     return K
 end
-export D1_SpringAssemble
-function D1_SpringElementForce(k, u)
-    #function prototype: D1_SpringElementForce(k,u)
+export d1_spring_assemble
+"""
+function prototype: d1_spring_assemble(K,k,i,j)
+This function assembles the element stiffness
+matrix k of the spring with nodes i & j into the
+global stiffness matrix K.
+This function returns the global stiffness matrix K
+after the element stiffness matrix k is assembled.
+"""
+function d1_spring_elementforce(k, u)
+    #function prototype: d1_spring_elementforce(k,u)
     #This function returns the element nodal force
     #vector given the element stiffness matrix k
     #and the element nodal displacement vector u.
     return k * u
 end
-export D1_SpringElementForce
-function D1_SpringElementStiffness(k)
-    #function prototype: D1_SpringElementStiffness(k)
+export d1_spring_elementforce
+function d1_spring_elementstiffness(k)
+    #function prototype: d1_spring_elementstiffness(k)
     #This function returns the element stiffness
     #matrix for a spring with stiffness k.
     #The size of the element stiffness matrix
     #is 2 x 2.
     return [k -k; -k k]
 end
-export D1_SpringElementStiffness
-function D1_TrussAssemble(K, k, i, j)
-    #function prototype:D1_TrussAssemble(K,k,i,j)
+export d1_spring_elementstiffness
+function d1_truss_assemble(K, k, i, j)
+    #function prototype:d1_truss_assemble(K,k,i,j)
     #This function assembles the element stiffness
     #matrix k of the linear bar with nodes i & j
     #into the global stiffness matrix K.
@@ -44,17 +46,17 @@ function D1_TrussAssemble(K, k, i, j)
     K[j, j] = K[j, j] + k[2, 2]
     return K
 end
-export D1_TrussAssemble
-function D1_TrussElementForce(k, u)
-    #function prototype: D1_TrussElementForces(k,u)
+export d1_truss_assemble
+function d1_truss_elementforce(k, u)
+    #function prototype: d1_truss_elementforce(k,u)
     #This function returns the element nodal
     #force vector given the element stiffness
     #matrix k & the element nodal displacement
     #vector u.
     return k * u
 end
-export D1_TrussElementForce
-function D1_TrussElementStiffness(E, A, L)
+export d1_truss_elementforce
+function d1_truss_elementStiffness(E, A, L)
     #function prototype: D1_TrussElementStiffness(E,A,L)
     #This function returns the element
     #stiffness matrix for a linear bar with

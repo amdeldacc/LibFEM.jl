@@ -1,4 +1,10 @@
 name = "LibFEM"
 uuid = "3625dbae-1167-4e4e-9595-224d0cceb916"
-authors = ["amdeldacc <amdeldacc@gmail.com>"]
 version = "0.1.0"
+authors = ["amdeldacc <amdeldacc@gmail.com>"]
+
+[deps]
+ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
+
+[compat]
+ModelingToolkit = "10.2.0"

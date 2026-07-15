@@ -2,7 +2,7 @@
 
 ## Module Structure
 
-LibFEM.jl is a single-module library — all code lives in one file: `src/LibFEM.jl` (585 lines).
+LibFEM.jl is a single-module library — all code lives in one file: `src/LibFEM.jl` (~904 lines).
 
 ```julia
 module LibFEM
@@ -21,9 +21,10 @@ d2_spring_*              # Spring (2 DOF/node)
 d2_truss_*               # Plane truss (2 DOF/node)
 d2_beam_*                # Plane beam/frame (3 DOF/node)
 
-# ── 3D elements (3 DOF/node) ──────────────
-d3_spring_*              # Spring
-d3_truss_*               # Space truss
+# ── 3D elements ──────────────────────────
+d3_spring_*              # Spring (3 DOF/node)
+d3_truss_*               # Space truss (3 DOF/node)
+d3_beam_*                # Space frame / 3D beam (6 DOF/node)
 
 end # module
 ```
@@ -50,11 +51,14 @@ This is a translation from the MATLAB naming convention in `Doc/Kattan/M-Files/`
 |--------|-------------|------------------|----------------------|
 | `d1_` | 1 | 1D spring, linear bar | Node `i` → row `i` |
 | `d2_` | 2 | 2D spring, plane truss | Node `i` → rows `2i-1, 2i` |
-| `d3_` | 3 | 3D spring, space truss, 2D beam | Node `i` → rows `3i-2, 3i-1, 3i` |
+| `d3_` | 3 (`d3_spring`, `d3_truss`) | 3D spring, space truss | Node `i` → rows `3i-2, 3i-1, 3i` |
+| `d3_beam` | **6** | Space frame (3D beam) | Node `i` → rows `6i-5, 6i-4, 6i-3, 6i-2, 6i-1, 6i` |
 
-### Special case: 2D Beam (`d2_beam_*`)
+### Special cases: Beam elements
 
-Uses 3 DOF per node (`u_x`, `u_y`, rotation) — matching the `d3_` indexing scheme — because beam elements carry both axial and bending behavior. The `_assemble!` helper handles this by parameterizing DOF count per node.
+**2D Beam (`d2_beam_*`)**: Uses 3 DOF per node (`u_x`, `u_y`, rotation) — matching the `d3_` indexing scheme — because beam elements carry both axial and bending behavior. The `_assemble!` helper handles this by parameterizing DOF count per node.
+
+**3D Beam / Space Frame (`d3_beam_*`)**: Uses **6 DOF per node** (`u_x`, `u_y`, `u_z`, `θ_x`, `θ_y`, `θ_z`) — translations and rotations in all three axes. The element stiffness matrix is 12×12. The rotation matrix `Λ` (3×3 direction cosines) is constructed from the element node coordinates, handling the vertical-element degenerate case where `D = y₂ - y₁ = 0` and `z₂ - z₁ = 0`.
 
 ## Function Pattern
 
@@ -115,6 +119,7 @@ This maps 4 element-level blocks (ii, jj, ii→jj, jj→ii) to the global stiffn
 | `1` | `d1_spring_assemble`, `d1_truss_assemble` |
 | `2` | `d2_spring_assemble`, `d2_truss_assemble` |
 | `3` | `d2_beam_assemble`, `d3_spring_assemble`, `d3_truss_assemble` |
+| `6` | `d3_beam_assemble` |
 
 The helper is private (underscore prefix, not exported). Adding new element types requires only passing the correct `dofs` parameter — no new assembly boilerplate.
 
@@ -167,16 +172,30 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d3_truss_elementstrain(L, thetax, thetay, thetaz, u)` — scalar strain
 - `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)` — element length
 
+### 3D Beam / Space Frame (`d3_beam`)
+- `d3_beam_elementstiffness(E, A, Iy, Iz, G, J, L, x1, y1, z1, x2, y2, z2)` — 12×12 matrix
+- `d3_beam_assemble(K, k, i, j)` — DOF mapping: **6**
+- `d3_beam_elementforces(E, A, Iy, Iz, G, J, L, x1, y1, z1, x2, y2, z2, u)` — 12-element vector (local frame)
+- `d3_beam_elementlength(x1, y1, z1, x2, y2, z2)` — 3D Euclidean distance
+- `d3_beam_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
+- `d3_beam_elementshearydiagram(f, L)` — Plots.jl shear force (Y) diagram
+- `d3_beam_elementshearzdiagram(f, L)` — Plots.jl shear force (Z) diagram
+- `d3_beam_elementmomentyidiagram(f, L)` — Plots.jl bending moment (Y) diagram
+- `d3_beam_elementmomentzdiagram(f, L)` — Plots.jl bending moment (Z) diagram
+- `d3_beam_elementtorsiondiagram(f, L)` — Plots.jl torsion diagram
+
+  **Note**: The 3D beam uses a 12×12 local stiffness matrix with an embedded 3×3 rotation matrix `Λ` built from node coordinates (not angle parameters). `Iy` governs bending about the y-axis (δz, θy), `Iz` governs bending about the z-axis (δy, θz). The vertical-element degenerate case (`D = y₂ - y₁ = 0` and `z₂ - z₁ = 0`) is handled automatically.
+
 ## Dependencies & Runtime Notes
 
-- **`Plots.jl`** v1 — used by beam diagram functions (`d2_beam_elementaxialdiagram`, etc.). Required in `Project.toml`.
-- **`using Plots`** is declared at module level (line 2 of `src/LibFEM.jl`).
+- **`Plots.jl`** v1 — used by all beam diagram functions (`d2_beam_*` and `d3_beam_*`). Required in `Project.toml`.
+- **`using Plots`** is declared at module level in `src/LibFEM.jl`.
 - **No `ModelingToolkit`** — listed as a dependency in `CLAUDE.md`'s older version note, but the `Project.toml` has been updated to `Plots` only. The scripts in `scripts/` use MTK independently.
 
 ## Testing
 
 Tests are in `test/`:
-- **`runtests.jl`** — Main test suite (~400 lines). Uses `Test` standard library. Covers all 7 element types with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, and assembly correctness.
+- **`runtests.jl`** — Main test suite (~400 lines). Uses `Test` standard library. Covers all 8 element types (including `d3_beam`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, and assembly correctness.
 - **`comparison.jl`** — Side-by-side MATLAB reference implementations transcribed from `Doc/Kattan/M-Files/`. Not run as independent tests; included from `runtests.jl`.
 
 To run:
@@ -206,7 +225,7 @@ Key invariants to maintain:
 ## Known Issues
 
 See `ToDo.md` for full list. Notable items:
-- Docstring typos (lines 105-107, 673 in `src/LibFEM.jl`)
+- Docstring typos (lines 105-107, ~673 in `src/LibFEM.jl`)
 - Double space in an export statement (line 319)
 - No boundary condition or solver functions yet (users must solve `K·U = F` themselves)
 - No `Project.toml` `[extras]`/`[targets]` section for `Test` dependency

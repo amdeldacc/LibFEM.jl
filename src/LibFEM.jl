@@ -582,4 +582,323 @@ function d3_truss_elementstress(E::Real, L::Real, thetax::Real, thetay::Real, th
     return E / L * [-Cx -Cy -Cz Cx Cy Cz] * u
 end
 export d3_truss_elementstress
+"""
+    _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
+
+Compute the 12×12 local (primal) stiffness matrix for a
+3D beam (space frame) element.  This is the stiffness in
+the element's local coordinate system.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `G::Real`: Shear modulus.
+- `A::Real`: Cross-sectional area.
+- `Iy::Real`: Moment of inertia about the local y-axis.
+- `Iz::Real`: Moment of inertia about the local z-axis.
+- `J::Real`: Torsional constant.
+- `L::Real`: Element length.
+
+Returns a 12×12 matrix.
+"""
+function _d3_beam_kprime(
+    E::Real,
+    G::Real,
+    A::Real,
+    Iy::Real,
+    Iz::Real,
+    J::Real,
+    L::Real,
+)
+    w1 = E * A / L
+    w2 = 12 * E * Iz / (L^3)
+    w3 = 6 * E * Iz / (L^2)
+    w4 = 4 * E * Iz / L
+    w5 = 2 * E * Iz / L
+    w6 = 12 * E * Iy / (L^3)
+    w7 = 6 * E * Iy / (L^2)
+    w8 = 4 * E * Iy / L
+    w9 = 2 * E * Iy / L
+    w10 = G * J / L
+    # MATLAB SpaceFrameElementStiffness.m lines 24-35 layout:
+    # DOF order: [δx, δy, δz, θx, θy, θz, δx₂, δy₂, δz₂, θx₂, θy₂, θz₂]
+    # w2..w5 use Iz (bending about z-axis → δy, θz)
+    # w6..w9 use Iy (bending about y-axis → δz, θy)
+    return [
+        w1   0    0    0    0    0   -w1   0    0    0    0    0
+        0   w2   0    0    0    w3   0   -w2   0    0    0    w3
+        0    0   w6   0   -w7   0    0    0   -w6   0   -w7   0
+        0    0    0   w10   0    0    0    0    0   -w10  0    0
+        0    0   -w7   0   w8    0    0    0    w7   0    w9   0
+        0    w3   0    0    0    w4   0   -w3   0    0    0    w5
+       -w1   0    0    0    0    0    w1   0    0    0    0    0
+        0   -w2   0    0    0   -w3   0    w2   0    0    0   -w3
+        0    0   -w6   0    w7    0    0    0    w6   0    w7   0
+        0    0    0   -w10  0    0    0    0    0    w10   0    0
+        0    0   -w7   0    w9    0    0    0    w7   0    w8   0
+        0    w3   0    0    0    w5   0   -w3   0    0    0    w4
+    ]
+end
+
+"""
+    function declaration: d3_beam_elementlength(x1,y1,z1,x2,y2,z2)
+
+This function returns the length of the
+space frame (3D beam) element whose first node has
+coordinates [x1,y1,z1] & second node has
+coordinates [x2,y2,z2].
+"""
+function d3_beam_elementlength(
+    x1::Real,
+    y1::Real,
+    z1::Real,
+    x2::Real,
+    y2::Real,
+    z2::Real,
+)
+    return sqrt(
+        (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1),
+    )
+end
+export d3_beam_elementlength
+
+"""
+    function declaration: d3_beam_elementstiffness(E,G,A,Iy,Iz,J,x1,y1,z1,x2,y2,z2)
+
+This function returns the element
+stiffness matrix for a space frame (3D beam)
+element with modulus of elasticity E;
+shear modulus G; cross-sectional area A;
+moments of inertia Iy, Iz; torsional constant J;
+and nodal coordinates (x1,y1,z1) & (x2,y2,z2).
+The size of the element stiffness matrix is 12 x 12.
+"""
+function d3_beam_elementstiffness(
+    E::Real,
+    G::Real,
+    A::Real,
+    Iy::Real,
+    Iz::Real,
+    J::Real,
+    x1::Real,
+    y1::Real,
+    z1::Real,
+    x2::Real,
+    y2::Real,
+    z2::Real,
+)
+    L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)
+    kprime = _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
+
+    Cx = (x2 - x1) / L
+    Cy = (y2 - y1) / L
+    Cz = (z2 - z1) / L
+
+    if x1 == x2 && y1 == y2
+        # Vertical element — standard formula breaks (D = 0)
+        if z2 > z1
+            Lambda = [0 0 1; 0 1 0; -1 0 0]
+        else
+            Lambda = [0 0 -1; 0 1 0; 1 0 0]
+        end
+    else
+        D = sqrt(Cx^2 + Cy^2)
+        Lambda = [
+            Cx       Cy       Cz
+            -Cy / D   Cx / D   0
+            -Cx * Cz / D  -Cy * Cz / D  D
+        ]
+    end
+
+    Z33 = zeros(3, 3)
+    R = [
+        Lambda Z33    Z33    Z33
+        Z33    Lambda Z33    Z33
+        Z33    Z33    Lambda Z33
+        Z33    Z33    Z33    Lambda
+    ]
+
+    return R' * kprime * R
+end
+export d3_beam_elementstiffness
+
+"""
+    function declaration: d3_beam_assemble(K,k,i,j)
+
+This function assembles the element stiffness
+matrix k of the space frame (3D beam) element with nodes
+i & j into the global stiffness matrix K.
+This function returns the global stiffness
+matrix K after the element stiffness matrix
+k is assembled.
+"""
+function d3_beam_assemble(
+    K::AbstractMatrix,
+    k::AbstractMatrix,
+    i::Integer,
+    j::Integer,
+)
+    return _assemble!(K, k, i, j, 6)
+end
+export d3_beam_assemble
+"""
+    function declaration: d3_beam_elementforces(E,G,A,Iy,Iz,J,x1,y1,z1,x2,y2,z2,u)
+
+This function returns the element force
+vector given the modulus of elasticity E;
+the shear modulus G; the cross-sectional area A;
+the moments of inertia Iy, Iz; the torsional constant J;
+the coordinates (x1,y1,z1) & (x2,y2,z2) of the two nodes;
+and the element nodal displacement vector u.
+The size of the element force vector is 12 x 1.
+"""
+function d3_beam_elementforces(
+    E::Real,
+    G::Real,
+    A::Real,
+    Iy::Real,
+    Iz::Real,
+    J::Real,
+    x1::Real,
+    y1::Real,
+    z1::Real,
+    x2::Real,
+    y2::Real,
+    z2::Real,
+    u::AbstractVector,
+)
+    L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)
+    kprime = _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
+
+    Cx = (x2 - x1) / L
+    Cy = (y2 - y1) / L
+    Cz = (z2 - z1) / L
+
+    if x1 == x2 && y1 == y2
+        if z2 > z1
+            Lambda = [0 0 1; 0 1 0; -1 0 0]
+        else
+            Lambda = [0 0 -1; 0 1 0; 1 0 0]
+        end
+    else
+        D = sqrt(Cx^2 + Cy^2)
+        Lambda = [
+            Cx       Cy       Cz
+            -Cy / D   Cx / D   0
+            -Cx * Cz / D  -Cy * Cz / D  D
+        ]
+    end
+
+    Z33 = zeros(3, 3)
+    R = [
+        Lambda Z33    Z33    Z33
+        Z33    Lambda Z33    Z33
+        Z33    Z33    Lambda Z33
+        Z33    Z33    Z33    Lambda
+    ]
+
+    return kprime * R * u
+end
+export d3_beam_elementforces
+
+"""
+    function declaration: d3_beam_elementaxialdiagram(f, L)
+
+This function plots and returns the axial force
+diagram for the space frame (3D beam) element
+with nodal force vector f & length L.
+"""
+function d3_beam_elementaxialdiagram(f::AbstractVector, L::Real)
+    x = [0, L]
+    z = [f[1], f[7]]
+    p = plot(x, z, title="Axial Force Diagram")
+    y1 = [0, 0]
+    plot!(p, x, y1, color=:black)
+    return p
+end
+export d3_beam_elementaxialdiagram
+
+"""
+    function declaration: d3_beam_elementshearydiagram(f, L)
+
+This function plots and returns the shear force
+y diagram for the space frame (3D beam) element
+with nodal force vector f & length L.
+"""
+function d3_beam_elementshearydiagram(f::AbstractVector, L::Real)
+    x = [0, L]
+    z = [f[2], -f[8]]
+    p = plot(x, z, title="Shear Force Y Diagram")
+    y1 = [0, 0]
+    plot!(p, x, y1, color=:black)
+    return p
+end
+export d3_beam_elementshearydiagram
+
+"""
+    function declaration: d3_beam_elementshearzdiagram(f, L)
+
+This function plots and returns the shear force
+z diagram for the space frame (3D beam) element
+with nodal force vector f & length L.
+"""
+function d3_beam_elementshearzdiagram(f::AbstractVector, L::Real)
+    x = [0, L]
+    z = [f[3], -f[9]]
+    p = plot(x, z, title="Shear Force Z Diagram")
+    y1 = [0, 0]
+    plot!(p, x, y1, color=:black)
+    return p
+end
+export d3_beam_elementshearzdiagram
+
+"""
+    function declaration: d3_beam_elementmomentyidiagram(f, L)
+
+This function plots and returns the bending moment
+y diagram for the space frame (3D beam) element
+with nodal force vector f & length L.
+"""
+function d3_beam_elementmomentyidiagram(f::AbstractVector, L::Real)
+    x = [0, L]
+    z = [f[5], -f[11]]
+    p = plot(x, z, title="Bending Moment Y Diagram")
+    y1 = [0, 0]
+    plot!(p, x, y1, color=:black)
+    return p
+end
+export d3_beam_elementmomentyidiagram
+
+"""
+    function declaration: d3_beam_elementmomentzdiagram(f, L)
+
+This function plots and returns the bending moment
+z diagram for the space frame (3D beam) element
+with nodal force vector f & length L.
+"""
+function d3_beam_elementmomentzdiagram(f::AbstractVector, L::Real)
+    x = [0, L]
+    z = [f[6], -f[12]]
+    p = plot(x, z, title="Bending Moment Z Diagram")
+    y1 = [0, 0]
+    plot!(p, x, y1, color=:black)
+    return p
+end
+export d3_beam_elementmomentzdiagram
+
+"""
+    function declaration: d3_beam_elementtorsiondiagram(f, L)
+
+This function plots and returns the torsion
+diagram for the space frame (3D beam) element
+with nodal force vector f & length L.
+"""
+function d3_beam_elementtorsiondiagram(f::AbstractVector, L::Real)
+    x = [0, L]
+    z = [f[4], -f[10]]
+    p = plot(x, z, title="Torsion Diagram")
+    y1 = [0, 0]
+    plot!(p, x, y1, color=:black)
+    return p
+end
+export d3_beam_elementtorsiondiagram
 end # module

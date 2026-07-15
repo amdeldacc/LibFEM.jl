@@ -1,0 +1,15 @@
+/home/piou/LibFEM.jl/.github/workflows/ci.yml
+/home/piou/LibFEM.jl/.github/workflows/openwiki-update.yml
+/home/piou/LibFEM.jl/.omo/drafts/matlab-comparison.md
+/home/piou/LibFEM.jl/.omo/drafts/update-agents-md.md
+/home/piou/LibFEM.jl/.omo/plans/matlab-comparison.md
+/home/piou/LibFEM.jl/.omo/plans/update-agents-md.md
+/home/piou/LibFEM.jl/AGENTS.md
+/home/piou/LibFEM.jl/CLAUDE.md
+/home/piou/LibFEM.jl/CONTEXT.md
+/home/piou/LibFEM.jl/README.md
+/home/piou/LibFEM.jl/ToDo.md
+/home/piou/LibFEM.jl/docs/assembly-helper-refactor.md
+/home/piou/LibFEM.jl/openwiki/architecture/overview.md
+/home/piou/LibFEM.jl/openwiki/quickstart.md
+/home/piou/LibFEM.jl/openwiki/reference/kattan-mapping.md

@@ -1,0 +1,96 @@
+# LibFEM.jl — Quickstart
+
+**LibFEM.jl** is an educational Finite Element Method (FEM) library for Julia. It provides element stiffness matrices, assembly functions, force/stress/strain calculations, and diagram plotting for springs, trusses, and beams in 1D, 2D, and 3D.
+
+Inspired by *"MATLAB Guide to Finite Elements — An Interactive Approach"* by Peter I. Kattan (Springer, 2007). The reference MATLAB code is preserved in `Doc/Kattan/M-Files/` as a read-only verification source.
+
+## Getting Started
+
+```julia
+# Start Julia with the project environment
+julia --project=.
+
+# Load the package
+using Pkg; Pkg.activate("."); using LibFEM
+```
+
+**Dependencies**: `Plots.jl` v1 (`Project.toml`).
+
+## Element Types at a Glance
+
+| Domain | 1D (`d1_`) | 2D (`d2_`) | 3D (`d3_`) |
+|--------|-----------|-----------|-----------|
+| **Spring** | `d1_spring_*` — scalar stiffness `k` | `d2_spring_*` — angle `theta` | `d3_spring_*` — angles `thetax, thetay, thetaz` |
+| **Truss** | `d1_truss_*` — `E, A, L` | `d2_truss_*` — `E, A, L, theta` | `d3_truss_*` — `E, A, L, thetax, thetay, thetaz` |
+| **Beam** | (not implemented) | `d2_beam_*` — `E, A, I, L, theta` | (not implemented) |
+
+## Core Function Pattern
+
+Every element type follows the same 3-function pattern:
+
+1. **`<prefix>_elementstiffness(...)`** — compute the element stiffness matrix
+2. **`<prefix>_assemble(K, k, i, j)`** — assemble element matrix into global stiffness matrix
+3. **One of**: `<prefix>_elementforce(...)`, `<prefix>_elementstress(...)`, `<prefix>_elementstrain(...)` — compute results from displacements
+
+Additional helpers: `_elementlength(...)`, beam diagram functions (`_elementaxialdiagram`, `_elementmomentdiagram`, `_elementsheardiagram`).
+
+### Example: 2D Truss Workflow
+
+```julia
+using LibFEM
+
+# Material properties
+E, A = 210e9, 0.01
+
+# Compute element length from node coordinates
+L = d2_truss_elementlength(0.0, 0.0, 3.0, 4.0)  # → 5.0
+theta = 30.0  # degrees
+
+# Element stiffness (4×4)
+k = d2_truss_elementstiffness(E, A, L, theta)
+
+# Assemble into global matrix (8×8 for 4 nodes)
+K = zeros(8, 8)
+K = d2_truss_assemble(K, k, 1, 2)
+
+# After solving K·U = F for displacements u...
+f = d2_truss_elementforce(E, A, L, theta, u)     # element force
+sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
+```
+
+## Conventions
+
+- **Angle units**: all angle parameters are in **degrees**; converted to radians internally via `deg2rad`.
+- **Dimension prefixes**: `d1_` (1 DOF/node), `d2_` (2 DOF/node for spring/truss; 3 for beam), `d3_` (3 DOF/node).
+- **Single source file**: all code lives in `src/LibFEM.jl`. No multi-file module structure.
+- **Assembly refactored**: all 7 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, dofs)` helper. See `docs/assembly-helper-refactor.md`.
+
+## Repository Map
+
+| Path | Purpose |
+|------|---------|
+| `src/LibFEM.jl` | All source code (single module) |
+| `test/runtests.jl` | Test suite (~400 lines, covers all 7 element types) |
+| `test/comparison.jl` | MATLAB reference transcriptions for verification |
+| `Doc/Kattan/M-Files/` | Read-only MATLAB reference (80 `.m` files from Kattan) |
+| `Doc/Kattan/Solutions Manual/` | Problem solutions (`.rtf` format) |
+| `Doc/Peter_Kattan_*` | Book PDF and text/Markdown transcriptions |
+| `docs/assembly-helper-refactor.md` | Refactor documentation for `_assemble!` helper |
+| `CONTEXT.md` | Domain glossary: MATLAB→Julia mapping and naming conventions |
+| `AGENTS.md`, `CLAUDE.md` | Agent instructions with constraints and conventions |
+| `ToDo.md` | Known issues, missing features, and refactoring opportunities |
+| `scripts/` | Example scripts using LibFEM and ModelingToolkit |
+| `LibFEM_DS_2020.ipynb` | Jupyter notebook with worked examples |
+
+## Where to Go Next
+
+- **[Architecture Overview](architecture/overview.md)** — Naming conventions, dimension system, `_assemble!` helper, module structure.
+- **[Kattan MATLAB Mapping](reference/kattan-mapping.md)** — Full MATLAB-to-Julia mapping table and reference material index.
+
+## Backlog
+
+| Area | Source Anchor | Reason Deferred |
+|------|--------------|-----------------|
+| `scripts/` example walkthrough | `/scripts/linear_truss_mtk.jl`, `linear_truss_mtk_2.jl` | Example scripts; interesting but secondary to API docs |
+| `LibFEM_DS_2020.ipynb` notebook | `/LibFEM_DS_2020.ipynb` | Large notebook (84 KB); deferred for future content analysis |
+| Detailed per-MATLAB-file analysis | `/Doc/Kattan/M-Files/` (80 files) | Covered at mapping level; deeper analysis can be added on demand |

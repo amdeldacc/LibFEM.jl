@@ -21,7 +21,7 @@ Julia:   d{N}_{domain}_{operation} (snake_case, dimension prefix)
 Where `{N}` encodes dimensionality:
 - `1` — 1D linear elements (scalar DOF)
 - `2` — 2D plane elements (2 DOF for spring/truss, 3 for beam)
-- `3` — 3D space elements (3 DOF)
+- `3` — 3D space elements (3 DOF for spring/truss; **6** for beam)
 
 ## Implemented Element Mapping
 

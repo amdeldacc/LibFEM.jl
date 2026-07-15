@@ -11,9 +11,9 @@
 
 ### 1. Benchmark Suite (`test/benchmark.jl`)
 
-A standalone BenchmarkTools suite covering the library's hot path in 3 groups (9 benchmarks total).
+A standalone BenchmarkTools suite covering the library's hot path in 3 groups (10 benchmarks total).
 
-**Group 1 — Element Stiffness Construction** (7 benchmarks)
+**Group 1 — Element Stiffness Construction** (8 benchmarks)
 Each element type's stiffness matrix construction benchmarked with realistic engineering values:
 
 | Benchmark | Matrix size | Mean time | Inputs |
@@ -25,6 +25,7 @@ Each element type's stiffness matrix construction benchmarked with realistic eng
 | `d2_truss` | 4×4 | **360 ns** | E=200 GPa, A=0.01 m², L=2.0 m, θ=30° |
 | `d3_truss` | 6×6 | **606 ns** | E=200 GPa, A=0.01 m², L=2.0 m, θx=30°, θy=45°, θz=60° |
 | `d2_beam` | 6×6 | **5.80 μs** | E=200 GPa, A=0.01 m², I=2e-4, L=2.0 m, θ=0° |
+| `d3_beam` | 12×12 | **242 μs** | E=30 GPa, G=0.115 GPa, A=0.01 m², Iy=1e-4, Iz=2e-4, J=1e-5 |
 
 **Group 2 — Assembly** (1 benchmark)
 500-element d2_truss chain → 1002 DOF system:
@@ -70,5 +71,5 @@ results = include("test/benchmark.jl")
 ## Verification
 
 - `using BenchmarkTools` imports cleanly (v1.8)
-- All 9 benchmarks execute without errors
+- All 10 benchmarks execute without errors
 - All 296 existing tests pass (zero regressions)

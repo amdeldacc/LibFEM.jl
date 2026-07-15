@@ -14,7 +14,7 @@ deg2rad(theta::Real) = theta * pi / 180
 Assemble element stiffness matrix k of a finite element
 into the global stiffness matrix K. The element has nodes
 i and j, with `dofs` degrees of freedom per node
-(1: 1D spring/truss; 2: 2D spring/truss; 3: 2D beam / 3D spring/truss).
+(1: 1D spring/truss; 2: 2D spring/truss; 3: 2D beam / 3D spring/truss; 6: 3D beam / space frame).
 Returns the modified global stiffness matrix K.
 """
 function _assemble!(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer, dofs::Integer)
@@ -809,7 +809,7 @@ with nodal force vector f & length L.
 """
 function d3_beam_elementaxialdiagram(f::AbstractVector, L::Real)
     x = [0, L]
-    z = [f[1], f[7]]
+    z = [-f[1], f[7]]
     p = plot(x, z, title="Axial Force Diagram")
     y1 = [0, 0]
     plot!(p, x, y1, color=:black)

@@ -173,9 +173,9 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)` — element length
 
 ### 3D Beam / Space Frame (`d3_beam`)
-- `d3_beam_elementstiffness(E, A, Iy, Iz, G, J, L, x1, y1, z1, x2, y2, z2)` — 12×12 matrix
+- `d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` — 12×12 matrix
 - `d3_beam_assemble(K, k, i, j)` — DOF mapping: **6**
-- `d3_beam_elementforces(E, A, Iy, Iz, G, J, L, x1, y1, z1, x2, y2, z2, u)` — 12-element vector (local frame)
+- `d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` — 12-element vector (local frame)
 - `d3_beam_elementlength(x1, y1, z1, x2, y2, z2)` — 3D Euclidean distance
 - `d3_beam_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
 - `d3_beam_elementshearydiagram(f, L)` — Plots.jl shear force (Y) diagram

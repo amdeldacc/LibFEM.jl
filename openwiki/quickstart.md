@@ -22,7 +22,7 @@ using Pkg; Pkg.activate("."); using LibFEM
 |--------|-----------|-----------|-----------|
 | **Spring** | `d1_spring_*` — scalar stiffness `k` | `d2_spring_*` — angle `theta` | `d3_spring_*` — angles `thetax, thetay, thetaz` |
 | **Truss** | `d1_truss_*` — `E, A, L` | `d2_truss_*` — `E, A, L, theta` | `d3_truss_*` — `E, A, L, thetax, thetay, thetaz` |
-| **Beam** | (not implemented) | `d2_beam_*` — `E, A, I, L, theta` (3 DOF/node) | `d3_beam_*` — `E, A, Iy, Iz, G, J, L` **+ node coords** (6 DOF/node) |
+| **Beam** | (not implemented) | `d2_beam_*` — `E, A, I, L, theta` (3 DOF/node) | `d3_beam_*` — `E, G, A, Iy, Iz, J` **+ node coords** (6 DOF/node) |
 
 ## Core Function Pattern
 
@@ -55,14 +55,14 @@ x2, y2, z2 = 4.0, 0.0, 0.0
 L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)  # → 4.0
 
 # Element stiffness (12×12 matrix)
-k = d3_beam_elementstiffness(E, A, Iy, Iz, G, J, L, x1, y1, z1, x2, y2, z2)
+k = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)
 
 # Assemble into global matrix (global K sized for 2 nodes × 6 DOF = 12)
 K = zeros(12, 12)
 K = d3_beam_assemble(K, k, 1, 2)
 
 # After solving K·U = F for displacements u (12×1)...
-f = d3_beam_elementforces(E, A, Iy, Iz, G, J, L, x1, y1, z1, x2, y2, z2, u)
+f = d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)
 
 # Visualize internal force diagrams (displays in REPL; use display() in scripts)
 d3_beam_elementaxialdiagram(f, L)

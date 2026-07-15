@@ -197,15 +197,16 @@ The helper is private (underscore prefix, not exported). Adding new element type
 Tests are in `test/`:
 - **`runtests.jl`** — Main test suite (~400 lines). Uses `Test` standard library. Covers all 8 element types (including `d3_beam`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, and assembly correctness.
 - **`comparison.jl`** — Side-by-side MATLAB reference implementations transcribed from `Doc/Kattan/M-Files/`. Not run as independent tests; included from `runtests.jl`.
+- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (9 benchmarks). Covers stiffness construction (7 element types), assembly (500-element chain), and solve (random SPD system). Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
 
-To run:
+To run tests:
 ```julia
 julia --project=. -e 'using Pkg; Pkg.test()'
 # Or manually:
 # julia --project=. test/runtests.jl
 ```
 
-No CI is set up yet. The output of `runtests.jl` verifies all behavior matches expectations.
+**CI**: GitHub Actions (`.github/workflows/ci.yml`) runs `runtests.jl` on push/PR to `main` against Julia 1 and 1.10. A badge is displayed in `README.md`. Benchmarks are not included in CI — they run standalone due to noise and slowness in automated environments.
 
 ## Extension Points
 
@@ -228,4 +229,4 @@ See `ToDo.md` for full list. Notable items:
 - Docstring typos (lines 105-107, ~673 in `src/LibFEM.jl`)
 - Double space in an export statement (line 319)
 - No boundary condition or solver functions yet (users must solve `K·U = F` themselves)
-- No `Project.toml` `[extras]`/`[targets]` section for `Test` dependency
+- `Project.toml` has `[extras]`/`[targets]` for `BenchmarkTools` (test-only), but `Test` stdlib is not declared there

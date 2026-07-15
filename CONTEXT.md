@@ -39,7 +39,7 @@ Every element type follows a 3-function pattern:
 2. `*_assemble(K, k, i, j)` — assembles element into global stiffness matrix
 3. One of: `*_elementforce(...)`, `*_elementstress(...)`, `*_elementstrain(...)` — computes forces/stresses/strains
 
-Additional helper functions may exist: `*_elementlength(...)`, `*_elementaxialdiagram(...)`, `*_elementshearydiagram(...)`, `*_elementshearzdiagram(...)`, `*_elementmomentyidiagram(...)`, `*_elementmomentzdiagram(...)`, `*_elementtorsiondiagram(...)`, etc.
+Additional helper functions may exist: `*_elementlength(...)`, `*_elementaxialdiagram(...)`, `*_elementshearydiagram(...)`, `*_elementshearzdiagram(...)`, `*_elementmomentydiagram(...)`, `*_elementmomentzdiagram(...)`, `*_elementtorsiondiagram(...)`, etc.
 
 ## MATLAB File Reference
 

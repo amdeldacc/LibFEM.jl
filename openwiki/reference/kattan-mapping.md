@@ -1,0 +1,156 @@
+# Kattan MATLAB Mapping
+
+This page documents the relationship between the MATLAB reference implementation in `Doc/Kattan/M-Files/` and the LibFEM.jl Julia API.
+
+## Book Reference
+
+The MATLAB files are companion code for:
+
+> **"MATLAB Guide to Finite Elements — An Interactive Approach"**  
+> Peter I. Kattan, Springer, 2007
+
+The book PDF resides at `Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.pdf` with Markdown and plain-text transcriptions also available.
+
+## MATLAB → Julia Naming Convention
+
+```
+MATLAB:  {Domain}{Operation}.m    (PascalCase, no underscore)
+Julia:   d{N}_{domain}_{operation} (snake_case, dimension prefix)
+```
+
+Where `{N}` encodes dimensionality:
+- `1` — 1D linear elements (scalar DOF)
+- `2` — 2D plane elements (2 DOF for spring/truss, 3 for beam)
+- `3` — 3D space elements (3 DOF)
+
+## Implemented Element Mapping
+
+These are the MATLAB files whose algorithms are implemented (or planned) in `src/LibFEM.jl`:
+
+### Spring Element
+
+| MATLAB File | Julia Function | Status |
+|------------|---------------|--------|
+| `SpringElementStiffness.m` | `d1_spring_elementstiffness` | Implemented |
+| `SpringAssemble.m` | `d1_spring_assemble` | Implemented |
+| `SpringElementForces.m` | `d1_spring_elementforce` | Implemented |
+
+2D and 3D spring implementations (`d2_spring_*`, `d3_spring_*`) are LibFEM extensions — Kattan only provides the 1D spring directly, though the 2D/3D formulations follow the same principles.
+
+### Truss / Bar Elements
+
+| MATLAB File | Julia Function | Status |
+|------------|---------------|--------|
+| `LinearBarElementStiffness.m` | `d1_truss_elementstiffness` | Implemented |
+| `LinearBarAssemble.m` | `d1_truss_assemble` | Implemented |
+| `LinearBarElementForces.m` | `d1_truss_elementforce` | Implemented |
+| `LinearBarElementStresses.m` | `d1_truss_elementstress` | Implemented |
+| `PlaneTrussElementStiffness.m` | `d2_truss_elementstiffness` | Implemented |
+| `PlaneTrussAssemble.m` | `d2_truss_assemble` | Implemented |
+| `PlaneTrussElementForce.m` | `d2_truss_elementforce` | Implemented |
+| `PlaneTrussElementStress.m` | `d2_truss_elementstress` | Implemented |
+| `PlaneTrussElementLength.m` | `d2_truss_elementlength` | Implemented |
+| `PlaneTrussInclinedSupport.m` | — | Not implemented |
+| `SpaceTrussElementStiffness.m` | `d3_truss_elementstiffness` | Implemented |
+| `SpaceTrussAssemble.m` | `d3_truss_assemble` | Implemented |
+| `SpaceTrussElementForce.m` | `d3_truss_elementforce` | Implemented |
+| `SpaceTrussElementStress.m` | `d3_truss_elementstress` | Implemented |
+| `SpaceTrussElementLength.m` | `d3_truss_elementlength` | Implemented |
+| `SpaceTrussInclinedSupport.m` | — | Not implemented |
+
+LibFEM adds `d1_truss_elementstrain`, `d2_truss_elementstrain`, and `d3_truss_elementstrain` — strain calculations not present as standalone MATLAB files.
+
+### Beam / Plane Frame Elements
+
+| MATLAB File | Julia Function | Status |
+|------------|---------------|--------|
+| `BeamElementStiffness.m` | `d2_beam_elementstiffness` | Implemented |
+| `BeamAssemble.m` | `d2_beam_assemble` | Implemented |
+| `BeamElementForces.m` | `d2_beam_elementforce` | Implemented |
+| `BeamElementMomentDiagram.m` | `d2_beam_elementmomentdiagram` | Implemented |
+| `BeamElementShearDiagram.m` | `d2_beam_elementsheardiagram` | Implemented |
+| `PlaneFrameElementStiffness.m` | (same as `d2_beam_elementstiffness`) | Implemented |
+| `PlaneFrameAssemble.m` | (same as `d2_beam_assemble`) | Implemented |
+| `PlaneFrameElementForces.m` | (same as `d2_beam_elementforce`) | Implemented |
+| `PlaneFrameElementLength.m` | `d2_beam_elementlength` | Implemented |
+| `PlaneFrameElementAxialDiagram.m` | `d2_beam_elementaxialdiagram` | Implemented |
+| `PlaneFrameElementMomentDiagram.m` | (same as `d2_beam_elementmomentdiagram`) | Implemented |
+| `PlaneFrameElementShearDiagram.m` | (same as `d2_beam_elementsheardiagram`) | Implemented |
+| `PlaneFrameInclinedSupport.m` | — | Not implemented |
+
+**Note**: Kattan separates `Beam*` (simple beam) and `PlaneFrame*` (plane frame with axial effects). LibFEM merges both into `d2_beam_*` — the `d2_beam_elementstiffness` formulation already includes axial stiffness `E*A/L`, making it equivalent to Kattan's `PlaneFrameElementStiffness.m`.
+
+### Space Frame Elements
+
+| MATLAB File | Julia Function | Status |
+|------------|---------------|--------|
+| `SpaceFrameElementStiffness.m` | — | Not implemented |
+| `SpaceFrameAssemble.m` | — | Not implemented |
+| `SpaceFrameElementForces.m` | — | Not implemented |
+| `SpaceFrameElementLength.m` | — | Not implemented |
+| `SpaceFrameElementAxialDiagram.m` | — | Not implemented |
+| `SpaceFrameElementMomentYDiagram.m` | — | Not implemented |
+| `SpaceFrameElementMomentZDiagram.m` | — | Not implemented |
+| `SpaceFrameElementShearYDiagram.m` | — | Not implemented |
+| `SpaceFrameElementShearZDiagram.m` | — | Not implemented |
+| `SpaceFrameElementTorsionDiagram.m` | — | Not implemented |
+
+Space frame (3D beam) is the most complex structural element — it would carry 6 DOF per node (3 translations + 3 rotations) and require a 12×12 stiffness matrix.
+
+### Other MATLAB Files (Not Yet Implemented)
+
+Kattan covers additional element types beyond springs/trusses/beams. These MATLAB files exist in `Doc/Kattan/M-Files/` but are not yet implemented in LibFEM.jl:
+
+| Category | MATLAB Files |
+|----------|-------------|
+| **Linear Triangle (CST)** | `LinearTriangleAssemble.m`, `LinearTriangleElementStiffness.m`, `LinearTriangleElementStresses.m`, `LinearTriangleElementPStresses.m`, `LinearTriangleElementArea.m` |
+| **Bilinear Quad (Q4)** | `BilinearQuadAssemble.m`, `BilinearQuadElementStiffness.m`, `BilinearQuadElementStiffness2.m`, `BilinearQuadElementStresses.m`, `BilinearQuadElementPStresses.m`, `BilinearQuadElementArea.m` |
+| **Quadratic Bar** | `QuadraticBarAssemble.m`, `QuadraticBarElementStiffness.m`, `QuadraticBarElementForces.m`, `QuadraticBarElementStresses.m` |
+| **Quadratic Triangle (T6)** | `QuadTriangleAssemble.m`, `QuadTriangleElementStiffness.m`, `QuadTriangleElementStresses.m`, `QuadTriangleElementPStresses.m`, `QuadTriangleElementArea.m` |
+| **Quadratic Quad (Q8)** | `QuadraticQuadAssemble.m`, `QuadraticQuadElementStiffness.m`, `QuadraticQuadElementStresses.m`, `QuadraticQuadElementPStresses.m`, `QuadraticQuadElementArea.m` |
+| **Linear Brick (B8)** | `LinearBrickAssemble.m`, `LinearBrickElementStiffness.m`, `LinearBrickElementStresses.m`, `LinearBrickElementPStresses.m`, `LinearBrickElementVolume.m` |
+| **Tetrahedron (T4)** | `TetrahedronAssemble.m`, `TetrahedronElementStiffness.m`, `TetrahedronElementStresses.m`, `TetrahedronElementPStresses.m`, `TetrahedronElementVolume.m` |
+| **Grid** | `GridAssemble.m`, `GridElementStiffness.m`, `GridElementForces.m`, `GridElementLength.m` |
+| **1D Fluid Flow** | `FluidFlow1DAssemble.m`, `FluidFlow1DElementStiffness.m`, `FluidFlow1DElementVFR.m`, `FluidFlow1DElementVelocities.m` |
+
+These represent 2D/3D continuum elements (plane stress/strain, solid mechanics), grid structures, and fluid flow — natural extension areas for the library.
+
+## Verification: `test/comparison.jl`
+
+The file `test/comparison.jl` contains Julia transcriptions of selected MATLAB functions using the original PascalCase naming. This enables side-by-side verification that the Julia implementations produce identical results. Transcribed functions include:
+
+- `SpringElementStiffness`, `SpringElementForces`, `SpringAssemble`
+- `LinearBarElementStiffness`, `LinearBarElementForces`, `LinearBarElementStresses`, `LinearBarAssemble`
+- `PlaneTrussElementLength`, `PlaneTrussElementStiffness`, `PlaneTrussElementForce`, `PlaneTrussElementStress`, `PlaneTrussAssemble`
+- `PlaneFrameElementLength`, `PlaneFrameElementStiffness`, `PlaneFrameElementForces`, `PlaneFrameAssemble` (and diagram functions)
+
+Note: these transcriptions use MATLAB-style explicit index assignment (16 lines per 4×4 assemble) rather than the refactored `_assemble!` helper — they serve as algorithmic ground truth, not as reusable code.
+
+## Doc/ Directory Structure
+
+```
+Doc/
+├── Kattan/
+│   ├── Kattan_CD.doc               # Book companion CD contents
+│   ├── M-Files/                    # 80 MATLAB function files (read-only)
+│   │   ├── Spring*.m               # 3 files
+│   │   ├── LinearBar*.m            # 4 files
+│   │   ├── PlaneTruss*.m           # 6 files
+│   │   ├── SpaceTruss*.m           # 6 files
+│   │   ├── Beam*.m                 # 5 files
+│   │   ├── PlaneFrame*.m           # 8 files
+│   │   ├── SpaceFrame*.m           # 10 files
+│   │   ├── LinearTriangle*.m       # 5 files
+│   │   ├── BilinearQuad*.m         # 6 files
+│   │   ├── QuadraticBar*.m         # 4 files
+│   │   ├── QuadTriangle*.m         # 5 files
+│   │   ├── QuadraticQuad*.m        # 5 files
+│   │   ├── LinearBrick*.m          # 5 files
+│   │   ├── Tetrahedron*.m          # 5 files
+│   │   ├── Grid*.m                 # 4 files
+│   │   └── FluidFlow1D*.m          # 4 files
+│   └── Solutions Manual/           # .rtf and .doc files
+└── Peter_Kattan_*                  # Book PDF and transcriptions
+```
+
+**Important**: The `Doc/Kattan/M-Files/` directory is designated **read-only** (per `AGENTS.md`). These files are reference material — do not modify them.

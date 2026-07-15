@@ -84,18 +84,18 @@ LibFEM adds `d1_truss_elementstrain`, `d2_truss_elementstrain`, and `d3_truss_el
 
 | MATLAB File | Julia Function | Status |
 |------------|---------------|--------|
-| `SpaceFrameElementStiffness.m` | — | Not implemented |
-| `SpaceFrameAssemble.m` | — | Not implemented |
-| `SpaceFrameElementForces.m` | — | Not implemented |
-| `SpaceFrameElementLength.m` | — | Not implemented |
-| `SpaceFrameElementAxialDiagram.m` | — | Not implemented |
-| `SpaceFrameElementMomentYDiagram.m` | — | Not implemented |
-| `SpaceFrameElementMomentZDiagram.m` | — | Not implemented |
-| `SpaceFrameElementShearYDiagram.m` | — | Not implemented |
-| `SpaceFrameElementShearZDiagram.m` | — | Not implemented |
-| `SpaceFrameElementTorsionDiagram.m` | — | Not implemented |
+| `SpaceFrameElementStiffness.m` | `d3_beam_elementstiffness` | Implemented |
+| `SpaceFrameAssemble.m` | `d3_beam_assemble` | Implemented |
+| `SpaceFrameElementForces.m` | `d3_beam_elementforces` | Implemented |
+| `SpaceFrameElementLength.m` | `d3_beam_elementlength` | Implemented |
+| `SpaceFrameElementAxialDiagram.m` | `d3_beam_elementaxialdiagram` | Implemented |
+| `SpaceFrameElementMomentYDiagram.m` | `d3_beam_elementmomentyidiagram` | Implemented |
+| `SpaceFrameElementMomentZDiagram.m` | `d3_beam_elementmomentzdiagram` | Implemented |
+| `SpaceFrameElementShearYDiagram.m` | `d3_beam_elementshearydiagram` | Implemented |
+| `SpaceFrameElementShearZDiagram.m` | `d3_beam_elementshearzdiagram` | Implemented |
+| `SpaceFrameElementTorsionDiagram.m` | `d3_beam_elementtorsiondiagram` | Implemented |
 
-Space frame (3D beam) is the most complex structural element — it would carry 6 DOF per node (3 translations + 3 rotations) and require a 12×12 stiffness matrix.
+Space frame (3D beam) is the most complex structural element — it carries 6 DOF per node (3 translations + 3 rotations) with a 12×12 stiffness matrix and a rotation matrix `Λ` built from node coordinates (no angle parameters). The Julia implementation in `d3_beam_*` uses a private `_d3_beam_kprime` helper for the local stiffness matrix and a rotation matrix `R` that handles the vertical-element degenerate case automatically via `Λ` (3×3 direction cosines).
 
 ### Other MATLAB Files (Not Yet Implemented)
 

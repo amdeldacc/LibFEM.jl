@@ -22,7 +22,7 @@ using Pkg; Pkg.activate("."); using LibFEM
 |--------|-----------|-----------|-----------|
 | **Spring** | `d1_spring_*` — scalar stiffness `k` | `d2_spring_*` — angle `theta` | `d3_spring_*` — angles `thetax, thetay, thetaz` |
 | **Truss** | `d1_truss_*` — `E, A, L` | `d2_truss_*` — `E, A, L, theta` | `d3_truss_*` — `E, A, L, thetax, thetay, thetaz` |
-| **Beam** | (not implemented) | `d2_beam_*` — `E, A, I, L, theta` | (not implemented) |
+| **Beam** | (not implemented) | `d2_beam_*` — `E, A, I, L, theta` (3 DOF/node) | `d3_beam_*` — `E, A, Iy, Iz, G, J, L` **+ node coords** (6 DOF/node) |
 
 ## Core Function Pattern
 
@@ -32,7 +32,43 @@ Every element type follows the same 3-function pattern:
 2. **`<prefix>_assemble(K, k, i, j)`** — assemble element matrix into global stiffness matrix
 3. **One of**: `<prefix>_elementforce(...)`, `<prefix>_elementstress(...)`, `<prefix>_elementstrain(...)` — compute results from displacements
 
-Additional helpers: `_elementlength(...)`, beam diagram functions (`_elementaxialdiagram`, `_elementmomentdiagram`, `_elementsheardiagram`).
+Additional helpers: `_elementlength(...)`, beam diagram functions (2D: `_elementaxialdiagram`, `_elementmomentdiagram`, `_elementsheardiagram`; 3D: `_elementaxialdiagram`, `_elementshearydiagram`, `_elementshearzdiagram`, `_elementmomentyidiagram`, `_elementmomentzdiagram`, `_elementtorsiondiagram`).
+
+### Example: 3D Beam (Space Frame) Workflow
+
+```julia
+using LibFEM
+
+# Material and section properties
+E = 210e9          # Young's modulus (Pa)
+A = 0.01           # cross-sectional area (m²)
+Iy = 2e-4          # second moment about y-axis (m⁴)
+Iz = 1e-4          # second moment about z-axis (m⁴)
+G = 80e9           # shear modulus (Pa)
+J = 3e-4           # torsional constant (m⁴)
+
+# Node coordinates (x, y, z)
+x1, y1, z1 = 0.0, 0.0, 0.0
+x2, y2, z2 = 4.0, 0.0, 0.0
+
+# Element length (computed from node coordinates)
+L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)  # → 4.0
+
+# Element stiffness (12×12 matrix)
+k = d3_beam_elementstiffness(E, A, Iy, Iz, G, J, L, x1, y1, z1, x2, y2, z2)
+
+# Assemble into global matrix (global K sized for 2 nodes × 6 DOF = 12)
+K = zeros(12, 12)
+K = d3_beam_assemble(K, k, 1, 2)
+
+# After solving K·U = F for displacements u (12×1)...
+f = d3_beam_elementforces(E, A, Iy, Iz, G, J, L, x1, y1, z1, x2, y2, z2, u)
+
+# Visualize internal force diagrams (displays in REPL; use display() in scripts)
+d3_beam_elementaxialdiagram(f, L)
+d3_beam_elementshearydiagram(f, L)
+d3_beam_elementtorsiondiagram(f, L)
+```
 
 ### Example: 2D Truss Workflow
 
@@ -61,16 +97,16 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 ## Conventions
 
 - **Angle units**: all angle parameters are in **degrees**; converted to radians internally via `deg2rad`.
-- **Dimension prefixes**: `d1_` (1 DOF/node), `d2_` (2 DOF/node for spring/truss; 3 for beam), `d3_` (3 DOF/node).
+- **Dimension prefixes**: `d1_` (1 DOF/node), `d2_` (2 DOF/node for spring/truss; 3 for beam), `d3_` (3 DOF/node for spring/truss; **6** for `d3_beam`).
 - **Single source file**: all code lives in `src/LibFEM.jl`. No multi-file module structure.
-- **Assembly refactored**: all 7 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, dofs)` helper. See `docs/assembly-helper-refactor.md`.
+- **Assembly refactored**: all 8 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, dofs)` helper. See `docs/assembly-helper-refactor.md`.
 
 ## Repository Map
 
 | Path | Purpose |
 |------|---------|
 | `src/LibFEM.jl` | All source code (single module) |
-| `test/runtests.jl` | Test suite (~400 lines, covers all 7 element types) |
+| `test/runtests.jl` | Test suite (~400 lines, covers all 8 element types) |
 | `test/comparison.jl` | MATLAB reference transcriptions for verification |
 | `Doc/Kattan/M-Files/` | Read-only MATLAB reference (80 `.m` files from Kattan) |
 | `Doc/Kattan/Solutions Manual/` | Problem solutions (`.rtf` format) |

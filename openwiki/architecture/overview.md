@@ -180,7 +180,7 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d3_beam_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
 - `d3_beam_elementshearydiagram(f, L)` — Plots.jl shear force (Y) diagram
 - `d3_beam_elementshearzdiagram(f, L)` — Plots.jl shear force (Z) diagram
-- `d3_beam_elementmomentyidiagram(f, L)` — Plots.jl bending moment (Y) diagram
+- `d3_beam_elementmomentydiagram(f, L)` — Plots.jl bending moment (Y) diagram
 - `d3_beam_elementmomentzdiagram(f, L)` — Plots.jl bending moment (Z) diagram
 - `d3_beam_elementtorsiondiagram(f, L)` — Plots.jl torsion diagram
 

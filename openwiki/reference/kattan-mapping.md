@@ -89,7 +89,7 @@ LibFEM adds `d1_truss_elementstrain`, `d2_truss_elementstrain`, and `d3_truss_el
 | `SpaceFrameElementForces.m` | `d3_beam_elementforces` | Implemented |
 | `SpaceFrameElementLength.m` | `d3_beam_elementlength` | Implemented |
 | `SpaceFrameElementAxialDiagram.m` | `d3_beam_elementaxialdiagram` | Implemented |
-| `SpaceFrameElementMomentYDiagram.m` | `d3_beam_elementmomentyidiagram` | Implemented |
+| `SpaceFrameElementMomentYDiagram.m` | `d3_beam_elementmomentydiagram` | Implemented |
 | `SpaceFrameElementMomentZDiagram.m` | `d3_beam_elementmomentzdiagram` | Implemented |
 | `SpaceFrameElementShearYDiagram.m` | `d3_beam_elementshearydiagram` | Implemented |
 | `SpaceFrameElementShearZDiagram.m` | `d3_beam_elementshearzdiagram` | Implemented |

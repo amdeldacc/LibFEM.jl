@@ -32,7 +32,7 @@ Every element type follows the same 3-function pattern:
 2. **`<prefix>_assemble(K, k, i, j)`** — assemble element matrix into global stiffness matrix
 3. **One of**: `<prefix>_elementforce(...)`, `<prefix>_elementstress(...)`, `<prefix>_elementstrain(...)` — compute results from displacements
 
-Additional helpers: `_elementlength(...)`, beam diagram functions (2D: `_elementaxialdiagram`, `_elementmomentdiagram`, `_elementsheardiagram`; 3D: `_elementaxialdiagram`, `_elementshearydiagram`, `_elementshearzdiagram`, `_elementmomentyidiagram`, `_elementmomentzdiagram`, `_elementtorsiondiagram`).
+Additional helpers: `_elementlength(...)`, beam diagram functions (2D: `_elementaxialdiagram`, `_elementmomentdiagram`, `_elementsheardiagram`; 3D: `_elementaxialdiagram`, `_elementshearydiagram`, `_elementshearzdiagram`, `_elementmomentydiagram`, `_elementmomentzdiagram`, `_elementtorsiondiagram`).
 
 ### Example: 3D Beam (Space Frame) Workflow
 

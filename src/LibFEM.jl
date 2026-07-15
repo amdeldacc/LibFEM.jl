@@ -852,13 +852,13 @@ end
 export d3_beam_elementshearzdiagram
 
 """
-    function declaration: d3_beam_elementmomentyidiagram(f, L)
+    function declaration: d3_beam_elementmomentydiagram(f, L)
 
 This function plots and returns the bending moment
 y diagram for the space frame (3D beam) element
 with nodal force vector f & length L.
 """
-function d3_beam_elementmomentyidiagram(f::AbstractVector, L::Real)
+function d3_beam_elementmomentydiagram(f::AbstractVector, L::Real)
     x = [0, L]
     z = [f[5], -f[11]]
     p = plot(x, z, title="Bending Moment Y Diagram")
@@ -866,7 +866,7 @@ function d3_beam_elementmomentyidiagram(f::AbstractVector, L::Real)
     plot!(p, x, y1, color=:black)
     return p
 end
-export d3_beam_elementmomentyidiagram
+export d3_beam_elementmomentydiagram
 
 """
     function declaration: d3_beam_elementmomentzdiagram(f, L)

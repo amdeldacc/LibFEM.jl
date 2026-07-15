@@ -30,7 +30,7 @@ STIFF["d3_truss"] = @benchmarkable d3_truss_elementstiffness(200e9, 0.01, 2.0, 3
 # d2_beam: E = 200e9, A = 0.01, I = 2e-4, L = 2.0, theta = 0 (horizontal)
 STIFF["d2_beam"] = @benchmarkable d2_beam_elementstiffness(200e9, 0.01, 2e-4, 2.0, 0)
 
-# d3_beam: E = 3e10, A = 1.15e8, Iy = 0.01, Iz = 1e-4, J = 2e-4, G = 1e-5, L = 4
+# d3_beam: E = 3e10, G = 1.15e8, A = 0.01, Iy = 1e-4, Iz = 2e-4, J = 1e-5, (0,0,0)→(4,0,0)
 STIFF["d3_beam"] = @benchmarkable d3_beam_elementstiffness(3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5, 0, 0, 0, 4, 0, 0)
 
 # =====================

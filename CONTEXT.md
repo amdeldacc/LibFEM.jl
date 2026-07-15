@@ -20,7 +20,7 @@ This file defines the domain model: element types, dimensionality, and the mappi
 - **MATLAB prefix**: `Beam*` (2D beam), `PlaneFrame*` (plane frame — extended beam), `SpaceFrame*` (3D beam)
 - **LibFEM prefix**: `d2_beam_*` (2D), `d3_beam_*` (3D)
 - **Functions (2D)**: `*_elementstiffness(E, A, I, L, theta)`, `*_assemble(K, k, i, j)`, `*_elementforce(E, A, I, L, theta, u)`, `*_elementlength(x1, y1, x2, y2)`, `*_elementaxialdiagram(f, L)`, `*_elementmomentdiagram(f, L)`, `*_elementsheardiagram(f, L)`
-- **Functions (3D)**: `*_elementstiffness(E, A, Iy, Iz, G, J, L, x1, y1, z1, x2, y2, z2)`, `*_assemble(K, k, i, j)`, `*_elementforce(E, A, Iy, Iz, G, J, L, x1, y1, z1, x2, y2, z2, u)`, `*_elementlength(x1, y1, z1, x2, y2, z2)`, plus 6 diagram functions (axial, shearY, shearZ, momentY, momentZ, torsion)
+- **Functions (3D)**: `*_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)`, `*_assemble(K, k, i, j)`, `*_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)`, `*_elementlength(x1, y1, z1, x2, y2, z2)`, plus 6 diagram functions (axial, shearY, shearZ, momentY, momentZ, torsion)
 - **DOFs**: 2D beam uses 3 DOF/node (6×6 stiffness). 3D beam uses **6 DOF/node** (12×12 stiffness — 3 translations + 3 rotations per node).
 - **Key mapping**: MATLAB `BeamElementStiffness.m` → `d2_beam_elementstiffness`. MATLAB `SpaceFrameElementStiffness.m` → `d3_beam_elementstiffness`. MATLAB `PlaneFrameElementForces.m` → similar pattern.
 

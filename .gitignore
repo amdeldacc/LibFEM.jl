@@ -14,5 +14,6 @@ Manifest.toml
 
 # Generated files
 LibFEM_DS_2020.ipynb
+ToDo.md
 ToDo/
 graphify-out/

@@ -1,21 +1,41 @@
 module LibFEM
 using Plots
 
+# ═══════════════════════════════════════════════════════════
+# Utility
+# ═══════════════════════════════════════════════════════════
+
 """
-    deg2rad(theta::Real)
+    deg2rad(theta)
 
 Convert degrees to radians.
+
+# Arguments
+- `theta::Real`: Angle in degrees.
+
+# Returns
+Angle in radians.
 """
 deg2rad(theta::Real) = theta * pi / 180
+
+export deg2rad
 
 """
     _assemble!(K, k, i, j, dofs)
 
-Assemble element stiffness matrix k of a finite element
-into the global stiffness matrix K. The element has nodes
-i and j, with `dofs` degrees of freedom per node
+Assemble element stiffness matrix k into the global stiffness matrix K.
+The element has nodes i and j, with `dofs` degrees of freedom per node
 (1: 1D spring/truss; 2: 2D spring/truss; 3: 2D beam / 3D spring/truss; 6: 3D beam / space frame).
-Returns the modified global stiffness matrix K.
+
+# Arguments
+- `K::AbstractMatrix`: Global stiffness matrix.
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `i::Integer`: First node number.
+- `j::Integer`: Second node number.
+- `dofs::Integer`: Degrees of freedom per node.
+
+# Returns
+The modified global stiffness matrix K.
 """
 function _assemble!(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer, dofs::Integer)
     ii = (dofs * (i - 1) + 1):(dofs * i)
@@ -27,124 +47,196 @@ function _assemble!(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer
     return K
 end
 
-"""
-    function declaration: d1_spring_assemble(K,k,i,j)
+# ═══════════════════════════════════════════════════════════
+# 1-D Spring Element (d1_spring)
+# ═══════════════════════════════════════════════════════════
 
-This function assembles the element stiffness
-matrix k of the spring with nodes i & j into the
-global stiffness matrix K.
-This function returns the global stiffness matrix K
-after the element stiffness matrix k is assembled.
+"""
+    d1_spring_assemble(K, k, i, j)
+
+Assemble the element stiffness matrix k of the spring with nodes i and j
+into the global stiffness matrix K.
+
+# Arguments
+- `K::AbstractMatrix`: Global stiffness matrix.
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `i::Integer`: First node number.
+- `j::Integer`: Second node number.
+
+# Returns
+The global stiffness matrix K after assembly.
 """
 function d1_spring_assemble(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer)
     return _assemble!(K, k, i, j, 1)
 end
-export d1_spring_assemble
-"""
-    function declaration: d1_spring_elementforce(k,u)
 
-This function returns the element nodal force
-vector given the element stiffness matrix k
+"""
+    d1_spring_elementforce(k, u)
+
+Return the element nodal force vector given the element stiffness matrix k
 and the element nodal displacement vector u.
+
+# Arguments
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element nodal force vector (k * u).
 """
 function d1_spring_elementforce(k::AbstractMatrix, u::AbstractVector)
     return k * u
 end
-export d1_spring_elementforce
-"""
-    function declaration: d1_spring_elementstiffness(k)
 
-This function returns the element stiffness
-matrix for a spring with stiffness k.
-The size of the element stiffness matrix
-is 2 x 2.
+"""
+    d1_spring_elementstiffness(k)
+
+Return the 2×2 element stiffness matrix for a spring with stiffness `k`.
+
+# Arguments
+- `k::Real`: Spring stiffness.
+
+# Returns
+A 2×2 matrix `[k -k; -k k]`.
 """
 function d1_spring_elementstiffness(k::Real)
     return [k -k; -k k]
 end
-export d1_spring_elementstiffness
-"""
-    function declaration: d1_truss_assemble(K,k,i,j)
 
-This function assembles the element stiffness
-matrix k of the linear bar with nodes i & j
+export d1_spring_assemble, d1_spring_elementforce, d1_spring_elementstiffness
+
+# ═══════════════════════════════════════════════════════════
+# 1-D Truss Element (d1_truss)
+# ═══════════════════════════════════════════════════════════
+
+"""
+    d1_truss_assemble(K, k, i, j)
+
+Assemble the element stiffness matrix k of the linear bar with nodes i and j
 into the global stiffness matrix K.
-This function returns the global stiffness
-matrix K after the element stiffness matrix
-k is assembled.
+
+# Arguments
+- `K::AbstractMatrix`: Global stiffness matrix.
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `i::Integer`: First node number.
+- `j::Integer`: Second node number.
+
+# Returns
+The global stiffness matrix K after assembly.
 """
 function d1_truss_assemble(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer)
     return _assemble!(K, k, i, j, 1)
 end
-export d1_truss_assemble
-"""
-    function declaration: d1_truss_elementforce(k,u)
 
-This function returns the element nodal
-force vector given the element stiffness
-matrix k & the element nodal displacement
-vector u.
+"""
+    d1_truss_elementforce(k, u)
+
+Return the element nodal force vector given the element stiffness matrix k
+and the element nodal displacement vector u.
+
+# Arguments
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element nodal force vector (k * u).
 """
 function d1_truss_elementforce(k::AbstractMatrix, u::AbstractVector)
     return k * u
 end
-export d1_truss_elementforce
-"""
-    function declaration: d1_truss_elementstiffness(E,A,L)
 
-This function returns the element
-stiffness matrix for a linear bar with
-modulus of elasticity E; cross-sectional
-area A; & length L. The size of the
-element stiffness matrix is 2 x 2.
+"""
+    d1_truss_elementstiffness(E, A, L)
+
+Return the 2×2 element stiffness matrix for a linear bar with modulus of
+elasticity E, cross-sectional area A, and length L.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `A::Real`: Cross-sectional area.
+- `L::Real`: Element length.
+
+# Returns
+A 2×2 matrix `[E*A/L -E*A/L; -E*A/L E*A/L]`.
 """
 function d1_truss_elementstiffness(E::Real, A::Real, L::Real)
+    L > 0 || throw(ArgumentError("Length L must be positive, got $L"))
+    A > 0 || throw(ArgumentError("Area A must be positive, got $A"))
     return [E * A / L -E * A / L; -E * A / L E * A / L]
 end
-export d1_truss_elementstiffness
-"""
-    function declaration: d1_truss_elementstress(k,u,A)
 
-This function returns the element nodal
-stress vector given the element stiffness
-matrix k; the element nodal displacement
-vector u; & the cross-sectional area A.
+"""
+    d1_truss_elementstress(k, u, A)
+
+Return the element nodal stress vector given the element stiffness matrix k,
+the element nodal displacement vector u, and the cross-sectional area A.
+
+# Arguments
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `u::AbstractVector`: Element nodal displacement vector.
+- `A::Real`: Cross-sectional area.
+
+# Returns
+The element nodal stress vector (k * u / A).
 """
 function d1_truss_elementstress(k::AbstractMatrix, u::AbstractVector, A::Real)
     return k * u / A
 end
-export d1_truss_elementstress
-"""
-    function declaration: d1_truss_elementstrain(L,u)
 
-This function returns the element nodal
-strain vector given the element length L
+"""
+    d1_truss_elementstrain(L, u)
+
+Return the element nodal strain vector given the element length L
 and the element nodal displacement vector u.
+
+# Arguments
+- `L::Real`: Element length.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element nodal strain vector (u / L).
 """
 function d1_truss_elementstrain(L::Real, u::AbstractVector)
-    return 1/L * u 
+    L > 0 || throw(ArgumentError("Length L must be positive, got $L"))
+    return 1/L * u
 end
-export d1_truss_elementstrain
-"""
-    function declaration: d2_beam_assemble(K,k,i,j)
 
-This function assembles the element stiffness
-matrix k of the plane beam element with nodes
-i & j into the global stiffness matrix K.
-This function returns the global stiffness
-matrix K after the element stiffness matrix
-k is assembled.    
+export d1_truss_assemble, d1_truss_elementforce, d1_truss_elementstiffness, d1_truss_elementstrain, d1_truss_elementstress
+
+# ═══════════════════════════════════════════════════════════
+# 2-D Beam Element (d2_beam)
+# ═══════════════════════════════════════════════════════════
+
+"""
+    d2_beam_assemble(K, k, i, j)
+
+Assemble the element stiffness matrix k of the plane beam element with nodes i and j
+into the global stiffness matrix K.
+
+# Arguments
+- `K::AbstractMatrix`: Global stiffness matrix.
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `i::Integer`: First node number.
+- `j::Integer`: Second node number.
+
+# Returns
+The global stiffness matrix K after assembly.
 """
 function d2_beam_assemble(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer)
     return _assemble!(K, k, i, j, 3)
 end
-export d2_beam_assemble
-"""
-    function declaration: d2_beam_elementaxialdiagram(f, L)
 
-This function plots and returns the axial force
-diagram for the plane beam element
-with nodal force vector f & length L.
+"""
+    d2_beam_elementaxialdiagram(f, L)
+
+Plot and return the axial force diagram for the plane beam element
+with nodal force vector f and length L.
+
+# Arguments
+- `f::AbstractVector`: Nodal force vector.
+- `L::Real`: Element length.
+
+# Returns
+A plot object showing the axial force diagram.
 """
 function d2_beam_elementaxialdiagram(f::AbstractVector, L::Real)
     x = [0, L]
@@ -154,18 +246,25 @@ function d2_beam_elementaxialdiagram(f::AbstractVector, L::Real)
     plot!(p, x, y1, color=:black)
     return p
 end
-export d2_beam_elementaxialdiagram
-"""
-    function declaration: d2_beam_elementforce(E,A,I,L,theta,u)
 
-This function returns the element force
-vector given the modulus of elasticity E
-the cross-sectional area A; the moment of
-inertia I; the length L; the angle theta
-(in degrees), & the element nodal
-displacement vector u.
+"""
+    d2_beam_elementforce(E, A, I, L, theta, u)
+
+Return the element force vector for a plane beam element.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `A::Real`: Cross-sectional area.
+- `I::Real`: Moment of inertia.
+- `L::Real`: Element length.
+- `theta::Real`: Angle in degrees.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element force vector (6-element).
 """
 function d2_beam_elementforce(E::Real, A::Real, I::Real, L::Real, theta::Real, u::AbstractVector)
+    L > 0 || throw(ArgumentError("Length L must be positive, got $L"))
     x = deg2rad(theta)
     C = cos(x)
     S = sin(x)
@@ -192,25 +291,38 @@ function d2_beam_elementforce(E::Real, A::Real, I::Real, L::Real, theta::Real, u
     ]
     return kprime * T * u
 end
-export d2_beam_elementforce
-"""
-    function declaration: d2_beam_elementlength(x1,y1,x2,y2)
 
-This function returns the length of the
-plane beam element whose first node has
-coordinates [x1,y1] & second node has
-coordinates [x2,y2].
+"""
+    d2_beam_elementlength(x1, y1, x2, y2)
+
+Return the length of the plane beam element whose first node has
+coordinates (x1, y1) and second node has coordinates (x2, y2).
+
+# Arguments
+- `x1::Real`: x-coordinate of first node.
+- `y1::Real`: y-coordinate of first node.
+- `x2::Real`: x-coordinate of second node.
+- `y2::Real`: y-coordinate of second node.
+
+# Returns
+The element length.
 """
 function d2_beam_elementlength(x1::Real, y1::Real, x2::Real, y2::Real)
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
 end
-export d2_beam_elementlength
-"""
-    function declaration: d2_beam_elementmomentdiagram(f, L)
 
-This function plots and returns the bending
-moment diagram for the plane beam
-element with nodal force vector f & length L.
+"""
+    d2_beam_elementmomentdiagram(f, L)
+
+Plot and return the bending moment diagram for the plane beam element
+with nodal force vector f and length L.
+
+# Arguments
+- `f::AbstractVector`: Nodal force vector.
+- `L::Real`: Element length.
+
+# Returns
+A plot object showing the bending moment diagram.
 """
 function d2_beam_elementmomentdiagram(f::AbstractVector, L::Real)
     x = [0, L]
@@ -220,13 +332,19 @@ function d2_beam_elementmomentdiagram(f::AbstractVector, L::Real)
     plot!(p, x, y1, color=:black)
     return p
 end
-export d2_beam_elementmomentdiagram
-"""
-    function declaration: d2_beam_elementsheardiagram(f, L)
 
-This function plots and returns the shear force
-diagram for the plane beam element
-with nodal force vector f & length L.
+"""
+    d2_beam_elementsheardiagram(f, L)
+
+Plot and return the shear force diagram for the plane beam element
+with nodal force vector f and length L.
+
+# Arguments
+- `f::AbstractVector`: Nodal force vector.
+- `L::Real`: Element length.
+
+# Returns
+A plot object showing the shear force diagram.
 """
 function d2_beam_elementsheardiagram(f::AbstractVector, L::Real)
     x = [0, L]
@@ -236,19 +354,24 @@ function d2_beam_elementsheardiagram(f::AbstractVector, L::Real)
     plot!(p, x, y1, color=:black)
     return p
 end
-export d2_beam_elementsheardiagram
-"""
-    function declaration: d2_beam_elementstiffness(E,A,I,L,theta)
 
-This function returns the element
-stiffness matrix for a plane beam
-element with modulus of elasticity E;
-cross-sectional area A; moment of
-inertia I; length L; & angle
-    theta [in degrees].
-The size of the element stiffness matrix is 6 x 6.
+"""
+    d2_beam_elementstiffness(E, A, I, L, theta)
+
+Return the 6×6 element stiffness matrix for a plane beam element.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `A::Real`: Cross-sectional area.
+- `I::Real`: Moment of inertia.
+- `L::Real`: Element length.
+- `theta::Real`: Angle in degrees.
+
+# Returns
+A 6×6 element stiffness matrix.
 """
 function d2_beam_elementstiffness(E::Real, A::Real, I::Real, L::Real, theta::Real)
+    L > 0 || throw(ArgumentError("Length L must be positive, got $L"))
     x = deg2rad(theta)
     C = cos(x)
     S = sin(x)
@@ -266,28 +389,44 @@ function d2_beam_elementstiffness(E::Real, A::Real, I::Real, L::Real, theta::Rea
         -w4 w5 2 * I w4 -w5 4 * I
     ]
 end
-export d2_beam_elementstiffness
-"""
-    function declaration: d2_spring_assemble(K,k,i,j)
 
-This function assembles the element stiffness
-matrix k of the 2D spring element with nodes
-i & j into the global stiffness matrix K.
-This function returns the global stiffness
-matrix K after the element stiffness matrix
-k is assembled.
+export d2_beam_assemble, d2_beam_elementaxialdiagram, d2_beam_elementforce, d2_beam_elementlength, d2_beam_elementmomentdiagram, d2_beam_elementsheardiagram, d2_beam_elementstiffness
+
+# ═══════════════════════════════════════════════════════════
+# 2-D Spring Element (d2_spring)
+# ═══════════════════════════════════════════════════════════
+
+"""
+    d2_spring_assemble(K, k, i, j)
+
+Assemble the element stiffness matrix k of the 2D spring element with nodes i and j
+into the global stiffness matrix K.
+
+# Arguments
+- `K::AbstractMatrix`: Global stiffness matrix.
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `i::Integer`: First node number.
+- `j::Integer`: Second node number.
+
+# Returns
+The global stiffness matrix K after assembly.
 """
 function d2_spring_assemble(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer)
     return _assemble!(K, k, i, j, 2)
 end
-export d2_spring_assemble
-"""
-    function declaration: d2_spring_elementforce(k,theta,u)
 
-This function returns the element force
-given the stiffness k &
-the angle theta [in degrees], and the
-element nodal displacement vector u.
+"""
+    d2_spring_elementforce(k, theta, u)
+
+Return the element force for a 2D spring element.
+
+# Arguments
+- `k::Real`: Spring stiffness.
+- `theta::Real`: Angle in degrees.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element force (scalar).
 """
 function d2_spring_elementforce(k::Real, theta::Real, u::AbstractVector)
     x = deg2rad(theta)
@@ -295,16 +434,19 @@ function d2_spring_elementforce(k::Real, theta::Real, u::AbstractVector)
     S = sin(x)
     return k * [-C -S C S] * u
 end
-export d2_spring_elementforce
-"""
-    function declaration: d2_spring_elementstiffness(k,theta)
 
-This function returns the element
-stiffness matrix for a 2D spring
-with stiffness k &
-angle theta [in degrees].
-The size of the element stiffness
-matrix is 4 x 4.
+"""
+    d2_spring_elementstiffness(k, theta)
+
+Return the 4×4 element stiffness matrix for a 2D spring with stiffness k
+and angle theta (in degrees).
+
+# Arguments
+- `k::Real`: Spring stiffness.
+- `theta::Real`: Angle in degrees.
+
+# Returns
+A 4×4 element stiffness matrix.
 """
 function d2_spring_elementstiffness(k::Real, theta::Real)
     x = deg2rad(theta)
@@ -317,29 +459,46 @@ function d2_spring_elementstiffness(k::Real, theta::Real)
         -C * S -S * S C * S S * S
     ]
 end
-export d2_spring_elementstiffness
-"""
-    function declaration: d2_truss_assemble(K,k,i,j)
 
-This function assembles the element stiffness
-matrix k of the plane truss element with nodes
-i & j into the global stiffness matrix K.
-This function returns the global stiffness
-matrix K after the element stiffness matrix
-k is assembled.
+export d2_spring_assemble, d2_spring_elementforce, d2_spring_elementstiffness
+
+# ═══════════════════════════════════════════════════════════
+# 2-D Truss Element (d2_truss)
+# ═══════════════════════════════════════════════════════════
+
+"""
+    d2_truss_assemble(K, k, i, j)
+
+Assemble the element stiffness matrix k of the plane truss element with nodes i and j
+into the global stiffness matrix K.
+
+# Arguments
+- `K::AbstractMatrix`: Global stiffness matrix.
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `i::Integer`: First node number.
+- `j::Integer`: Second node number.
+
+# Returns
+The global stiffness matrix K after assembly.
 """
 function d2_truss_assemble(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer)
     return _assemble!(K, k, i, j, 2)
 end
-export d2_truss_assemble
-"""
-    function declaration: d2_truss_elementforce(E,A,L,theta,u)
 
-This function returns the element force
-given the modulus of elasticity E; the
-cross-sectional area A; the length L;
-the angle theta [in degrees], & the
-element nodal displacement vector u.
+"""
+    d2_truss_elementforce(E, A, L, theta, u)
+
+Return the element force for a plane truss element.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `A::Real`: Cross-sectional area.
+- `L::Real`: Element length.
+- `theta::Real`: Angle in degrees.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element force (scalar).
 """
 function d2_truss_elementforce(E::Real, A::Real, L::Real, theta::Real, u::AbstractVector)
     x = deg2rad(theta)
@@ -347,31 +506,41 @@ function d2_truss_elementforce(E::Real, A::Real, L::Real, theta::Real, u::Abstra
     S = sin(x)
     return E * A / L * [-C -S C S] * u
 end
-export d2_truss_elementforce
-"""
-    function declaration: d2_truss_elementlength(x1,y1,x2,y2)
 
-This function returns the length of the
-plane truss element whose first node has
-coordinates [x1,y1] & second node has
-coordinates [x2,y2].
+"""
+    d2_truss_elementlength(x1, y1, x2, y2)
+
+Return the length of the plane truss element with nodes (x1, y1) and (x2, y2).
+
+# Arguments
+- `x1::Real`: x-coordinate of first node.
+- `y1::Real`: y-coordinate of first node.
+- `x2::Real`: x-coordinate of second node.
+- `y2::Real`: y-coordinate of second node.
+
+# Returns
+The element length.
 """
 function d2_truss_elementlength(x1::Real, y1::Real, x2::Real, y2::Real)
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
 end
-export d2_truss_elementlength
-"""
-    function declaration: d2_truss_elementstiffness(E,A,L,theta)
 
-This function returns the element
-stiffness matrix for a plane truss
-element with modulus of elasticity E;
-cross-sectional area A; length L; &
-angle theta [in degrees].
-The size of the element stiffness
-matrix is 4 x 4.
+"""
+    d2_truss_elementstiffness(E, A, L, theta)
+
+Return the 4×4 element stiffness matrix for a plane truss element.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `A::Real`: Cross-sectional area.
+- `L::Real`: Element length.
+- `theta::Real`: Angle in degrees.
+
+# Returns
+A 4×4 element stiffness matrix.
 """
 function d2_truss_elementstiffness(E::Real, A::Real, L::Real, theta::Real)
+    L > 0 || throw(ArgumentError("Length L must be positive, got $L"))
     x = deg2rad(theta)
     C = cos(x)
     S = sin(x)
@@ -382,29 +551,41 @@ function d2_truss_elementstiffness(E::Real, A::Real, L::Real, theta::Real)
         -C * S -S * S C * S S * S
     ]
 end
-export d2_truss_elementstiffness
-"""
-    function declaration: d2_truss_elementstrain(L,theta,u)
 
-This function returns the element strain
-given the length L; the angle theta [in degrees]
-and the element nodal displacement vector u.
+"""
+    d2_truss_elementstrain(L, theta, u)
+
+Return the element strain for a plane truss element.
+
+# Arguments
+- `L::Real`: Element length.
+- `theta::Real`: Angle in degrees.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element strain (scalar).
 """
 function d2_truss_elementstrain(L::Real, theta::Real, u::AbstractVector)
+    L > 0 || throw(ArgumentError("Length L must be positive, got $L"))
     x = deg2rad(theta)
     C = cos(x)
     S = sin(x)
     return 1 / L * [-C -S C S] * u
 end
-export d2_truss_elementstrain
-"""
-    function declaration: d2_truss_elementstress(E,L,theta,u)
 
-This function returns the element stress
-given the modulus of elasticity E; the
-length L; the angle theta (in
-degrees); & the element nodal
-displacement vector u.
+"""
+    d2_truss_elementstress(E, L, theta, u)
+
+Return the element stress for a plane truss element.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `L::Real`: Element length.
+- `theta::Real`: Angle in degrees.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element stress (scalar).
 """
 function d2_truss_elementstress(E::Real, L::Real, theta::Real, u::AbstractVector)
     x = deg2rad(theta)
@@ -412,29 +593,46 @@ function d2_truss_elementstress(E::Real, L::Real, theta::Real, u::AbstractVector
     S = sin(x)
     return E / L * [-C -S C S] * u
 end
-export d2_truss_elementstress
-"""
-    function declaration: d3_spring_assemble(K,k,i,j)
 
-This function assembles the element stiffness
-matrix k of the 3D spring element with nodes
-i & j into the global stiffness matrix K.
-This function returns the global stiffness
-matrix K after the element stiffness matrix
-k is assembled.
+export d2_truss_assemble, d2_truss_elementforce, d2_truss_elementlength, d2_truss_elementstiffness, d2_truss_elementstrain, d2_truss_elementstress
+
+# ═══════════════════════════════════════════════════════════
+# 3-D Spring Element (d3_spring)
+# ═══════════════════════════════════════════════════════════
+
+"""
+    d3_spring_assemble(K, k, i, j)
+
+Assemble the element stiffness matrix k of the 3D spring element with nodes i and j
+into the global stiffness matrix K.
+
+# Arguments
+- `K::AbstractMatrix`: Global stiffness matrix.
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `i::Integer`: First node number.
+- `j::Integer`: Second node number.
+
+# Returns
+The global stiffness matrix K after assembly.
 """
 function d3_spring_assemble(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer)
     return _assemble!(K, k, i, j, 3)
 end
-export d3_spring_assemble
-"""
-    function declaration: d3_spring_elementforce(k,thetax,thetay,thetaz,u)
 
-This function returns the element force
-given the stiffness k;
-the angles thetax; thetay; thetaz
-(in degrees), & the element nodal
-displacement vector u.
+"""
+    d3_spring_elementforce(k, thetax, thetay, thetaz, u)
+
+Return the element force for a 3D spring element.
+
+# Arguments
+- `k::Real`: Spring stiffness.
+- `thetax::Real`: Angle about x-axis in degrees.
+- `thetay::Real`: Angle about y-axis in degrees.
+- `thetaz::Real`: Angle about z-axis in degrees.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element force (scalar).
 """
 function d3_spring_elementforce(k::Real, thetax::Real, thetay::Real, thetaz::Real, u::AbstractVector)
     x = deg2rad(thetax)
@@ -445,16 +643,20 @@ function d3_spring_elementforce(k::Real, thetax::Real, thetay::Real, thetaz::Rea
     Cz = cos(v)
     return k * [-Cx -Cy -Cz Cx Cy Cz] * u
 end
-export d3_spring_elementforce
-"""
-    function declaration: d3_spring_elementstiffness(k,thetax,thetay,thetaz)
 
-This function returns the element
-stiffness matrix for a 3D spring
-element with stiffness k;
-angles thetax; thetay; thetaz
-(in degrees). The size of the element
-stiffness matrix is 6 x 6.
+"""
+    d3_spring_elementstiffness(k, thetax, thetay, thetaz)
+
+Return the 6×6 element stiffness matrix for a 3D spring element.
+
+# Arguments
+- `k::Real`: Spring stiffness.
+- `thetax::Real`: Angle about x-axis in degrees.
+- `thetay::Real`: Angle about y-axis in degrees.
+- `thetaz::Real`: Angle about z-axis in degrees.
+
+# Returns
+A 6×6 element stiffness matrix.
 """
 function d3_spring_elementstiffness(k::Real, thetax::Real, thetay::Real, thetaz::Real)
     x = deg2rad(thetax)
@@ -470,30 +672,48 @@ function d3_spring_elementstiffness(k::Real, thetax::Real, thetay::Real, thetaz:
     ]
     return k * [w -w; -w w]
 end
-export d3_spring_elementstiffness
-"""
-    function declaration: d3_truss_assemble(K,k,i,j)
 
-This function assembles the element stiffness
-matrix k of the space truss element with nodes
-i & j into the global stiffness matrix K.
-This function returns the global stiffness
-matrix K after the element stiffness matrix
-k is assembled.
+export d3_spring_assemble, d3_spring_elementforce, d3_spring_elementstiffness
+
+# ═══════════════════════════════════════════════════════════
+# 3-D Truss Element (d3_truss)
+# ═══════════════════════════════════════════════════════════
+
+"""
+    d3_truss_assemble(K, k, i, j)
+
+Assemble the element stiffness matrix k of the space truss element with nodes i and j
+into the global stiffness matrix K.
+
+# Arguments
+- `K::AbstractMatrix`: Global stiffness matrix.
+- `k::AbstractMatrix`: Element stiffness matrix.
+- `i::Integer`: First node number.
+- `j::Integer`: Second node number.
+
+# Returns
+The global stiffness matrix K after assembly.
 """
 function d3_truss_assemble(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer)
     return _assemble!(K, k, i, j, 3)
 end
-export d3_truss_assemble
-"""
-    function declaration: d3_truss_elementforce(E,A,L,thetax,thetay,thetaz,u)
 
-This function returns the element force
-given the modulus of elasticity E; the
-cross-sectional area A; the length L;
-the angles thetax; thetay; thetaz
-(in degrees), & the element nodal
-displacement vector u.
+"""
+    d3_truss_elementforce(E, A, L, thetax, thetay, thetaz, u)
+
+Return the element force for a space truss element.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `A::Real`: Cross-sectional area.
+- `L::Real`: Element length.
+- `thetax::Real`: Angle about x-axis in degrees.
+- `thetay::Real`: Angle about y-axis in degrees.
+- `thetaz::Real`: Angle about z-axis in degrees.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element force (scalar).
 """
 function d3_truss_elementforce(E::Real, A::Real, L::Real, thetax::Real, thetay::Real, thetaz::Real, u::AbstractVector)
     x = deg2rad(thetax)
@@ -504,33 +724,47 @@ function d3_truss_elementforce(E::Real, A::Real, L::Real, thetax::Real, thetay::
     Cz = cos(v)
     return E * A / L * [-Cx -Cy -Cz Cx Cy Cz] * u
 end
-export d3_truss_elementforce
-"""
-    function declaration: d3_truss_elementlength(x1,y1,z1,x2,y2,z2)
 
-This function returns the length of the
-space truss element whose first node has
-coordinates [x1,y1,z1] & second node has
-coordinates [x2,y2,z2].
+"""
+    d3_truss_elementlength(x1, y1, z1, x2, y2, z2)
+
+Return the length of the space truss element with nodes (x1, y1, z1) and (x2, y2, z2).
+
+# Arguments
+- `x1::Real`: x-coordinate of first node.
+- `y1::Real`: y-coordinate of first node.
+- `z1::Real`: z-coordinate of first node.
+- `x2::Real`: x-coordinate of second node.
+- `y2::Real`: y-coordinate of second node.
+- `z2::Real`: z-coordinate of second node.
+
+# Returns
+The element length.
 """
 function d3_truss_elementlength(x1::Real, y1::Real, z1::Real, x2::Real, y2::Real, z2::Real)
     return sqrt(
         (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1),
     )
 end
-export d3_truss_elementlength
-"""
-    function declaration: d3_truss_elementstiffness(E,A,L,thetax,thetay,thetaz)
 
-This function returns the element
-stiffness matrix for a space truss
-element with modulus of elasticity E;
-cross-sectional area A; length L; &
-angles thetax; thetay; thetaz
-(in degrees). The size of the element
-stiffness matrix is 6 x 6.
+"""
+    d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)
+
+Return the 6×6 element stiffness matrix for a space truss element.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `A::Real`: Cross-sectional area.
+- `L::Real`: Element length.
+- `thetax::Real`: Angle about x-axis in degrees.
+- `thetay::Real`: Angle about y-axis in degrees.
+- `thetaz::Real`: Angle about z-axis in degrees.
+
+# Returns
+A 6×6 element stiffness matrix.
 """
 function d3_truss_elementstiffness(E::Real, A::Real, L::Real, thetax::Real, thetay::Real, thetaz::Real)
+    L > 0 || throw(ArgumentError("Length L must be positive, got $L"))
     x = deg2rad(thetax)
     u = deg2rad(thetay)
     v = deg2rad(thetaz)
@@ -544,16 +778,24 @@ function d3_truss_elementstiffness(E::Real, A::Real, L::Real, thetax::Real, thet
     ]
     return E * A / L * [w -w; -w w]
 end
-export d3_truss_elementstiffness
-"""
-    function declaration: d3_truss_elementstrain(L,thetax,thetay,thetaz,u)
 
-This function returns the element strain
-given the length L; the angles thetax; thetay;
-thetaz [in degrees], & the element
-nodal displacement vector u.
+"""
+    d3_truss_elementstrain(L, thetax, thetay, thetaz, u)
+
+Return the element strain for a space truss element.
+
+# Arguments
+- `L::Real`: Element length.
+- `thetax::Real`: Angle about x-axis in degrees.
+- `thetay::Real`: Angle about y-axis in degrees.
+- `thetaz::Real`: Angle about z-axis in degrees.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element strain (scalar).
 """
 function d3_truss_elementstrain(L::Real, thetax::Real, thetay::Real, thetaz::Real, u::AbstractVector)
+    L > 0 || throw(ArgumentError("Length L must be positive, got $L"))
     x = deg2rad(thetax)
     w = deg2rad(thetay)
     v = deg2rad(thetaz)
@@ -562,15 +804,22 @@ function d3_truss_elementstrain(L::Real, thetax::Real, thetay::Real, thetaz::Rea
     Cz = cos(v)
     return 1 / L * [-Cx -Cy -Cz Cx Cy Cz] * u
 end
-export d3_truss_elementstrain
-"""
-    function declaration: d3_truss_elementstress(E,L,thetax,thetay,thetaz,u)
 
-This function returns the element stress
-given the modulus of elasticity E; the
-length L; the angles thetax; thetay;
-thetaz [in degrees], & the element
-nodal displacement vector u.
+"""
+    d3_truss_elementstress(E, L, thetax, thetay, thetaz, u)
+
+Return the element stress for a space truss element.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `L::Real`: Element length.
+- `thetax::Real`: Angle about x-axis in degrees.
+- `thetay::Real`: Angle about y-axis in degrees.
+- `thetaz::Real`: Angle about z-axis in degrees.
+- `u::AbstractVector`: Element nodal displacement vector.
+
+# Returns
+The element stress (scalar).
 """
 function d3_truss_elementstress(E::Real, L::Real, thetax::Real, thetay::Real, thetaz::Real, u::AbstractVector)
     x = deg2rad(thetax)
@@ -581,7 +830,13 @@ function d3_truss_elementstress(E::Real, L::Real, thetax::Real, thetay::Real, th
     Cz = cos(v)
     return E / L * [-Cx -Cy -Cz Cx Cy Cz] * u
 end
-export d3_truss_elementstress
+
+export d3_truss_assemble, d3_truss_elementforce, d3_truss_elementlength, d3_truss_elementstiffness, d3_truss_elementstrain, d3_truss_elementstress
+
+# ═══════════════════════════════════════════════════════════
+# 3-D Beam Element (d3_beam)
+# ═══════════════════════════════════════════════════════════
+
 """
     _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
 
@@ -659,7 +914,6 @@ function d3_beam_elementlength(
         (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1),
     )
 end
-export d3_beam_elementlength
 
 """
     function declaration: d3_beam_elementstiffness(E,G,A,Iy,Iz,J,x1,y1,z1,x2,y2,z2)
@@ -687,6 +941,7 @@ function d3_beam_elementstiffness(
     z2::Real,
 )
     L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)
+    L > 0 || throw(ArgumentError("Length L must be positive, got $L"))
     kprime = _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
 
     Cx = (x2 - x1) / L
@@ -719,7 +974,6 @@ function d3_beam_elementstiffness(
 
     return R' * kprime * R
 end
-export d3_beam_elementstiffness
 
 """
     function declaration: d3_beam_assemble(K,k,i,j)
@@ -739,7 +993,7 @@ function d3_beam_assemble(
 )
     return _assemble!(K, k, i, j, 6)
 end
-export d3_beam_assemble
+
 """
     function declaration: d3_beam_elementforces(E,G,A,Iy,Iz,J,x1,y1,z1,x2,y2,z2,u)
 
@@ -767,6 +1021,7 @@ function d3_beam_elementforces(
     u::AbstractVector,
 )
     L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)
+    L > 0 || throw(ArgumentError("Length L must be positive, got $L"))
     kprime = _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
 
     Cx = (x2 - x1) / L
@@ -798,7 +1053,6 @@ function d3_beam_elementforces(
 
     return kprime * R * u
 end
-export d3_beam_elementforces
 
 """
     function declaration: d3_beam_elementaxialdiagram(f, L)
@@ -815,7 +1069,6 @@ function d3_beam_elementaxialdiagram(f::AbstractVector, L::Real)
     plot!(p, x, y1, color=:black)
     return p
 end
-export d3_beam_elementaxialdiagram
 
 """
     function declaration: d3_beam_elementshearydiagram(f, L)
@@ -832,7 +1085,6 @@ function d3_beam_elementshearydiagram(f::AbstractVector, L::Real)
     plot!(p, x, y1, color=:black)
     return p
 end
-export d3_beam_elementshearydiagram
 
 """
     function declaration: d3_beam_elementshearzdiagram(f, L)
@@ -849,7 +1101,6 @@ function d3_beam_elementshearzdiagram(f::AbstractVector, L::Real)
     plot!(p, x, y1, color=:black)
     return p
 end
-export d3_beam_elementshearzdiagram
 
 """
     function declaration: d3_beam_elementmomentydiagram(f, L)
@@ -866,7 +1117,6 @@ function d3_beam_elementmomentydiagram(f::AbstractVector, L::Real)
     plot!(p, x, y1, color=:black)
     return p
 end
-export d3_beam_elementmomentydiagram
 
 """
     function declaration: d3_beam_elementmomentzdiagram(f, L)
@@ -883,7 +1133,6 @@ function d3_beam_elementmomentzdiagram(f::AbstractVector, L::Real)
     plot!(p, x, y1, color=:black)
     return p
 end
-export d3_beam_elementmomentzdiagram
 
 """
     function declaration: d3_beam_elementtorsiondiagram(f, L)
@@ -900,5 +1149,7 @@ function d3_beam_elementtorsiondiagram(f::AbstractVector, L::Real)
     plot!(p, x, y1, color=:black)
     return p
 end
-export d3_beam_elementtorsiondiagram
+
+export d3_beam_assemble, d3_beam_elementaxialdiagram, d3_beam_elementforces, d3_beam_elementlength, d3_beam_elementmomentydiagram, d3_beam_elementmomentzdiagram, d3_beam_elementshearydiagram, d3_beam_elementshearzdiagram, d3_beam_elementstiffness, d3_beam_elementtorsiondiagram
+
 end # module

@@ -117,7 +117,7 @@ length L, and angle theta (in degrees).
 Identical to `d2_truss_elementstiffness(E, A, L, theta)`.
 """
 function PlaneTrussElementStiffness(E, A, L, theta)
-    x = deg2rad(theta)
+    x = LibFEM.deg2rad(theta)
     C = cos(x)
     S = sin(x)
     return E * A / L * [
@@ -137,7 +137,7 @@ and element nodal displacement vector u.
 MATLAB returns a scalar; Julia's `d2_truss_elementforce` returns a 1-element Vector.
 """
 function PlaneTrussElementForce(E, A, L, theta, u)
-    x = deg2rad(theta)
+    x = LibFEM.deg2rad(theta)
     C = cos(x)
     S = sin(x)
     return first(E * A / L * [-C -S C S] * u)
@@ -152,7 +152,7 @@ displacement vector u.
 MATLAB returns a scalar; Julia's `d2_truss_elementstress` returns a 1-element Vector.
 """
 function PlaneTrussElementStress(E, L, theta, u)
-    x = deg2rad(theta)
+    x = LibFEM.deg2rad(theta)
     C = cos(x)
     S = sin(x)
     return first(E / L * [-C -S C S] * u)
@@ -210,7 +210,7 @@ moment of inertia I, length L, and angle theta (in degrees).
 Identical to `d2_beam_elementstiffness(E, A, I, L, theta)`.
 """
 function PlaneFrameElementStiffness(E, A, I, L, theta)
-    x = deg2rad(theta)
+    x = LibFEM.deg2rad(theta)
     C = cos(x)
     S = sin(x)
     w1 = A * C * C + 12 * I * S * S / (L * L)
@@ -237,7 +237,7 @@ length L, angle theta (in degrees), and element nodal displacement
 vector u. Identical to `d2_beam_elementforce(E, A, I, L, theta, u)`.
 """
 function PlaneFrameElementForces(E, A, I, L, theta, u)
-    x = deg2rad(theta)
+    x = LibFEM.deg2rad(theta)
     C = cos(x)
     S = sin(x)
     w1 = E * A / L

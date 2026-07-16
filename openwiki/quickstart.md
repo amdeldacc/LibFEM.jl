@@ -113,7 +113,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `Doc/Peter_Kattan_*` | Book PDF and text/Markdown transcriptions |
 | `docs/assembly-helper-refactor.md` | Refactor documentation for `_assemble!` helper |
 | `docs/benchmarking.md` | Benchmarking suite overview and baseline timings |
-| `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (9 benchmarks) |
+| `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (12 benchmarks) |
 | `CONTEXT.md` | Domain glossary: MATLAB→Julia mapping and naming conventions |
 | `AGENTS.md`, `CLAUDE.md` | Agent instructions with constraints and conventions |
 | `ToDo.md` | Known issues, missing features, and refactoring opportunities |

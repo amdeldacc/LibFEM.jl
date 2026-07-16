@@ -67,6 +67,39 @@ const f_vec = randn(n_solve)
 SOLVE["dense"] = @benchmarkable $K_spd \ $f_vec
 
 # =====================
+# d3_beam: Element forces
+# =====================
+const FORCES = SUITE["forces"] = BenchmarkGroup()
+const E_bm = 3e10
+const G_bm = 1.15e8
+const A_bm = 0.01
+const Iy_bm = 1e-4
+const Iz_bm = 2e-4
+const J_bm = 1e-5
+const u_bm = [0.001; zeros(11)]
+
+FORCES["d3_beam"] = @benchmarkable d3_beam_elementforces($E_bm, $G_bm, $A_bm, $Iy_bm, $Iz_bm, $J_bm, 0, 0, 0, 4, 0, 0, $u_bm)
+
+# =====================
+# Group 4: d3_beam Assembly into ~3000 DOF system
+# =====================
+const D3_ASSEMBLE = SUITE["d3_assembly"] = BenchmarkGroup()
+
+# 500 elements → 501 nodes × 6 DOF = 3006 DOF
+const n_d3_elements = 500
+const n_d3_nodes = n_d3_elements + 1
+const K_d3_global = zeros(6 * n_d3_nodes, 6 * n_d3_nodes)
+
+const k_d3_elements = [d3_beam_elementstiffness(E_bm, G_bm, A_bm, Iy_bm, Iz_bm, J_bm, 0, 0, 0, 4, 0, 0) for _ in 1:n_d3_elements]
+
+D3_ASSEMBLE["d3_beam"] = @benchmarkable begin
+    fill!($K_d3_global, 0.0)
+    for idx in 1:$n_d3_elements
+        d3_beam_assemble($K_d3_global, $k_d3_elements[idx], idx, idx + 1)
+    end
+end
+
+# =====================
 # Run benchmarks
 # =====================
 println("Tuning benchmarks...")

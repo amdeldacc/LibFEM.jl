@@ -400,6 +400,102 @@ using Test
         end
     end
 
+    # ─────────────────────────────────────────────────
+    # 3-D Beam / Space Frame (d3_beam)
+    # ─────────────────────────────────────────────────
+    @testset "d3_beam" begin
+        @testset "elementlength" begin
+            @test d3_beam_elementlength(0,0,0, 3,4,12) ≈ 13.0  # 5-12-13 triangle
+            @test d3_beam_elementlength(0,0,0, 0,0,0) == 0.0
+            @test d3_beam_elementlength(1,0,0, 5,0,0) == 4.0
+            @test d3_beam_elementlength(0,0,0, 1,1,1) ≈ sqrt(3)
+        end
+
+        @testset "elementstiffness" begin
+            E, G, A, Iy, Iz, J = 3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5
+            # Horizontal beam along X: (0,0,0)→(4,0,0)
+            Ke = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 4,0,0)
+            @test size(Ke) == (12, 12)
+            @test Ke == Ke'  # symmetric
+
+            # For horizontal beam, rotation matrix R = I, so Ke = kprime
+            L = 4.0
+            w1 = E*A/L
+            w2 = 12*E*Iz/(L^3)
+            w3 = 6*E*Iz/(L^2)
+            w4 = 4*E*Iz/L
+            w5 = 2*E*Iz/L
+            w6 = 12*E*Iy/(L^3)
+            w7 = 6*E*Iy/(L^2)
+            w8 = 4*E*Iy/L
+            w9 = 2*E*Iy/L
+            w10 = G*J/L
+
+            @test Ke[1,1] ≈ w1    # axial
+            @test Ke[2,2] ≈ w2    # shear y
+            @test Ke[3,3] ≈ w6    # shear z
+            @test Ke[4,4] ≈ w10   # torsion
+            @test Ke[5,5] ≈ w8    # bending about y
+            @test Ke[6,6] ≈ w4    # bending about z
+            # Shear-bending coupling
+            @test Ke[2,6] ≈ w3
+            @test Ke[3,5] ≈ -w7
+            @test Ke[5,3] ≈ -w7
+            @test Ke[6,2] ≈ w3
+            # Off-diagonal blocks
+            @test Ke[1,7] ≈ -w1
+            @test Ke[2,8] ≈ -w2
+            @test Ke[4,10] ≈ -w10
+        end
+
+        @testset "elementforces" begin
+            E, G, A, Iy, Iz, J = 3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5
+            # Horizontal beam, axial displacement at node 2 (follows d2_beam pattern)
+            u = zeros(12)
+            u[7] = 0.001  # 1mm axial at node 2
+            f = d3_beam_elementforces(E, G, A, Iy, Iz, J, 0,0,0, 4,0,0, u)
+            @test length(f) == 12
+            @test f[1] ≈ -(E*A/4.0) * 0.001  # reaction at node 1 = -EA/L * u_x2
+            @test f[7] ≈ (E*A/4.0) * 0.001   # reaction at node 2 = +EA/L * u_x2
+            # Zero displacement → zero force
+            @test d3_beam_elementforces(E, G, A, Iy, Iz, J, 0,0,0, 4,0,0, zeros(12)) ≈ zeros(12)
+        end
+
+        @testset "assemble" begin
+            K = zeros(12, 12)
+            k = reshape(1.0:144.0, 12, 12)
+            K = d3_beam_assemble(K, k, 1, 2)
+            @test K[1:6, 1:6] == k[1:6, 1:6]
+            @test K[1:6, 7:12] == k[1:6, 7:12]
+            @test K[7:12, 1:6] == k[7:12, 1:6]
+            @test K[7:12, 7:12] == k[7:12, 7:12]
+        end
+
+        @testset "diagrams" begin
+            f = [1000, 500, 300, 200, 150, 100, -1000, -500, -300, -200, -150, -100]
+            L = 5.0
+            @test d3_beam_elementaxialdiagram(f, L) isa Plots.Plot
+            @test d3_beam_elementshearydiagram(f, L) isa Plots.Plot
+            @test d3_beam_elementshearzdiagram(f, L) isa Plots.Plot
+            @test d3_beam_elementmomentydiagram(f, L) isa Plots.Plot
+            @test d3_beam_elementmomentzdiagram(f, L) isa Plots.Plot
+            @test d3_beam_elementtorsiondiagram(f, L) isa Plots.Plot
+        end
+
+        @testset "vertical beam" begin
+            E, G, A, Iy, Iz, J = 3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5
+            # Vertical beam along Z: (0,0,0)→(0,0,4)
+            Ke = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 0,0,4)
+            @test size(Ke) == (12, 12)
+            @test Ke == Ke'
+            @test all(!isnan, Ke)
+            # Vertical beam along Z (negative direction)
+            Ke2 = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,4, 0,0,0)
+            @test size(Ke2) == (12, 12)
+            @test all(!isnan, Ke2)
+        end
+    end
+
 end  # @testset "LibFEM"
 
 include("comparison.jl")

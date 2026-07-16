@@ -353,6 +353,210 @@ function PlaneFrameElementMomentDiagram(f, L)
 end
 
 # ─────────────────────────────────────────────────
+# MATLAB Reference Implementations (SpaceFrame / 3D Beam)
+# Transcribed from Doc/Kattan/M-Files/ (read-only)
+# ─────────────────────────────────────────────────
+
+"""
+    SpaceFrameElementLength(x1, y1, z1, x2, y2, z2) -> Real
+
+MATLAB reference: returns the length of a space frame element between
+coordinates (x1,y1,z1) and (x2,y2,z2).
+Identical to `d3_beam_elementlength(x1, y1, z1, x2, y2, z2)`.
+"""
+function SpaceFrameElementLength(x1, y1, z1, x2, y2, z2)
+    return sqrt((x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2)
+end
+
+"""
+    SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2) -> Matrix
+
+MATLAB reference: returns the 12×12 element stiffness matrix for a space frame
+element. Identical to `d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)`.
+"""
+function SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)
+    L = SpaceFrameElementLength(x1, y1, z1, x2, y2, z2)
+    w1 = E * A / L
+    w2 = 12 * E * Iz / (L^3)
+    w3 = 6 * E * Iz / (L^2)
+    w4 = 4 * E * Iz / L
+    w5 = 2 * E * Iz / L
+    w6 = 12 * E * Iy / (L^3)
+    w7 = 6 * E * Iy / (L^2)
+    w8 = 4 * E * Iy / L
+    w9 = 2 * E * Iy / L
+    w10 = G * J / L
+    kprime = [
+        w1   0    0    0    0    0   -w1   0    0    0    0    0
+        0   w2   0    0    0    w3   0   -w2   0    0    0    w3
+        0    0   w6   0   -w7   0    0    0   -w6   0   -w7   0
+        0    0    0   w10   0    0    0    0    0   -w10  0    0
+        0    0   -w7   0   w8    0    0    0    w7   0    w9   0
+        0    w3   0    0    0    w4   0   -w3   0    0    0    w5
+       -w1   0    0    0    0    0    w1   0    0    0    0    0
+        0   -w2   0    0    0   -w3   0    w2   0    0    0   -w3
+        0    0   -w6   0    w7    0    0    0    w6   0    w7   0
+        0    0    0   -w10  0    0    0    0    0    w10   0    0
+        0    0   -w7   0    w9    0    0    0    w7   0    w8   0
+        0    w3   0    0    0    w5   0   -w3   0    0    0    w4
+    ]
+    Cx = (x2 - x1) / L
+    Cy = (y2 - y1) / L
+    Cz = (z2 - z1) / L
+    if x1 == x2 && y1 == y2
+        if z2 > z1
+            Lambda = [0 0 1; 0 1 0; -1 0 0]
+        else
+            Lambda = [0 0 -1; 0 1 0; 1 0 0]
+        end
+    else
+        D = sqrt(Cx^2 + Cy^2)
+        Lambda = [
+            Cx       Cy       Cz
+            -Cy / D   Cx / D   0
+            -Cx * Cz / D  -Cy * Cz / D  D
+        ]
+    end
+    Z33 = zeros(3, 3)
+    R = [Lambda Z33 Z33 Z33; Z33 Lambda Z33 Z33; Z33 Z33 Lambda Z33; Z33 Z33 Z33 Lambda]
+    return R' * kprime * R
+end
+
+"""
+    SpaceFrameAssemble(K, k, i, j) -> Matrix
+
+MATLAB reference: assembles the 12×12 element stiffness matrix k of a space
+frame element with nodes i and j into the global stiffness matrix K (6 DOF/node).
+Returns the updated global matrix.
+Identical to `d3_beam_assemble(K, k, i, j)`.
+"""
+function SpaceFrameAssemble(K, k, i, j)
+    for a in 1:6, b in 1:6
+        K[6*i-6+a, 6*i-6+b] += k[a, b]     # (i, i)
+        K[6*i-6+a, 6*j-6+b] += k[a, b+6]   # (i, j)
+        K[6*j-6+a, 6*i-6+b] += k[a+6, b]   # (j, i)
+        K[6*j-6+a, 6*j-6+b] += k[a+6, b+6] # (j, j)
+    end
+    return K
+end
+
+"""
+    SpaceFrameElementForces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u) -> Vector
+
+MATLAB reference: returns the 12-element element force vector for a space frame
+element. Identical to `d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)`.
+"""
+function SpaceFrameElementForces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)
+    L = SpaceFrameElementLength(x1, y1, z1, x2, y2, z2)
+    w1 = E * A / L
+    w2 = 12 * E * Iz / (L^3)
+    w3 = 6 * E * Iz / (L^2)
+    w4 = 4 * E * Iz / L
+    w5 = 2 * E * Iz / L
+    w6 = 12 * E * Iy / (L^3)
+    w7 = 6 * E * Iy / (L^2)
+    w8 = 4 * E * Iy / L
+    w9 = 2 * E * Iy / L
+    w10 = G * J / L
+    kprime = [
+        w1   0    0    0    0    0   -w1   0    0    0    0    0
+        0   w2   0    0    0    w3   0   -w2   0    0    0    w3
+        0    0   w6   0   -w7   0    0    0   -w6   0   -w7   0
+        0    0    0   w10   0    0    0    0    0   -w10  0    0
+        0    0   -w7   0   w8    0    0    0    w7   0    w9   0
+        0    w3   0    0    0    w4   0   -w3   0    0    0    w5
+       -w1   0    0    0    0    0    w1   0    0    0    0    0
+        0   -w2   0    0    0   -w3   0    w2   0    0    0   -w3
+        0    0   -w6   0    w7    0    0    0    w6   0    w7   0
+        0    0    0   -w10  0    0    0    0    0    w10   0    0
+        0    0   -w7   0    w9    0    0    0    w7   0    w8   0
+        0    w3   0    0    0    w5   0   -w3   0    0    0    w4
+    ]
+    Cx = (x2 - x1) / L
+    Cy = (y2 - y1) / L
+    Cz = (z2 - z1) / L
+    if x1 == x2 && y1 == y2
+        if z2 > z1
+            Lambda = [0 0 1; 0 1 0; -1 0 0]
+        else
+            Lambda = [0 0 -1; 0 1 0; 1 0 0]
+        end
+    else
+        D = sqrt(Cx^2 + Cy^2)
+        Lambda = [
+            Cx       Cy       Cz
+            -Cy / D   Cx / D   0
+            -Cx * Cz / D  -Cy * Cz / D  D
+        ]
+    end
+    Z33 = zeros(3, 3)
+    R = [Lambda Z33 Z33 Z33; Z33 Lambda Z33 Z33; Z33 Z33 Lambda Z33; Z33 Z33 Z33 Lambda]
+    return kprime * R * u
+end
+
+"""
+    SpaceFrameElementAxialDiagram(f, L) -> Vector
+
+MATLAB reference: returns the z-vector of the axial force diagram
+(z = [-f[1], f[7]]) for a space frame element with nodal force vector f
+and length L. (Returns data only, no plot.)
+Identical to the data portion of `d3_beam_elementaxialdiagram(f, L)`.
+"""
+function SpaceFrameElementAxialDiagram(f, L)
+    return [-f[1], f[7]]
+end
+
+"""
+    SpaceFrameElementShearYDiagram(f, L) -> Vector
+
+MATLAB reference: returns the z-vector of the shear force Y diagram
+(z = [f[2], -f[8]]). (Returns data only, no plot.)
+"""
+function SpaceFrameElementShearYDiagram(f, L)
+    return [f[2], -f[8]]
+end
+
+"""
+    SpaceFrameElementShearZDiagram(f, L) -> Vector
+
+MATLAB reference: returns the z-vector of the shear force Z diagram
+(z = [f[3], -f[9]]). (Returns data only, no plot.)
+"""
+function SpaceFrameElementShearZDiagram(f, L)
+    return [f[3], -f[9]]
+end
+
+"""
+    SpaceFrameElementMomentYDiagram(f, L) -> Vector
+
+MATLAB reference: returns the z-vector of the bending moment Y diagram
+(z = [f[5], -f[11]]). (Returns data only, no plot.)
+"""
+function SpaceFrameElementMomentYDiagram(f, L)
+    return [f[5], -f[11]]
+end
+
+"""
+    SpaceFrameElementMomentZDiagram(f, L) -> Vector
+
+MATLAB reference: returns the z-vector of the bending moment Z diagram
+(z = [f[6], -f[12]]). (Returns data only, no plot.)
+"""
+function SpaceFrameElementMomentZDiagram(f, L)
+    return [f[6], -f[12]]
+end
+
+"""
+    SpaceFrameElementTorsionDiagram(f, L) -> Vector
+
+MATLAB reference: returns the z-vector of the torsion diagram
+(z = [f[4], -f[10]]). (Returns data only, no plot.)
+"""
+function SpaceFrameElementTorsionDiagram(f, L)
+    return [f[4], -f[10]]
+end
+
+# ─────────────────────────────────────────────────
 # MATLAB-vs-Julia Comparison Tests
 # ─────────────────────────────────────────────────
 
@@ -944,6 +1148,134 @@ end
             @test PlaneFrameElementAxialDiagram(f0, L) == [0.0, 0.0]
             @test PlaneFrameElementShearDiagram(f0, L) == [0.0, 0.0]
             @test PlaneFrameElementMomentDiagram(f0, L) == [0.0, 0.0]
+        end
+        # ───────────────────────────────────────────────
+        # Problem 10.1 — Eight-element space frame
+        #   (Kattan, Solutions Manual)
+        #   E=210e6, G=84e6, A=2e-2, Iy=10e-5, Iz=20e-5, J=5e-5
+        #   8 corner nodes of a 4×5×4 box, 8 elements
+        # ───────────────────────────────────────────────
+        @testset "Problem 10.1" begin
+            E = 210e6
+            G = 84e6
+            A = 2e-2
+            Iy = 10e-5
+            Iz = 20e-5
+            J = 5e-5
+
+            # ═══════════════════════
+            # MATLAB computation path
+            # ═══════════════════════
+            # Vertical columns (z=0→5, height 5)
+            k1_mat = SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, 0,0,0, 0,5,0)
+            k2_mat = SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, 0,0,4, 0,5,4)
+            k3_mat = SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, 4,0,4, 4,5,4)
+            k4_mat = SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, 4,0,0, 4,5,0)
+            # Beam members at z=5 (horizontal)
+            k5_mat = SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, 0,5,0, 0,5,4)
+            k6_mat = SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, 0,5,4, 4,5,4)
+            k7_mat = SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, 4,5,4, 4,5,0)
+            k8_mat = SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, 0,5,0, 4,5,0)
+
+            # Assembly (48 DOF, 8 nodes)
+            K_mat = zeros(48, 48)
+            K_mat = SpaceFrameAssemble(K_mat, k1_mat, 1, 5)
+            K_mat = SpaceFrameAssemble(K_mat, k2_mat, 2, 6)
+            K_mat = SpaceFrameAssemble(K_mat, k3_mat, 3, 7)
+            K_mat = SpaceFrameAssemble(K_mat, k4_mat, 4, 8)
+            K_mat = SpaceFrameAssemble(K_mat, k5_mat, 5, 6)
+            K_mat = SpaceFrameAssemble(K_mat, k6_mat, 6, 7)
+            K_mat = SpaceFrameAssemble(K_mat, k7_mat, 7, 8)
+            K_mat = SpaceFrameAssemble(K_mat, k8_mat, 5, 8)
+
+            # Reduced system: DOFs 25-48 (top nodes unconstrained)
+            k_reduced_mat = K_mat[25:48, 25:48]
+            f_reduced = zeros(24)
+            f_reduced[13] = -15.0  # -15 load at DOF 25+12=37
+            u_reduced_mat = k_reduced_mat \ f_reduced
+
+            # Full displacement (nodes 1-4 fixed = zero)
+            U_mat = zeros(48)
+            U_mat[25:48] = u_reduced_mat
+
+            # Nodal reactions
+            F_mat = K_mat * U_mat
+
+            # ═══════════════════════
+            # Julia computation path
+            # ═══════════════════════
+            k1_jl = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 0,5,0)
+            k2_jl = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,4, 0,5,4)
+            k3_jl = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 4,0,4, 4,5,4)
+            k4_jl = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 4,0,0, 4,5,0)
+            k5_jl = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,5,0, 0,5,4)
+            k6_jl = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,5,4, 4,5,4)
+            k7_jl = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 4,5,4, 4,5,0)
+            k8_jl = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,5,0, 4,5,0)
+
+            K_jl = zeros(48, 48)
+            K_jl = d3_beam_assemble(K_jl, k1_jl, 1, 5)
+            K_jl = d3_beam_assemble(K_jl, k2_jl, 2, 6)
+            K_jl = d3_beam_assemble(K_jl, k3_jl, 3, 7)
+            K_jl = d3_beam_assemble(K_jl, k4_jl, 4, 8)
+            K_jl = d3_beam_assemble(K_jl, k5_jl, 5, 6)
+            K_jl = d3_beam_assemble(K_jl, k6_jl, 6, 7)
+            K_jl = d3_beam_assemble(K_jl, k7_jl, 7, 8)
+            K_jl = d3_beam_assemble(K_jl, k8_jl, 5, 8)
+
+            k_reduced_jl = K_jl[25:48, 25:48]
+            u_reduced_jl = k_reduced_jl \ f_reduced
+
+            U_jl = zeros(48)
+            U_jl[25:48] = u_reduced_jl
+
+            F_jl = K_jl * U_jl
+
+            # ═══════════════════════
+            # Assertions: MATLAB vs Julia — exact match
+            # ═══════════════════════
+            @test k1_mat ≈ k1_jl rtol=1e-10
+            @test k2_mat ≈ k2_jl rtol=1e-10
+            @test k3_mat ≈ k3_jl rtol=1e-10
+            @test k4_mat ≈ k4_jl rtol=1e-10
+            @test k5_mat ≈ k5_jl rtol=1e-10
+            @test k6_mat ≈ k6_jl rtol=1e-10
+            @test k7_mat ≈ k7_jl rtol=1e-10
+            @test k8_mat ≈ k8_jl rtol=1e-10
+            @test K_mat ≈ K_jl rtol=1e-10
+            @test k_reduced_mat ≈ k_reduced_jl rtol=1e-10
+            @test u_reduced_mat ≈ u_reduced_jl rtol=1e-10
+            @test U_mat ≈ U_jl rtol=1e-10
+            @test F_mat ≈ F_jl rtol=1e-10
+
+            # ═══════════════════════
+            # Assertions: textbook values (from solutions manual, 4 decimal places)
+            # ═══════════════════════
+            # Reduced displacements (first 12 of 24)
+            expected_u = [
+                -0.0004,  0.0000, -0.0006,  0.0000, -0.0004,  0.0000,
+                -0.0021,  0.0000, -0.0006,  0.0000, -0.0004,  0.0002,
+                -0.0021,  0.0000,  0.0006,  0.0000, -0.0004,  0.0002,
+                -0.0004,  0.0000,  0.0006,  0.0000, -0.0004,  0.0000,
+            ]
+            @test u_reduced_mat ≈ expected_u atol=1e-3
+
+            # Key nodal reaction values (at constrained DOFs 1-24)
+            # F[1]=1.1599, F[2]=2.5054, F[3]=1.0091, ...
+            @test F_mat[1]  ≈ 1.1599  rtol=1e-3
+            @test F_mat[2]  ≈ 2.5054  rtol=1e-3
+            @test F_mat[3]  ≈ 1.0091  rtol=1e-3
+            @test F_mat[4]  ≈ 2.6719  rtol=1e-3
+            @test F_mat[5]  ≈ 0.3008  rtol=1e-3
+            @test F_mat[6]  ≈ -3.2737 rtol=1e-3
+            @test F_mat[7]  ≈ 6.3324  rtol=1e-3
+            @test F_mat[8]  ≈ 5.7484  rtol=1e-3
+            @test F_mat[9]  ≈ 1.0091  rtol=1e-3
+            @test F_mat[10] ≈ 2.6719  rtol=1e-3
+            @test F_mat[11] ≈ 0.3008  rtol=1e-3
+            @test F_mat[12] ≈ -17.6937 rtol=1e-3
+            @test F_mat[13] ≈ 6.3481  rtol=1e-3
+            @test F_mat[37] ≈ -15.0   rtol=1e-3
         end
     end
 

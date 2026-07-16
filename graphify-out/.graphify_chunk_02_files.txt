@@ -1,3 +1,0 @@
-/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.md
-/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt
-/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.pdf

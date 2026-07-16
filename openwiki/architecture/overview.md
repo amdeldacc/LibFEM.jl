@@ -2,26 +2,35 @@
 
 ## Module Structure
 
-LibFEM.jl is a single-module library — all code lives in one file: `src/LibFEM.jl` (~904 lines).
+LibFEM.jl is a single-module library — all code lives in one file: `src/LibFEM.jl` (~1155 lines).
 
 ```julia
 module LibFEM
 using Plots
 
-# ── Private helpers ────────────────────────
-deg2rad(theta)           # degrees → radians
-_assemble!(K, k, i, j, dofs)  # generic assembly
+# ═══════════════════════════════════════════════════════════
+# Utility
+# ═══════════════════════════════════════════════════════════
 
-# ── 1D elements (1 DOF/node) ──────────────
+deg2rad(theta::Real)           # degrees → radians (EXPORTED)
+_assemble!(K, k, i, j, dofs)  # private assembly helper
+
+# ═══════════════════════════════════════════════════════════
+# 1-D elements (1 DOF/node) ──────────────────
+# ═══════════════════════════════════════════════════════════
 d1_spring_*              # Spring
 d1_truss_*               # Linear bar / 1D truss
 
-# ── 2D elements ───────────────────────────
+# ═══════════════════════════════════════════════════════════
+# 2-D elements ─────────────────────────────────
+# ═══════════════════════════════════════════════════════════
 d2_spring_*              # Spring (2 DOF/node)
 d2_truss_*               # Plane truss (2 DOF/node)
 d2_beam_*                # Plane beam/frame (3 DOF/node)
 
-# ── 3D elements ──────────────────────────
+# ═══════════════════════════════════════════════════════════
+# 3-D elements ─────────────────────────────────
+# ═══════════════════════════════════════════════════════════
 d3_spring_*              # Spring (3 DOF/node)
 d3_truss_*               # Space truss (3 DOF/node)
 d3_beam_*                # Space frame / 3D beam (6 DOF/node)
@@ -29,7 +38,7 @@ d3_beam_*                # Space frame / 3D beam (6 DOF/node)
 end # module
 ```
 
-**Exports**: All public functions are individually exported immediately after their definitions.
+**Exports**: All public functions are exported in grouped blocks after their respective element-type sections. `deg2rad` is now exported for external use (was previously private). The helper `_assemble!` and `_d3_beam_kprime` remain private (underscore prefix, not exported).
 
 ## Naming Convention
 
@@ -81,9 +90,12 @@ sigma = d2_truss_elementstress(E, L, theta, u)
 epsilon = d2_truss_elementstrain(L, theta, u)
 ```
 
+**Validation**: Most stiffness/length functions now validate positive inputs (e.g., `L > 0`, `A > 0`) and throw `ArgumentError` with descriptive messages on violation. See `src/LibFEM.jl` lines with `throw(ArgumentError(...))`.
+
 Additional helpers exist per domain:
 - **Length**: `_elementlength(...)` — Euclidean distance between node coordinates (2D/3D truss, beam)
 - **Diagrams** (beam only): `_elementaxialdiagram`, `_elementmomentdiagram`, `_elementsheardiagram` — return Plots.jl `Plot` objects
+- **3D beam internals**: `_d3_beam_kprime(E, G, A, Iy, Iz, J, L)` — private helper returning the 12×12 local stiffness matrix in element coordinates (before rotation to global). Used by `d3_beam_elementstiffness` and `d3_beam_elementforces`.
 
 ### Angle Conventions
 
@@ -131,11 +143,11 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d1_spring_elementforce(k, u)` — 2-element vector
 
 ### 1D Truss (`d1_truss`)
-- `d1_truss_elementstiffness(E, A, L)` — 2×2 matrix
+- `d1_truss_elementstiffness(E, A, L)` — 2×2 matrix (validates `L > 0`, `A > 0`)
 - `d1_truss_assemble(K, k, i, j)` — DOF mapping: 1
 - `d1_truss_elementforce(k, u)` — 2-element vector
 - `d1_truss_elementstress(k, u, A)` — stress at nodes
-- `d1_truss_elementstrain(L, u)` — strain at nodes
+- `d1_truss_elementstrain(L, u)` — strain at nodes (validates `L > 0`)
 
 ### 2D Spring (`d2_spring`)
 - `d2_spring_elementstiffness(k, theta)` — 4×4 matrix
@@ -143,15 +155,15 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d2_spring_elementforce(k, theta, u)` — scalar force
 
 ### 2D Truss (`d2_truss`)
-- `d2_truss_elementstiffness(E, A, L, theta)` — 4×4 matrix
+- `d2_truss_elementstiffness(E, A, L, theta)` — 4×4 matrix (validates `L > 0`)
 - `d2_truss_assemble(K, k, i, j)` — DOF mapping: 2
 - `d2_truss_elementforce(E, A, L, theta, u)` — scalar force
 - `d2_truss_elementstress(E, L, theta, u)` — scalar stress
-- `d2_truss_elementstrain(L, theta, u)` — scalar strain
+- `d2_truss_elementstrain(L, theta, u)` — scalar strain (validates `L > 0`)
 - `d2_truss_elementlength(x1, y1, x2, y2)` — element length
 
 ### 2D Beam (`d2_beam`)
-- `d2_beam_elementstiffness(E, A, I, L, theta)` — 6×6 matrix
+- `d2_beam_elementstiffness(E, A, I, L, theta)` — 6×6 matrix (validates `L > 0`)
 - `d2_beam_assemble(K, k, i, j)` — DOF mapping: 3
 - `d2_beam_elementforce(E, A, I, L, theta, u)` — 6-element vector
 - `d2_beam_elementlength(x1, y1, x2, y2)` — element length
@@ -165,17 +177,17 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d3_spring_elementforce(k, thetax, thetay, thetaz, u)` — scalar force
 
 ### 3D Truss (`d3_truss`)
-- `d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)` — 6×6 matrix
+- `d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)` — 6×6 matrix (validates `L > 0`)
 - `d3_truss_assemble(K, k, i, j)` — DOF mapping: 3
 - `d3_truss_elementforce(E, A, L, thetax, thetay, thetaz, u)` — scalar force
 - `d3_truss_elementstress(E, L, thetax, thetay, thetaz, u)` — scalar stress
-- `d3_truss_elementstrain(L, thetax, thetay, thetaz, u)` — scalar strain
+- `d3_truss_elementstrain(L, thetax, thetay, thetaz, u)` — scalar strain (validates `L > 0`)
 - `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)` — element length
 
 ### 3D Beam / Space Frame (`d3_beam`)
-- `d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` — 12×12 matrix
+- `d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` — 12×12 matrix (validates `L > 0`)
 - `d3_beam_assemble(K, k, i, j)` — DOF mapping: **6**
-- `d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` — 12-element vector (local frame)
+- `d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` — 12-element vector (local frame) (validates `L > 0`)
 - `d3_beam_elementlength(x1, y1, z1, x2, y2, z2)` — 3D Euclidean distance
 - `d3_beam_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
 - `d3_beam_elementshearydiagram(f, L)` — Plots.jl shear force (Y) diagram
@@ -190,14 +202,15 @@ The helper is private (underscore prefix, not exported). Adding new element type
 
 - **`Plots.jl`** v1 — used by all beam diagram functions (`d2_beam_*` and `d3_beam_*`). Required in `Project.toml`.
 - **`using Plots`** is declared at module level in `src/LibFEM.jl`.
+- **`deg2rad` is now exported** — users can call `LibFEM.deg2rad(theta)` for degree-to-radian conversion.
 - **No `ModelingToolkit`** — listed as a dependency in `CLAUDE.md`'s older version note, but the `Project.toml` has been updated to `Plots` only. The scripts in `scripts/` use MTK independently.
 
 ## Testing
 
 Tests are in `test/`:
-- **`runtests.jl`** — Main test suite (~400 lines). Uses `Test` standard library. Covers all 8 element types (including `d3_beam`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, and assembly correctness.
+- **`runtests.jl`** — Main test suite (~400 lines). Uses `Test` standard library. Covers all 8 element types (including `d3_beam`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, and MATLAB reference comparison for Problem 10.1.
 - **`comparison.jl`** — Side-by-side MATLAB reference implementations transcribed from `Doc/Kattan/M-Files/`. Not run as independent tests; included from `runtests.jl`.
-- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (9 benchmarks). Covers stiffness construction (7 element types), assembly (500-element chain), and solve (random SPD system). Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
+- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (12 benchmarks). Covers stiffness construction (8 element types), assembly (500-element d2_truss chain + 500-element d3_beam chain), solve (random SPD system), and d3_beam element forces. Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
 
 To run tests:
 ```julia

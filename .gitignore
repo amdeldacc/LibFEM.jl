@@ -5,3 +5,13 @@
 Manifest.toml
 /docs/build/
 .env
+
+# Operational / generated directories
+.omo/
+.codegraph/
+.superpowers/
+/docs/
+
+# Generated files
+LibFEM_DS_2020.ipynb
+ToDo/

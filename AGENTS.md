@@ -4,7 +4,7 @@
 - **Single Source File**: All code must be in `src/LibFEM.jl`. Do not create new source files; append to this file and add the necessary `export` calls.
 - **Activation**: Use `julia --project=.` then `using LibFEM` to run or test.
 - **Read-only Directory**: The `Doc/` directory contains MATLAB reference files. Do not modify them.
-- **Testing**: No automated testing or CI currently exists in this repository.
+- **Testing**: Run with `julia --project=. test/runtests.jl` or `using Pkg; Pkg.test()`.
 
 ## Conventions
 - **Angle Units**: All angles are passed in **degrees** (converted to radians internally).
@@ -18,9 +18,6 @@
 
 ## Dependencies & Metadata
 - **Module Name**: `LibFEM`. Match its UUID in `Project.toml` when adding dependencies.
-- **Required Dependency**: `ModelingToolkit v10.2.0`.
-- **Unused Dependency**: `ModelingToolkit v10.2.0` is listed in `Project.toml` but is NOT imported or used anywhere in `src/LibFEM.jl`. Consider removing if no future use is planned.
-- **Missing Dependency**: Functions `d2_beam_elementaxialdiagram`, `d2_beam_elementmomentdiagram`, and `d2_beam_elementsheardiagram` call `plot()` directly (Matlab-style) at lines 171, 173, 238, 240, 255, 257 of `src/LibFEM.jl`, plus `title()` and `#hold on` comments, but no plotting package (`Plots`, `PyPlot`, etc.) is imported or listed in `Project.toml`. These functions will error at runtime. Add `Plots` to `Project.toml` and add `using Plots` before using these functions.
 
 <!-- OPENWIKI:START -->
 

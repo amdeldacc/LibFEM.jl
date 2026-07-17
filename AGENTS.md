@@ -1,7 +1,17 @@
 # LibFEM.jl Agent Instructions
 
 ## Constraints & Workflow
-- **Single Source File**: All code must be in `src/LibFEM.jl`. Do not create new source files; append to this file and add the necessary `export` calls.
+- **Source Organization**: The module is organized into multiple files via `include()` in a single `module LibFEM`:
+  - `src/LibFEM.jl` — module declaration, `export` statements, `include()` directives
+  - `src/types.jl` — abstract type hierarchy, `@kwdef` element structs, custom error types
+  - `src/spring.jl` — `d1_spring_*`, `d2_spring_*`, `d3_spring_*` functions
+  - `src/truss.jl` — `d1_truss_*`, `d2_truss_*`, `d3_truss_*` functions
+  - `src/beam.jl` — `d2_beam_*`, `d3_beam_*` functions
+  - `src/assembly.jl` — `_assemble!` helper and assembly utilities
+  - `src/utils.jl` — `deg2rad` and shared helpers
+  - `src/plot.jl` — diagram functions (Plots dependency)
+  - `src/errors.jl` — custom error type definitions
+- New element families add a corresponding `src/<family>.jl` file and an `include()` line to `src/LibFEM.jl`.
 - **Activation**: Use `julia --project=.` then `using LibFEM` to run or test.
 - **Read-only Directory**: The `Doc/` directory contains MATLAB reference files. Do not modify them.
 - **Testing**: Run with `julia --project=. test/runtests.jl` or `using Pkg; Pkg.test()`.

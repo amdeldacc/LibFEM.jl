@@ -43,17 +43,17 @@ These are the MATLAB files whose algorithms are implemented (or planned) in `src
 |------------|---------------|--------|
 | `LinearBarElementStiffness.m` | `d1_truss_elementstiffness` | Implemented |
 | `LinearBarAssemble.m` | `d1_truss_assemble` | Implemented |
-| `LinearBarElementForces.m` | `d1_truss_elementforce` | Implemented |
+| `LinearBarElementForces.m` | `d1_truss_elementforces` | Implemented |
 | `LinearBarElementStresses.m` | `d1_truss_elementstress` | Implemented |
 | `PlaneTrussElementStiffness.m` | `d2_truss_elementstiffness` | Implemented |
 | `PlaneTrussAssemble.m` | `d2_truss_assemble` | Implemented |
-| `PlaneTrussElementForce.m` | `d2_truss_elementforce` | Implemented |
+| `PlaneTrussElementForce.m` | `d2_truss_elementforces` | Implemented |
 | `PlaneTrussElementStress.m` | `d2_truss_elementstress` | Implemented |
 | `PlaneTrussElementLength.m` | `d2_truss_elementlength` | Implemented |
 | `PlaneTrussInclinedSupport.m` | — | Not implemented |
 | `SpaceTrussElementStiffness.m` | `d3_truss_elementstiffness` | Implemented |
 | `SpaceTrussAssemble.m` | `d3_truss_assemble` | Implemented |
-| `SpaceTrussElementForce.m` | `d3_truss_elementforce` | Implemented |
+| `SpaceTrussElementForce.m` | `d3_truss_elementforces` | Implemented |
 | `SpaceTrussElementStress.m` | `d3_truss_elementstress` | Implemented |
 | `SpaceTrussElementLength.m` | `d3_truss_elementlength` | Implemented |
 | `SpaceTrussInclinedSupport.m` | — | Not implemented |
@@ -66,12 +66,12 @@ LibFEM adds `d1_truss_elementstrain`, `d2_truss_elementstrain`, and `d3_truss_el
 |------------|---------------|--------|
 | `BeamElementStiffness.m` | `d2_beam_elementstiffness` | Implemented |
 | `BeamAssemble.m` | `d2_beam_assemble` | Implemented |
-| `BeamElementForces.m` | `d2_beam_elementforce` | Implemented |
+| `BeamElementForces.m` | `d2_beam_elementforces` | Implemented |
 | `BeamElementMomentDiagram.m` | `d2_beam_elementmomentdiagram` | Implemented |
 | `BeamElementShearDiagram.m` | `d2_beam_elementsheardiagram` | Implemented |
 | `PlaneFrameElementStiffness.m` | (same as `d2_beam_elementstiffness`) | Implemented |
 | `PlaneFrameAssemble.m` | (same as `d2_beam_assemble`) | Implemented |
-| `PlaneFrameElementForces.m` | (same as `d2_beam_elementforce`) | Implemented |
+| `PlaneFrameElementForces.m` | (same as `d2_beam_elementforces`) | Implemented |
 | `PlaneFrameElementLength.m` | `d2_beam_elementlength` | Implemented |
 | `PlaneFrameElementAxialDiagram.m` | `d2_beam_elementaxialdiagram` | Implemented |
 | `PlaneFrameElementMomentDiagram.m` | (same as `d2_beam_elementmomentdiagram`) | Implemented |

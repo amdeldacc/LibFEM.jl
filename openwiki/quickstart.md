@@ -90,7 +90,7 @@ K = zeros(8, 8)
 K = d2_truss_assemble(K, k, 1, 2)
 
 # After solving K·U = F for displacements u...
-f = d2_truss_elementforce(E, A, L, theta, u)     # element force
+f = d2_truss_elementforces(E, A, L, theta, u)     # element force
 sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 ```
 
@@ -98,22 +98,30 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 
 - **Angle units**: all angle parameters are in **degrees**; converted to radians internally via `deg2rad`.
 - **Dimension prefixes**: `d1_` (1 DOF/node), `d2_` (2 DOF/node for spring/truss; 3 for beam), `d3_` (3 DOF/node for spring/truss; **6** for `d3_beam`).
-- **Single source file**: all code lives in `src/LibFEM.jl`. No multi-file module structure.
-- **Assembly refactored**: all 8 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, dofs)` helper. See `docs/assembly-helper-refactor.md`.
+- **Multi-file module**: source code is organized into `src/LibFEM.jl` (declaration + includes) + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/plot.jl`.
+- **Assembly refactored**: all 7 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
 
 ## Repository Map
 
 | Path | Purpose |
 |------|---------|
-| `src/LibFEM.jl` | All source code (single module) |
+| `src/LibFEM.jl` | Module declaration, includes, exports |
+| `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
+| `src/errors.jl` | Custom error type definitions |
+| `src/utils.jl` | `deg2rad` and shared helpers |
+| `src/assembly.jl` | `_assemble!` private helper, `_d3_beam_kprime` |
+| `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
+| `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
+| `src/beam.jl` | All `d2_beam_*` and `d3_beam_*` implementations |
+| `src/plot.jl` | Beam diagram functions (Plots dependency) |
 | `test/runtests.jl` | Test suite (~400 lines, covers all 8 element types) |
 | `test/comparison.jl` | MATLAB reference transcriptions for verification |
+| `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (12 benchmarks) |
 | `Doc/Kattan/M-Files/` | Read-only MATLAB reference (80 `.m` files from Kattan) |
 | `Doc/Kattan/Solutions Manual/` | Problem solutions (`.rtf` format) |
 | `Doc/Peter_Kattan_*` | Book PDF and text/Markdown transcriptions |
 | `docs/assembly-helper-refactor.md` | Refactor documentation for `_assemble!` helper |
 | `docs/benchmarking.md` | Benchmarking suite overview and baseline timings |
-| `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (12 benchmarks) |
 | `CONTEXT.md` | Domain glossary: MATLAB→Julia mapping and naming conventions |
 | `AGENTS.md`, `CLAUDE.md` | Agent instructions with constraints and conventions |
 | `ToDo.md` | Known issues, missing features, and refactoring opportunities |

@@ -189,9 +189,6 @@ LibFEM.jl/
 │   ├── quickstart.md
 │   ├── architecture/overview.md
 │   └── reference/kattan-mapping.md
-├── docs/                  # Additional documentation
-│   ├── assembly-helper-refactor.md
-│   └── benchmarking.md
 ├── Doc/
 │   ├── Kattan/M-Files/    # Read-only MATLAB reference (80 .m files)
 │   └── Kattan/Solutions Manual/
@@ -199,8 +196,6 @@ LibFEM.jl/
 ├── Manifest.toml
 ├── CONTEXT.md             # Domain glossary: MATLAB→Julia mapping
 ├── AGENTS.md              # Agent instructions
-├── ToDo.md                # Known issues and feature backlog
-├── LibFEM_DS_2020.ipynb   # Jupyter notebook with worked examples
 └── README.md              # This file
 ```
 
@@ -338,7 +333,7 @@ To add a new element type:
 
 ## Known Issues & Backlog
 
-See [`ToDo.md`](ToDo.md) for the full list. Highlights:
+See the repository's issue tracker for the full list. Highlights:
 
 - **Docstring fixes**: Extra `export` keyword in docstrings, PascalCase vs snake_case mismatch
 - **Plotting**: `d2_beam_*diagram` functions use MATLAB-style `'k'` color syntax; need Julia `:black`

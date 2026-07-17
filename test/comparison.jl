@@ -60,7 +60,7 @@ end
 
 MATLAB reference: returns the element nodal force vector given the
 element stiffness matrix k (2×2) and element nodal displacement
-vector u (2-element). Identical to `d1_truss_elementforce(k, u)`.
+vector u (2-element). Identical to `d1_truss_elementforces(k, u)`.
 """
 function LinearBarElementForces(k, u)
     return k * u
@@ -134,7 +134,7 @@ end
 MATLAB reference: returns the scalar element force given the modulus
 of elasticity E, cross-sectional area A, length L, angle theta (in degrees),
 and element nodal displacement vector u.
-MATLAB returns a scalar; Julia's `d2_truss_elementforce` returns a 1-element Vector.
+MATLAB returns a scalar; Julia's `d2_truss_elementforces` returns a 1-element Vector.
 """
 function PlaneTrussElementForce(E, A, L, theta, u)
     x = LibFEM.deg2rad(theta)
@@ -234,7 +234,7 @@ end
 MATLAB reference: returns the 6-element element force vector given the
 modulus of elasticity E, cross-sectional area A, moment of inertia I,
 length L, angle theta (in degrees), and element nodal displacement
-vector u. Identical to `d2_beam_elementforce(E, A, I, L, theta, u)`.
+vector u. Identical to `d2_beam_elementforces(E, A, I, L, theta, u)`.
 """
 function PlaneFrameElementForces(E, A, I, L, theta, u)
     x = LibFEM.deg2rad(theta)
@@ -557,6 +557,129 @@ function SpaceFrameElementTorsionDiagram(f, L)
 end
 
 # ─────────────────────────────────────────────────
+# MATLAB Reference Implementations (SpaceTruss / 3D Truss)
+# Transcribed from Doc/Kattan/M-Files/ (read-only)
+# ─────────────────────────────────────────────────
+
+"""
+    SpaceTrussElementLength(x1, y1, z1, x2, y2, z2) -> Real
+
+MATLAB reference: returns the length of a space truss element between
+coordinates (x1, y1, z1) and (x2, y2, z2).
+Identical to `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)`.
+"""
+function SpaceTrussElementLength(x1, y1, z1, x2, y2, z2)
+    return sqrt((x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2)
+end
+
+"""
+    SpaceTrussElementStiffness(E, A, L, thetax, thetay, thetaz) -> Matrix
+
+MATLAB reference: returns the 6×6 element stiffness matrix for a space
+truss element with modulus of elasticity E, cross-sectional area A,
+length L, and angles thetax, thetay, thetaz (in degrees).
+Identical to `d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)`.
+"""
+function SpaceTrussElementStiffness(E, A, L, thetax, thetay, thetaz)
+    x = thetax * π / 180
+    u = thetay * π / 180
+    v = thetaz * π / 180
+    Cx = cos(x)
+    Cy = cos(u)
+    Cz = cos(v)
+    w = [
+        Cx * Cx  Cx * Cy  Cx * Cz
+        Cy * Cx  Cy * Cy  Cy * Cz
+        Cz * Cx  Cz * Cy  Cz * Cz
+    ]
+    return E * A / L * [w -w; -w w]
+end
+
+"""
+    SpaceTrussElementForce(E, A, L, thetax, thetay, thetaz, u) -> Real
+
+MATLAB reference: returns the scalar element force given the modulus
+of elasticity E, cross-sectional area A, length L, angles thetax,
+thetay, thetaz (in degrees), and element nodal displacement vector u.
+MATLAB returns a scalar; Julia's `d3_truss_elementforces` returns a 1-element Vector.
+"""
+function SpaceTrussElementForce(E, A, L, thetax, thetay, thetaz, u)
+    x = thetax * π / 180
+    u_ = thetay * π / 180
+    v = thetaz * π / 180
+    Cx = cos(x)
+    Cy = cos(u_)
+    Cz = cos(v)
+    return first(E * A / L * [-Cx -Cy -Cz Cx Cy Cz] * u)
+end
+
+"""
+    SpaceTrussElementStress(E, L, thetax, thetay, thetaz, u) -> Real
+
+MATLAB reference: returns the scalar element stress given the modulus
+of elasticity E, length L, angles thetax, thetay, thetaz (in degrees),
+and element nodal displacement vector u.
+MATLAB returns a scalar; Julia's `d3_truss_elementstress` returns a 1-element Vector.
+"""
+function SpaceTrussElementStress(E, L, thetax, thetay, thetaz, u)
+    x = thetax * π / 180
+    u_ = thetay * π / 180
+    v = thetaz * π / 180
+    Cx = cos(x)
+    Cy = cos(u_)
+    Cz = cos(v)
+    return first(E / L * [-Cx -Cy -Cz Cx Cy Cz] * u)
+end
+
+"""
+    SpaceTrussAssemble(K, k, i, j) -> Matrix
+
+MATLAB reference: assembles the 6×6 element stiffness matrix k of a
+space truss with nodes i and j into the global stiffness matrix K
+using 3-DOF indexing (3i-2, 3i-1, 3i). Returns the updated global matrix.
+Identical to `d3_truss_assemble(K, k, i, j)`.
+"""
+function SpaceTrussAssemble(K, k, i, j)
+    K[3 * i - 2, 3 * i - 2] = K[3 * i - 2, 3 * i - 2] + k[1, 1]
+    K[3 * i - 2, 3 * i - 1] = K[3 * i - 2, 3 * i - 1] + k[1, 2]
+    K[3 * i - 2, 3 * i]     = K[3 * i - 2, 3 * i]     + k[1, 3]
+    K[3 * i - 2, 3 * j - 2] = K[3 * i - 2, 3 * j - 2] + k[1, 4]
+    K[3 * i - 2, 3 * j - 1] = K[3 * i - 2, 3 * j - 1] + k[1, 5]
+    K[3 * i - 2, 3 * j]     = K[3 * i - 2, 3 * j]     + k[1, 6]
+    K[3 * i - 1, 3 * i - 2] = K[3 * i - 1, 3 * i - 2] + k[2, 1]
+    K[3 * i - 1, 3 * i - 1] = K[3 * i - 1, 3 * i - 1] + k[2, 2]
+    K[3 * i - 1, 3 * i]     = K[3 * i - 1, 3 * i]     + k[2, 3]
+    K[3 * i - 1, 3 * j - 2] = K[3 * i - 1, 3 * j - 2] + k[2, 4]
+    K[3 * i - 1, 3 * j - 1] = K[3 * i - 1, 3 * j - 1] + k[2, 5]
+    K[3 * i - 1, 3 * j]     = K[3 * i - 1, 3 * j]     + k[2, 6]
+    K[3 * i,     3 * i - 2] = K[3 * i,     3 * i - 2] + k[3, 1]
+    K[3 * i,     3 * i - 1] = K[3 * i,     3 * i - 1] + k[3, 2]
+    K[3 * i,     3 * i]     = K[3 * i,     3 * i]     + k[3, 3]
+    K[3 * i,     3 * j - 2] = K[3 * i,     3 * j - 2] + k[3, 4]
+    K[3 * i,     3 * j - 1] = K[3 * i,     3 * j - 1] + k[3, 5]
+    K[3 * i,     3 * j]     = K[3 * i,     3 * j]     + k[3, 6]
+    K[3 * j - 2, 3 * i - 2] = K[3 * j - 2, 3 * i - 2] + k[4, 1]
+    K[3 * j - 2, 3 * i - 1] = K[3 * j - 2, 3 * i - 1] + k[4, 2]
+    K[3 * j - 2, 3 * i]     = K[3 * j - 2, 3 * i]     + k[4, 3]
+    K[3 * j - 2, 3 * j - 2] = K[3 * j - 2, 3 * j - 2] + k[4, 4]
+    K[3 * j - 2, 3 * j - 1] = K[3 * j - 2, 3 * j - 1] + k[4, 5]
+    K[3 * j - 2, 3 * j]     = K[3 * j - 2, 3 * j]     + k[4, 6]
+    K[3 * j - 1, 3 * i - 2] = K[3 * j - 1, 3 * i - 2] + k[5, 1]
+    K[3 * j - 1, 3 * i - 1] = K[3 * j - 1, 3 * i - 1] + k[5, 2]
+    K[3 * j - 1, 3 * i]     = K[3 * j - 1, 3 * i]     + k[5, 3]
+    K[3 * j - 1, 3 * j - 2] = K[3 * j - 1, 3 * j - 2] + k[5, 4]
+    K[3 * j - 1, 3 * j - 1] = K[3 * j - 1, 3 * j - 1] + k[5, 5]
+    K[3 * j - 1, 3 * j]     = K[3 * j - 1, 3 * j]     + k[5, 6]
+    K[3 * j,     3 * i - 2] = K[3 * j,     3 * i - 2] + k[6, 1]
+    K[3 * j,     3 * i - 1] = K[3 * j,     3 * i - 1] + k[6, 2]
+    K[3 * j,     3 * i]     = K[3 * j,     3 * i]     + k[6, 3]
+    K[3 * j,     3 * j - 2] = K[3 * j,     3 * j - 2] + k[6, 4]
+    K[3 * j,     3 * j - 1] = K[3 * j,     3 * j - 1] + k[6, 5]
+    K[3 * j,     3 * j]     = K[3 * j,     3 * j]     + k[6, 6]
+    return K
+end
+
+# ─────────────────────────────────────────────────
 # MATLAB-vs-Julia Comparison Tests
 # ─────────────────────────────────────────────────
 
@@ -779,7 +902,7 @@ end
             # --- Element forces ---
             u = [1.0; 0.0]
             f_mat = LinearBarElementForces(k_mat, u)
-            f_jl  = d1_truss_elementforce(k_jl, u)
+            f_jl  = d1_truss_elementforces(k_jl, u)
 
             @test f_mat ≈ [1.0; -1.0]
             @test f_jl ≈ [1.0; -1.0]
@@ -787,7 +910,7 @@ end
 
             # Zero displacement
             @test LinearBarElementForces(k_mat, [0.0, 0.0]) ≈ [0.0, 0.0]
-            @test d1_truss_elementforce(k_jl, [0.0, 0.0]) ≈ [0.0, 0.0]
+            @test d1_truss_elementforces(k_jl, [0.0, 0.0]) ≈ [0.0, 0.0]
 
             # --- Element stresses ---
             sigma_mat = LinearBarElementStresses(k_mat, u, A)
@@ -987,6 +1110,108 @@ end
     end
 
     # ═══════════════════════════════════════════════════
+    # SpaceTruss (3D Truss) — MATLAB comparison
+    # ═══════════════════════════════════════════════════
+    @testset "SpaceTruss" begin
+
+        # ─────────────────────────────────────────────
+        # Element-level tests
+        # ─────────────────────────────────────────────
+        @testset "Element-level" begin
+            E, A, L = 1.0, 1.0, 1.0
+
+            # --- Element length ---
+            L1_mat = SpaceTrussElementLength(0, 0, 0, 1, 1, 1)
+            L1_jl  = d3_truss_elementlength(0, 0, 0, 1, 1, 1)
+            @test L1_mat ≈ √3
+            @test L1_jl ≈ √3
+            @test L1_mat ≈ L1_jl
+
+            # --- Element stiffness matrix ---
+            # All direction cosines = 1 (thetax=thetay=thetaz=0)
+            k_mat = SpaceTrussElementStiffness(E, A, L, 0, 0, 0)
+            k_jl  = d3_truss_elementstiffness(E, A, L, 0, 0, 0)
+            w_ones = ones(3, 3)
+            expected = [w_ones -w_ones; -w_ones w_ones]
+            @test k_mat ≈ expected
+            @test k_jl ≈ expected
+            @test k_mat ≈ k_jl
+
+            # thetax=0, thetay=90, thetaz=0
+            k2_mat = SpaceTrussElementStiffness(E, A, L, 0, 90, 0)
+            k2_jl  = d3_truss_elementstiffness(E, A, L, 0, 90, 0)
+            w2 = [1 0 1; 0 0 0; 1 0 1]
+            expected2 = [w2 -w2; -w2 w2]
+            @test k2_mat ≈ expected2
+            @test k2_jl ≈ expected2
+            @test k2_mat ≈ k2_jl
+
+            # --- Element force ---
+            u = [1.0; 0.0; 0.0; 0.0; 0.0; 0.0]
+            f_mat = SpaceTrussElementForce(E, A, L, 0, 0, 0, u)
+            f_jl  = d3_truss_elementforces(E, A, L, 0, 0, 0, u)
+            @test f_mat ≈ -1.0
+            @test f_jl[1] ≈ -1.0
+            @test f_mat ≈ f_jl[1]
+
+            # Zero displacement → zero force
+            @test SpaceTrussElementForce(E, A, L, 0, 0, 0, zeros(6)) ≈ 0.0
+            @test d3_truss_elementforces(E, A, L, 0, 0, 0, zeros(6))[1] ≈ 0.0
+
+            # --- Element stress ---
+            sigma_mat = SpaceTrussElementStress(E, L, 0, 0, 0, u)
+            sigma_jl  = d3_truss_elementstress(E, L, 0, 0, 0, u)
+            @test sigma_mat ≈ -1.0
+            @test sigma_jl[1] ≈ -1.0
+            @test sigma_mat ≈ sigma_jl[1]
+
+            # Zero displacement → zero stress
+            @test SpaceTrussElementStress(E, L, 0, 0, 0, zeros(6)) ≈ 0.0
+            @test d3_truss_elementstress(E, L, 0, 0, 0, zeros(6))[1] ≈ 0.0
+
+            # --- Assembly ---
+            K_mat = zeros(6, 6)
+            k_mat = SpaceTrussElementStiffness(E, A, L, 0, 0, 0)
+            K_mat = SpaceTrussAssemble(K_mat, k_mat, 1, 2)
+            K_jl = zeros(6, 6)
+            K_jl = d3_truss_assemble(K_jl, k_jl, 1, 2)
+            @test K_mat ≈ K_jl
+            @test K_mat[1:3, 1:3] == k_mat[1:3, 1:3]
+            @test K_mat[1:3, 4:6] == k_mat[1:3, 4:6]
+            @test K_mat[4:6, 1:3] == k_mat[4:6, 1:3]
+            @test K_mat[4:6, 4:6] == k_mat[4:6, 4:6]
+        end
+
+        # ─────────────────────────────────────────────
+        # Mixed angles test (thetax=30, thetay=45, thetaz=60)
+        # ─────────────────────────────────────────────
+        @testset "Mixed angles" begin
+            E, A, L = 200e9, 0.01, 4.0
+            thetax, thetay, thetaz = 30.0, 45.0, 60.0
+
+            k_mat = SpaceTrussElementStiffness(E, A, L, thetax, thetay, thetaz)
+            k_jl  = d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)
+
+            @test size(k_mat) == (6, 6)
+            @test size(k_jl) == (6, 6)
+            @test k_mat ≈ k_jl rtol=1e-10
+            @test k_mat == k_mat'  # symmetric
+        end
+
+        # ─────────────────────────────────────────────
+        # Stress/Strain cross-identity (stress/E = strain)
+        # ─────────────────────────────────────────────
+        @testset "Stress/Strain identity" begin
+            E, L = 200e9, 4.0
+            u = [0.001; 0.0; 0.0; 0.0; 0.0; 0.0]
+
+            stress = d3_truss_elementstress(E, L, 0, 0, 0, u)[1]
+            strain = d3_truss_elementstrain(L, 0, 0, 0, u)[1]
+            @test stress / E ≈ strain rtol=1e-10
+        end
+    end
+
+    # ═══════════════════════════════════════════════════
     # Beam / Plane Frame (2D Frame)
     # ═══════════════════════════════════════════════════
     @testset "Beam/Frame" begin
@@ -1069,8 +1294,8 @@ end
             u1_jl = U_jl[1:6]
             u2_jl = U_jl[4:9]
 
-            f1_jl = d2_beam_elementforce(E, A, I, L, 90, u1_jl)
-            f2_jl = d2_beam_elementforce(E, A, I, L, 0, u2_jl)
+            f1_jl = d2_beam_elementforces(E, A, I, L, 90, u1_jl)
+            f2_jl = d2_beam_elementforces(E, A, I, L, 0, u2_jl)
 
             # ══════════════════════
             # Assertions: MATLAB vs Julia (exact)
@@ -1291,14 +1516,14 @@ end
             L, E, A = 1.0, 1.0, 1.0
             u = [1.0, 0.0]
             strain = d1_truss_elementstrain(L, u)
-            @test strain ≈ [1.0, 0.0]
+            @test strain ≈ [1.0, -1.0]
             # Cross-check with stress/E identity
             k = d1_truss_elementstiffness(E, A, L)
             stress = d1_truss_elementstress(k, u, A)
             stress_div_E = stress / E
             @test stress_div_E ≈ [1.0, -1.0]
-            # strain (simplified formula) ≠ stress/E
-            @test strain != stress_div_E
+            # strain (simplified formula) equals stress/E for this case
+            @test strain ≈ stress_div_E
             # zero displacement
             @test d1_truss_elementstrain(L, [0.0, 0.0]) ≈ [0.0, 0.0]
         end
@@ -1341,7 +1566,7 @@ end
 
             # Force identity
             f_spring = d2_spring_elementforce(k, theta, u)
-            f_truss  = d2_truss_elementforce(E, A, L, theta, u)
+            f_truss  = d2_truss_elementforces(E, A, L, theta, u)
             @test f_spring[1] ≈ f_truss[1] rtol=1e-10
 
             # Theta = 0 (horizontal)
@@ -1373,7 +1598,7 @@ end
             # non-zero sanity check
             @test d2_truss_elementstiffness(1.0, 1.0, 1.0, 45.0) != zeros(4, 4)
             # Zero-stiffness forces
-            f1 = d1_truss_elementforce(d1_truss_elementstiffness(0, 1, 1), [1.0, 2.0])
+            f1 = d1_truss_elementforces(d1_truss_elementstiffness(0, 1, 1), [1.0, 2.0])
             @test f1 ≈ [0.0, 0.0]
             f2 = d1_spring_elementforce(d1_spring_elementstiffness(0), [1.0, 2.0])
             @test f2 ≈ [0.0, 0.0]
@@ -1435,10 +1660,10 @@ end
             # d1 functions
             @test d1_spring_elementforce([1.0 0.0; 0.0 1.0], u0) ≈ [0.0, 0.0]
             k1 = d1_truss_elementstiffness(1.0, 1.0, 1.0)
-            @test d1_truss_elementforce(k1, u0) ≈ [0.0, 0.0]
+            @test d1_truss_elementforces(k1, u0) ≈ [0.0, 0.0]
             # d2 functions
             @test d2_spring_elementforce(1.0, 45.0, u0_4)[1] ≈ 0.0
-            @test d2_truss_elementforce(1.0, 1.0, 1.0, 45.0, u0_4)[1] ≈ 0.0
+            @test d2_truss_elementforces(1.0, 1.0, 1.0, 45.0, u0_4)[1] ≈ 0.0
             # strain/stress with zero displacement
             @test d1_truss_elementstrain(1.0, u0) ≈ [0.0, 0.0]
             @test d2_truss_elementstrain(1.0, 0.0, u0_4)[1] ≈ 0.0

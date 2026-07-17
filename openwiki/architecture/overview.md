@@ -2,43 +2,39 @@
 
 ## Module Structure
 
-LibFEM.jl is a single-module library — all code lives in one file: `src/LibFEM.jl` (~1155 lines).
+LibFEM.jl is a single-module library with multi-file source organization. The module `src/LibFEM.jl` uses `include()` to compose files in `src/`:
+
+| File | Contents |
+|------|----------|
+| `src/LibFEM.jl` | Module declaration, `include()` directives, `export` statements |
+| `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
+| `src/errors.jl` | Custom error type definitions |
+| `src/utils.jl` | `deg2rad` and shared helpers |
+| `src/assembly.jl` | `_assemble!` private helper |
+| `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
+| `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
+| `src/beam.jl` | All `d2_beam_*` and `d3_beam_*` implementations |
+| `src/plot.jl` | Beam diagram functions (Plots dependency) |
 
 ```julia
 module LibFEM
 using Plots
 
-# ═══════════════════════════════════════════════════════════
-# Utility
-# ═══════════════════════════════════════════════════════════
+# includes (types/errors/utils first, then element families)
+include("types.jl")
+include("errors.jl")
+include("utils.jl")
+include("assembly.jl")
+include("spring.jl")
+include("truss.jl")
+include("beam.jl")
+include("plot.jl")
 
-deg2rad(theta::Real)           # degrees → radians (EXPORTED)
-_assemble!(K, k, i, j, dofs)  # private assembly helper
-
-# ═══════════════════════════════════════════════════════════
-# 1-D elements (1 DOF/node) ──────────────────
-# ═══════════════════════════════════════════════════════════
-d1_spring_*              # Spring
-d1_truss_*               # Linear bar / 1D truss
-
-# ═══════════════════════════════════════════════════════════
-# 2-D elements ─────────────────────────────────
-# ═══════════════════════════════════════════════════════════
-d2_spring_*              # Spring (2 DOF/node)
-d2_truss_*               # Plane truss (2 DOF/node)
-d2_beam_*                # Plane beam/frame (3 DOF/node)
-
-# ═══════════════════════════════════════════════════════════
-# 3-D elements ─────────────────────────────────
-# ═══════════════════════════════════════════════════════════
-d3_spring_*              # Spring (3 DOF/node)
-d3_truss_*               # Space truss (3 DOF/node)
-d3_beam_*                # Space frame / 3D beam (6 DOF/node)
-
-end # module
+# grouped exports follow...
+end
 ```
 
-**Exports**: All public functions are exported in grouped blocks after their respective element-type sections. `deg2rad` is now exported for external use (was previously private). The helper `_assemble!` and `_d3_beam_kprime` remain private (underscore prefix, not exported).
+**Exports**: All public functions are exported in grouped blocks. `deg2rad` is exported for external use. The helpers `_assemble!` and `_d3_beam_kprime` remain private (underscore prefix, not exported).
 
 ## Naming Convention
 
@@ -110,19 +106,22 @@ deg2rad(theta::Real) = theta * pi / 180
 
 ## Assembly Helper (`_assemble!`)
 
-Since [the refactor](assembly-helper-refactor.md) (2026-07-15), all 7 public `*_assemble` functions delegate to one private helper:
+All 7 public `*_assemble` functions delegate to one private helper:
 
 ```julia
-function _assemble!(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer, dofs::Integer)
-    ii = (dofs * (i - 1) + 1):(dofs * i)
-    jj = (dofs * (j - 1) + 1):(dofs * j)
-    K[ii, ii] .+= k[1:dofs, 1:dofs]
-    K[ii, jj] .+= k[1:dofs, (dofs + 1):(2 * dofs)]
-    K[jj, ii] .+= k[(dofs + 1):(2 * dofs), 1:dofs]
-    K[jj, jj] .+= k[(dofs + 1):(2 * dofs), (dofs + 1):(2 * dofs)]
+function _assemble!(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer, ndofs::Integer)
+    dofs = ndofs
+    @views begin
+        K[(i - 1) * dofs + 1:i * dofs, (i - 1) * dofs + 1:i * dofs] += k[1:dofs, 1:dofs]
+        K[(i - 1) * dofs + 1:i * dofs, (j - 1) * dofs + 1:j * dofs] += k[1:dofs, dofs + 1:2 * dofs]
+        K[(j - 1) * dofs + 1:j * dofs, (i - 1) * dofs + 1:i * dofs] += k[dofs + 1:2 * dofs, 1:dofs]
+        K[(j - 1) * dofs + 1:j * dofs, (j - 1) * dofs + 1:j * dofs] += k[dofs + 1:2 * dofs, dofs + 1:2 * dofs]
+    end
     return K
 end
 ```
+
+This maps 4 element-level blocks (ii, jj, ii→jj, jj→ii) to the global stiffness matrix using block indices based on `dofs`. Uses `@views` for efficient slice operations. Works for any DOF count:
 
 This maps 4 element-level blocks (ii, jj, ii→jj, jj→ii) to the global stiffness matrix using block indices based on `dofs`. It works for any DOF count:
 
@@ -145,8 +144,8 @@ The helper is private (underscore prefix, not exported). Adding new element type
 ### 1D Truss (`d1_truss`)
 - `d1_truss_elementstiffness(E, A, L)` — 2×2 matrix (validates `L > 0`, `A > 0`)
 - `d1_truss_assemble(K, k, i, j)` — DOF mapping: 1
-- `d1_truss_elementforce(k, u)` — 2-element vector
-- `d1_truss_elementstress(k, u, A)` — stress at nodes
+- `d1_truss_elementforces(Ke, u)` — 2-element vector
+- `d1_truss_elementstress(Ke, u, A)` — stress at nodes
 - `d1_truss_elementstrain(L, u)` — strain at nodes (validates `L > 0`)
 
 ### 2D Spring (`d2_spring`)
@@ -157,7 +156,7 @@ The helper is private (underscore prefix, not exported). Adding new element type
 ### 2D Truss (`d2_truss`)
 - `d2_truss_elementstiffness(E, A, L, theta)` — 4×4 matrix (validates `L > 0`)
 - `d2_truss_assemble(K, k, i, j)` — DOF mapping: 2
-- `d2_truss_elementforce(E, A, L, theta, u)` — scalar force
+- `d2_truss_elementforces(E, A, L, theta, u)` — scalar force
 - `d2_truss_elementstress(E, L, theta, u)` — scalar stress
 - `d2_truss_elementstrain(L, theta, u)` — scalar strain (validates `L > 0`)
 - `d2_truss_elementlength(x1, y1, x2, y2)` — element length
@@ -165,7 +164,7 @@ The helper is private (underscore prefix, not exported). Adding new element type
 ### 2D Beam (`d2_beam`)
 - `d2_beam_elementstiffness(E, A, I, L, theta)` — 6×6 matrix (validates `L > 0`)
 - `d2_beam_assemble(K, k, i, j)` — DOF mapping: 3
-- `d2_beam_elementforce(E, A, I, L, theta, u)` — 6-element vector
+- `d2_beam_elementforces(E, A, I, L, theta, u)` — 6-element vector
 - `d2_beam_elementlength(x1, y1, x2, y2)` — element length
 - `d2_beam_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
 - `d2_beam_elementmomentdiagram(f, L)` — Plots.jl bending moment diagram
@@ -179,7 +178,7 @@ The helper is private (underscore prefix, not exported). Adding new element type
 ### 3D Truss (`d3_truss`)
 - `d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)` — 6×6 matrix (validates `L > 0`)
 - `d3_truss_assemble(K, k, i, j)` — DOF mapping: 3
-- `d3_truss_elementforce(E, A, L, thetax, thetay, thetaz, u)` — scalar force
+- `d3_truss_elementforces(E, A, L, thetax, thetay, thetaz, u)` — scalar force
 - `d3_truss_elementstress(E, L, thetax, thetay, thetaz, u)` — scalar stress
 - `d3_truss_elementstrain(L, thetax, thetay, thetaz, u)` — scalar strain (validates `L > 0`)
 - `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)` — element length
@@ -201,7 +200,7 @@ The helper is private (underscore prefix, not exported). Adding new element type
 ## Dependencies & Runtime Notes
 
 - **`Plots.jl`** v1 — used by all beam diagram functions (`d2_beam_*` and `d3_beam_*`). Required in `Project.toml`.
-- **`using Plots`** is declared at module level in `src/LibFEM.jl`.
+- **`using Plots`** is declared at module level in `src/LibFEM.jl` (though the diagram functions are in `src/plot.jl`).
 - **`deg2rad` is now exported** — users can call `LibFEM.deg2rad(theta)` for degree-to-radian conversion.
 - **No `ModelingToolkit`** — listed as a dependency in `CLAUDE.md`'s older version note, but the `Project.toml` has been updated to `Plots` only. The scripts in `scripts/` use MTK independently.
 
@@ -239,7 +238,5 @@ Key invariants to maintain:
 ## Known Issues
 
 See `ToDo.md` for full list. Notable items:
-- Docstring typos (lines 105-107, ~673 in `src/LibFEM.jl`)
-- Double space in an export statement (line 319)
 - No boundary condition or solver functions yet (users must solve `K·U = F` themselves)
 - `Project.toml` has `[extras]`/`[targets]` for `BenchmarkTools` (test-only), but `Test` stdlib is not declared there

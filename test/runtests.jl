@@ -43,6 +43,16 @@ using Test
             @test d1_spring_elementforce(Ke, u_rb) ≈ [0.0; 0.0]
         end
 
+        @testset "elementstress" begin
+            k = 1000.0
+            Ke = d1_spring_elementstiffness(k)
+            u = [0.01; 0.0]
+            sigma = d1_spring_elementstress(Ke, u)
+            @test sigma ≈ [10.0; -10.0]  # same as elementforce for spring
+            # zero displacement → zero stress
+            @test d1_spring_elementstress(Ke, [0.0; 0.0]) ≈ [0.0; 0.0]
+        end
+
         @testset "assemble" begin
             K = zeros(2, 2)
             k = [1000 -1000; -1000 1000]
@@ -57,6 +67,22 @@ using Test
             @test K4[1:2, 1:2] ≈ [100 -100; -100 300]
             @test K4[2:3, 2:3] ≈ [300 -200; -200 200]
             @test K4[4, :] == zeros(4)
+        end
+
+        @testset "L>0 error paths" begin
+            # d1_spring_elementstiffness doesn't validate L (no L parameter)
+            # d1_spring_elementstress doesn't validate L (no L parameter)
+            # No L>0 checks needed for spring elements
+        end
+
+        @testset "negative/zero parameter behavior" begin
+            # Zero stiffness → zero matrix
+            @test d1_spring_elementstiffness(0) == zeros(2, 2)
+            # Negative stiffness → negated matrix
+            @test d1_spring_elementstiffness(-100) == -100 * [1 -1; -1 1]
+            # Negative stiffness force
+            Ke_neg = d1_spring_elementstiffness(-100)
+            @test d1_spring_elementforce(Ke_neg, [0.01; 0.0]) ≈ [-1.0; 1.0]
         end
     end
 
@@ -73,14 +99,14 @@ using Test
             @test Ke == Ke'
         end
 
-        @testset "elementforce" begin
+        @testset "elementforces" begin
             E, A, L = 200e9, 0.01, 4.0
             Ke = d1_truss_elementstiffness(E, A, L)
             u = [0.001; 0.0]
-            f = d1_truss_elementforce(Ke, u)
+            f = d1_truss_elementforces(Ke, u)
             @test f ≈ [500000.0; -500000.0]
             # zero displacement
-            @test d1_truss_elementforce(Ke, [0.0; 0.0]) ≈ [0.0; 0.0]
+            @test d1_truss_elementforces(Ke, [0.0; 0.0]) ≈ [0.0; 0.0]
         end
 
         @testset "elementstress" begin
@@ -94,7 +120,7 @@ using Test
             L = 4.0
             u = [0.001; 0.0]
             eps = d1_truss_elementstrain(L, u)
-            @test eps ≈ [2.5e-4; 0.0]
+            @test eps ≈ [2.5e-4; -2.5e-4]
             # zero displacement
             @test d1_truss_elementstrain(L, [0.0; 0.0]) ≈ [0.0; 0.0]
         end
@@ -105,6 +131,24 @@ using Test
             K = d1_truss_assemble(K, k, 1, 2)
             @test K == k
             @test size(K) == (2, 2)
+        end
+
+        @testset "L>0 error paths" begin
+            @test_throws ElementParameterError d1_truss_elementstiffness(1.0, 1.0, 0.0)
+            @test_throws ElementParameterError d1_truss_elementstiffness(1.0, 1.0, -1.0)
+            @test_throws ElementParameterError d1_truss_elementstrain(0.0, [1.0; 0.0])
+            @test_throws ElementParameterError d1_truss_elementstrain(-1.0, [1.0; 0.0])
+        end
+
+        @testset "negative/zero parameter behavior" begin
+            # Zero area → zero matrix
+            @test d1_truss_elementstiffness(1.0, 0.0, 1.0) == zeros(2, 2)
+            # Negative area → negated matrix
+            @test d1_truss_elementstiffness(1.0, -1.0, 1.0) == -[1 -1; -1 1]
+            # Zero modulus → zero matrix
+            @test d1_truss_elementstiffness(0.0, 1.0, 1.0) == zeros(2, 2)
+            # Negative modulus → negated matrix
+            @test d1_truss_elementstiffness(-1.0, 1.0, 1.0) == -[1 -1; -1 1]
         end
     end
 
@@ -135,11 +179,11 @@ using Test
             @test Ke[6, 6] ≈ 4.0
         end
 
-        @testset "elementforce" begin
+        @testset "elementforces" begin
             # Simple: E=1, A=1, I=1, L=1, theta=0
             # u has only axial displacement at node 2
             u = [0.0, 0.0, 0.0, 0.001, 0.0, 0.0]
-            f = d2_beam_elementforce(1, 1, 1, 1, 0, u)
+            f = d2_beam_elementforces(1, 1, 1, 1, 0, u)
             @test length(f) == 6
             @test f[1] ≈ -0.001  # axial force = -EA/L * u_x2
             @test f[4] ≈ 0.001
@@ -148,7 +192,7 @@ using Test
             @test f[5] ≈ 0.0
             @test f[6] ≈ 0.0
             # zero displacement
-            @test d2_beam_elementforce(1, 1, 1, 1, 0, zeros(6)) ≈ zeros(6)
+            @test d2_beam_elementforces(1, 1, 1, 1, 0, zeros(6)) ≈ zeros(6)
         end
 
         @testset "elementaxialdiagram" begin
@@ -186,6 +230,22 @@ using Test
             @test K9[1:3, 4:6] == ke[1:3, 4:6]
             @test K9[4:6, 1:3] == ke[4:6, 1:3]
             @test K9[4:6, 4:6] == ke[4:6, 4:6]
+        end
+
+        @testset "L>0 error paths" begin
+            @test_throws ElementParameterError d2_beam_elementstiffness(1.0, 1.0, 1.0, 0.0, 0.0)
+            @test_throws ElementParameterError d2_beam_elementstiffness(1.0, 1.0, 1.0, -1.0, 0.0)
+        end
+
+        @testset "negative/zero parameter behavior" begin
+            # Zero area → zero matrix (axial part)
+            Ke = d2_beam_elementstiffness(1.0, 0.0, 1.0, 1.0, 0.0)
+            @test Ke[1, 1] == 0.0
+            @test Ke[1, 4] == 0.0
+            # Negative area → negated axial part
+            Ke_neg = d2_beam_elementstiffness(1.0, -1.0, 1.0, 1.0, 0.0)
+            @test Ke_neg[1, 1] == -1.0
+            @test Ke_neg[1, 4] == 1.0
         end
     end
 
@@ -229,6 +289,17 @@ using Test
             @test K[3:4, 1:2] == k[3:4, 1:2]
             @test K[3:4, 3:4] == k[3:4, 3:4]
         end
+
+        @testset "L>0 error paths" begin
+            # d2_spring doesn't have L parameter
+        end
+
+        @testset "negative/zero parameter behavior" begin
+            # Zero stiffness → zero matrix
+            @test d2_spring_elementstiffness(0, 30) == zeros(4, 4)
+            # Negative stiffness → negated matrix
+            @test d2_spring_elementstiffness(-100, 0) == -100 * [1 0 -1 0; 0 0 0 0; -1 0 1 0; 0 0 0 0]
+        end
     end
 
     # ─────────────────────────────────────────────────
@@ -263,15 +334,15 @@ using Test
             @test Ke0 ≈ EAoL * [1 0 -1 0; 0 0 0 0; -1 0 1 0; 0 0 0 0]
         end
 
-        @testset "elementforce" begin
+        @testset "elementforces" begin
             E, A, L = 1.0, 1.0, 1.0
             theta = 30.0
             C = cos(π / 6)
             u = [1.0; 0.0; 0.0; 0.0]
-            f = d2_truss_elementforce(E, A, L, theta, u)  # returns 1-element Vector
+            f = d2_truss_elementforces(E, A, L, theta, u)  # returns 1-element Vector
             @test f[1] ≈ -C  # -EA/L * C
             # zero displacement
-            @test d2_truss_elementforce(E, A, L, theta, zeros(4))[1] ≈ 0.0
+            @test d2_truss_elementforces(E, A, L, theta, zeros(4))[1] ≈ 0.0
         end
 
         @testset "elementstrain" begin
@@ -299,6 +370,30 @@ using Test
             @test K[1:2, 3:4] == k[1:2, 3:4]
             @test K[3:4, 1:2] == k[3:4, 1:2]
             @test K[3:4, 3:4] == k[3:4, 3:4]
+        end
+
+        @testset "L>0 error paths" begin
+            @test_throws ElementParameterError d2_truss_elementstiffness(1.0, 1.0, 0.0, 0.0)
+            @test_throws ElementParameterError d2_truss_elementstiffness(1.0, 1.0, -1.0, 0.0)
+            @test_throws ElementParameterError d2_truss_elementforces(1.0, 1.0, 0.0, 0.0, [1.0;0.0;0.0;0.0])
+            @test_throws ElementParameterError d2_truss_elementforces(1.0, 1.0, -1.0, 0.0, [1.0;0.0;0.0;0.0])
+            @test_throws ElementParameterError d2_truss_elementstrain(0.0, 0.0, [1.0;0.0;0.0;0.0])
+            @test_throws ElementParameterError d2_truss_elementstrain(-1.0, 0.0, [1.0;0.0;0.0;0.0])
+            @test_throws ElementParameterError d2_truss_elementstress(1.0, 0.0, 0.0, [1.0;0.0;0.0;0.0])
+            @test_throws ElementParameterError d2_truss_elementstress(1.0, -1.0, 0.0, [1.0;0.0;0.0;0.0])
+        end
+
+        @testset "negative/zero parameter behavior" begin
+            # Zero area → zero matrix
+            @test d2_truss_elementstiffness(1.0, 0.0, 1.0, 0.0) == zeros(4, 4)
+            # Negative area → negated matrix
+            C = cos(0); S = sin(0)
+            expected = [C*C C*S -C*C -C*S; C*S S*S -C*S -S*S; -C*C -C*S C*C C*S; -C*S -S*S C*S S*S]
+            @test d2_truss_elementstiffness(1.0, -1.0, 1.0, 0.0) == -expected
+            # Zero modulus → zero matrix
+            @test d2_truss_elementstiffness(0.0, 1.0, 1.0, 0.0) == zeros(4, 4)
+            # Negative modulus → negated matrix
+            @test d2_truss_elementstiffness(-1.0, 1.0, 1.0, 0.0) == -expected
         end
     end
 
@@ -339,6 +434,14 @@ using Test
             @test K[4:6, 1:3] == k[4:6, 1:3]
             @test K[4:6, 4:6] == k[4:6, 4:6]
         end
+
+        @testset "negative/zero parameter behavior" begin
+            # Zero stiffness → zero matrix
+            @test d3_spring_elementstiffness(0, 0, 0, 0) == zeros(6, 6)
+            # Negative stiffness → negated matrix
+            w_ones = ones(3, 3)
+            @test d3_spring_elementstiffness(-1000, 0, 0, 0) == -1000 * [w_ones -w_ones; -w_ones w_ones]
+        end
     end
 
     # ─────────────────────────────────────────────────
@@ -365,13 +468,13 @@ using Test
             @test Ke2 ≈ [w2 -w2; -w2 w2]
         end
 
-        @testset "elementforce" begin
+        @testset "elementforces" begin
             E, A, L = 1.0, 1.0, 1.0
             u = [1.0; 0.0; 0.0; 0.0; 0.0; 0.0]
-            f = d3_truss_elementforce(E, A, L, 0, 0, 0, u)
+            f = d3_truss_elementforces(E, A, L, 0, 0, 0, u)
             @test f[1] ≈ -1.0
             # zero displacement
-            @test d3_truss_elementforce(E, A, L, 0, 0, 0, zeros(6))[1] ≈ 0.0
+            @test d3_truss_elementforces(E, A, L, 0, 0, 0, zeros(6))[1] ≈ 0.0
         end
 
         @testset "elementstrain" begin
@@ -397,6 +500,28 @@ using Test
             @test K[1:3, 4:6] == k[1:3, 4:6]
             @test K[4:6, 1:3] == k[4:6, 1:3]
             @test K[4:6, 4:6] == k[4:6, 4:6]
+        end
+
+        @testset "L>0 error paths" begin
+            @test_throws ElementParameterError d3_truss_elementstiffness(1.0, 1.0, 0.0, 0, 0, 0)
+            @test_throws ElementParameterError d3_truss_elementstiffness(1.0, 1.0, -1.0, 0, 0, 0)
+            @test_throws ElementParameterError d3_truss_elementforces(1.0, 1.0, 0.0, 0, 0, 0, [1.0;0.0;0.0;0.0;0.0;0.0])
+            @test_throws ElementParameterError d3_truss_elementforces(1.0, 1.0, -1.0, 0, 0, 0, [1.0;0.0;0.0;0.0;0.0;0.0])
+            @test_throws ElementParameterError d3_truss_elementstrain(0.0, 0, 0, 0, [1.0;0.0;0.0;0.0;0.0;0.0])
+            @test_throws ElementParameterError d3_truss_elementstrain(-1.0, 0, 0, 0, [1.0;0.0;0.0;0.0;0.0;0.0])
+            @test_throws ElementParameterError d3_truss_elementstress(1.0, 0.0, 0, 0, 0, [1.0;0.0;0.0;0.0;0.0;0.0])
+            @test_throws ElementParameterError d3_truss_elementstress(1.0, -1.0, 0, 0, 0, [1.0;0.0;0.0;0.0;0.0;0.0])
+        end
+
+        @testset "negative/zero parameter behavior" begin
+            # Zero area → zero matrix
+            @test d3_truss_elementstiffness(1.0, 0.0, 1.0, 0, 0, 0) == zeros(6, 6)
+            # Negative area → negated matrix
+            @test d3_truss_elementstiffness(1.0, -1.0, 1.0, 0, 0, 0) == -[ones(3,3) -ones(3,3); -ones(3,3) ones(3,3)]
+            # Zero modulus → zero matrix
+            @test d3_truss_elementstiffness(0.0, 1.0, 1.0, 0, 0, 0) == zeros(6, 6)
+            # Negative modulus → negated matrix
+            @test d3_truss_elementstiffness(-1.0, 1.0, 1.0, 0, 0, 0) == -[ones(3,3) -ones(3,3); -ones(3,3) ones(3,3)]
         end
     end
 
@@ -494,8 +619,50 @@ using Test
             @test size(Ke2) == (12, 12)
             @test all(!isnan, Ke2)
         end
+
+        @testset "L>0 error paths" begin
+            @test_throws ElementParameterError d3_beam_elementstiffness(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0,0,0, 0,0,0)
+            @test_throws ElementParameterError d3_beam_elementforces(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0,0,0, 0,0,0, zeros(12))
+        end
+
+        @testset "negative/zero parameter behavior" begin
+            # Zero area → zero axial part
+            Ke = d3_beam_elementstiffness(1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0)
+            @test Ke[1, 1] == 0.0
+            @test Ke[1, 7] == 0.0
+            # Negative area → negated axial part
+            Ke_neg = d3_beam_elementstiffness(1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0)
+            @test Ke_neg[1, 1] == -1.0
+            @test Ke_neg[1, 7] == 1.0
+        end
     end
 
 end  # @testset "LibFEM"
+
+@testset "module loaded and exports accessible" begin
+    @test isdefined(Main, :LibFEM)
+    # Verify key exports are accessible
+    for sym in [
+        :d1_spring_elementstiffness,
+        :d2_spring_elementstiffness,
+        :d3_spring_elementstiffness,
+        :d1_truss_elementstiffness,
+        :d2_truss_elementstiffness,
+        :d3_truss_elementstiffness,
+        :d2_beam_elementstiffness,
+        :d3_beam_elementstiffness,
+        :deg2rad,
+        :AbstractSpring,
+        :Spring,
+        :AbstractTruss,
+        :Truss,
+        :AbstractBeam,
+        :Beam,
+        :ElementDimensionError,
+        :AssemblyError,
+    ]
+        @test isdefined(LibFEM, sym) || error("$sym not exported")
+    end
+end
 
 include("comparison.jl")

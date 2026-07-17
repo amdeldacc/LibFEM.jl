@@ -68,7 +68,7 @@ julia> u = [0.0; K[2:2, 2:2] \ [10.0]; 0.0]
 | `d2_truss_assemble(K, k, i, j)` | Assemble |
 | `d2_beam_elementlength(x1, y1, x2, y2)` | Element length |
 | `d2_beam_elementstiffness(E, A, I, L, theta)` | 6×6 stiffness |
-| `d2_beam_elementforce(E, A, I, L, theta, u)` | 6-element force vector |
+| `d2_beam_elementforces(E, A, I, L, theta, u)` | 6-element force vector |
 | `d2_beam_elementaxialdiagram(f, L)` | Plot axial force diagram |
 | `d2_beam_elementsheardiagram(f, L)` | Plot shear force diagram |
 | `d2_beam_elementmomentdiagram(f, L)` | Plot bending moment diagram |
@@ -127,7 +127,16 @@ Tests include:
 
 ```
 LibFEM.jl/
-├── src/LibFEM.jl          # Single-file module (all element implementations)
+├── src/
+│   ├── LibFEM.jl          # Module declaration + includes + exports
+│   ├── types.jl           # Abstract type hierarchy, element structs
+│   ├── errors.jl          # Custom error types
+│   ├── utils.jl           # deg2rad and shared helpers
+│   ├── assembly.jl        # _assemble! helper
+│   ├── spring.jl          # d1/d2/d3_spring_* implementations
+│   ├── truss.jl           # d1/d2/d3_truss_* implementations
+│   ├── beam.jl            # d2/d3_beam_* implementations
+│   └── plot.jl            # Diagram functions (Plots dependency)
 ├── test/
 │   ├── runtests.jl        # Unit tests
 │   ├── comparison.jl      # MATLAB reference implementations + comparison tests

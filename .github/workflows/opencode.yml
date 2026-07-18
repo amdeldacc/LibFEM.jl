@@ -33,6 +33,7 @@ jobs:
       - name: Configure OpenCode for Ollama Cloud
         run: |
           mkdir -p ~/.config/opencode
+          mkdir -p ~/.local/share/opencode
           python3 - <<'PY'
           import json
           import os

@@ -1,3 +1,10 @@
+---
+type: Quickstart
+title: "LibFEM.jl — Quickstart"
+description: "Educational Finite Element Method library for Julia with springs, trusses, and beams in 1D, 2D, and 3D. Getting started guide, element reference table, core patterns, and worked examples."
+tags: ["quickstart", "getting-started", "fem", "julia"]
+---
+
 # LibFEM.jl — Quickstart
 
 **LibFEM.jl** is an educational Finite Element Method (FEM) library for Julia. It provides element stiffness matrices, assembly functions, force/stress/strain calculations, and diagram plotting for springs, trusses, and beams in 1D, 2D, and 3D.
@@ -120,13 +127,9 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `Doc/Kattan/M-Files/` | Read-only MATLAB reference (80 `.m` files from Kattan) |
 | `Doc/Kattan/Solutions Manual/` | Problem solutions (`.rtf` format) |
 | `Doc/Peter_Kattan_*` | Book PDF and text/Markdown transcriptions |
-| `docs/assembly-helper-refactor.md` | Refactor documentation for `_assemble!` helper |
-| `docs/benchmarking.md` | Benchmarking suite overview and baseline timings |
 | `CONTEXT.md` | Domain glossary: MATLAB→Julia mapping and naming conventions |
 | `AGENTS.md`, `CLAUDE.md` | Agent instructions with constraints and conventions |
-| `ToDo.md` | Known issues, missing features, and refactoring opportunities |
 | `scripts/` | Example scripts using LibFEM and ModelingToolkit |
-| `LibFEM_DS_2020.ipynb` | Jupyter notebook with worked examples |
 
 ## Where to Go Next
 
@@ -138,5 +141,4 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | Area | Source Anchor | Reason Deferred |
 |------|--------------|-----------------|
 | `scripts/` example walkthrough | `/scripts/linear_truss_mtk.jl`, `linear_truss_mtk_2.jl` | Example scripts; interesting but secondary to API docs |
-| `LibFEM_DS_2020.ipynb` notebook | `/LibFEM_DS_2020.ipynb` | Large notebook (84 KB); deferred for future content analysis |
 | Detailed per-MATLAB-file analysis | `/Doc/Kattan/M-Files/` (80 files) | Covered at mapping level; deeper analysis can be added on demand |

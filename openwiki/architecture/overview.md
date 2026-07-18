@@ -1,3 +1,11 @@
+---
+type: Architecture Overview
+title: "Architecture Overview"
+description: "LibFEM.jl module structure, naming conventions, dimension system, assembly helper, function inventory, testing, and extension points"
+tags: ["architecture", "module-structure", "naming-convention", "assembly", "testing"]
+resource: "/home/piou/LibFEM.jl/src"
+---
+
 # Architecture Overview
 
 ## Module Structure
@@ -237,6 +245,6 @@ Key invariants to maintain:
 
 ## Known Issues
 
-See `ToDo.md` for full list. Notable items:
+See the repository's issue tracker for the full list. Notable items:
 - No boundary condition or solver functions yet (users must solve `K·U = F` themselves)
 - `Project.toml` has `[extras]`/`[targets]` for `BenchmarkTools` (test-only), but `Test` stdlib is not declared there

@@ -1,3 +1,11 @@
+---
+type: Reference
+title: "Kattan MATLAB Mapping"
+description: "Mapping between MATLAB reference implementation and LibFEM.jl Julia API for FEM elements - springs, trusses, beams in 1D, 2D, and 3D"
+tags: ["reference", "matlab", "kattan", "mapping", "fem"]
+resource: "/home/piou/LibFEM.jl/Doc/Kattan/M-Files"
+---
+
 # Kattan MATLAB Mapping
 
 This page documents the relationship between the MATLAB reference implementation in `Doc/Kattan/M-Files/` and the LibFEM.jl Julia API.

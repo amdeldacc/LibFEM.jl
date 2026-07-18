@@ -44,9 +44,6 @@ jobs:
                 "models": {
                   "nemotron-3-nano:30b": {
                     "tools": false
-                  },
-                  "mistral-large-3:675b": {
-                    "tools": false
                   }
                 }
               }
@@ -55,6 +52,7 @@ jobs:
           EOF
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          
       - name: Run OpenCode with Ollama Cloud
         uses: anomalyco/opencode/github@latest
         env:

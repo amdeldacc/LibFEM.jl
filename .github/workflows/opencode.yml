@@ -59,6 +59,14 @@ jobs:
               json.dump(config, handle, indent=2)
               handle.write("\n")
           PY
+          cat << 'EOF' > ~/.local/share/opencode/auth.json
+          {
+            "ollama": {
+              "type": "api",
+              "key": "${OLLAMA_API_KEY}"
+            }
+          }
+          EOF
         env:
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 

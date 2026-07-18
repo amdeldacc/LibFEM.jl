@@ -44,7 +44,7 @@ jobs:
                 "models": {
                   "nemotron-3-nano:30b-cloud": {
                     "tools": true
-                  },
+                  }
               }
             }
           }

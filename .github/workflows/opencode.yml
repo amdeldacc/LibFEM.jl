@@ -60,5 +60,5 @@ jobs:
           # Map to whichever env var opencode expects for the adapter you used.
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
         with:
-          model: ollama/mistral-7b
+          model: ollama/nemotron-3-nano:30b
           # share: true

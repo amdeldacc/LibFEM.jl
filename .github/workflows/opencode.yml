@@ -45,10 +45,13 @@ jobs:
                   "nemotron-3-nano:30b-cloud": {
                     "tools": true
                   }
+                }
               }
             }
           }
           EOF
+        env:
+          OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 
       - name: Run OpenCode with Ollama Cloud
         uses: anomalyco/opencode/github@latest

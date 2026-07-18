@@ -31,8 +31,11 @@ jobs:
       - name: Configure OpenCode for Ollama Cloud
         run: |
           mkdir -p ~/.config/opencode
-          cat << 'EOF' > ~/.config/opencode/opencode.json
-          {
+          python3 - <<'PY'
+          import json
+          import os
+
+          config = {
             "$schema": "https://opencode.ai/config.json",
             "provider": {
               "ollama": {
@@ -43,13 +46,17 @@ jobs:
                 },
                 "models": {
                   "nemotron-3-nano:30b-cloud": {
-                    "tools": true
+                    "tools": True
                   }
                 }
               }
             }
           }
-          EOF
+
+          with open(os.path.expanduser("~/.config/opencode/opencode.json"), "w", encoding="utf-8") as handle:
+              json.dump(config, handle, indent=2)
+              handle.write("\n")
+          PY
         env:
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 

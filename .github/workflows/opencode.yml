@@ -69,7 +69,7 @@ jobs:
           }
           EOF
         env:
-          OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 
       - name: Run OpenCode with Ollama Cloud
         uses: anomalyco/opencode/github@latest

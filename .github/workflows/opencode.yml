@@ -42,13 +42,9 @@ jobs:
                   "baseURL": "https://ollama.com/v1"
                 },
                 "models": {
-                  "nemotron-3-nano:30b": {
-                    "tools": false
+                  "nemotron-3-nano:30b-cloud": {
+                    "tools": true
                   },
-                  "mistral-large-3:675b": {
-                    "tools": false
-                  }
-                }
               }
             }
           }
@@ -57,7 +53,7 @@ jobs:
       - name: Run OpenCode with Ollama Cloud
         uses: anomalyco/opencode/github@latest
         with:
-          model: ollama/nemotron-3-nano:30b
+          model: ollama/nemotron-3-nano:30b-cloud
         env:
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}

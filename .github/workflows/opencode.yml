@@ -52,7 +52,7 @@ jobs:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 
       - name: Run OpenCode with Ollama Cloud
-        uses: anomalyco/opencode/github@<PINNED_ACTION_TAG_OR_SHA>
+        uses: anomalyco/opencode/github@v1
         env:
           # Map to whichever env var opencode expects for the adapter you used.
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}

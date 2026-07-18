@@ -6,14 +6,19 @@ on:
   pull_request_review_comment:
     types: [created]
 
+concurrency:
+  group: opencode-ollama-cloud
+  cancel-in-progress: true
+
 jobs:
   opencode:
     if: |
-      contains(github.event.comment.body, '/oc') ||
-      contains(github.event.comment.body, '/opencode')
+      (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode')) &&
+      (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
+      contents: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -32,11 +37,11 @@ jobs:
                 "npm": "@ai-sdk/openai-compatible",
                 "name": "Ollama Cloud",
                 "options": {
-                  "baseURL": "https://api.ollama-cloud.example/v1"
+                  "baseURL": "https://ollama.com/v1"
                 },
                 "models": {
-                  "llama3.1-70b": {
-                    "tools": true
+                  "MODEL_KEY": {
+                    "tools": false
                   }
                 }
               }
@@ -44,17 +49,13 @@ jobs:
           }
           EOF
         env:
-          # Selon la façon dont le client OpenCode passe la clé à l'API,
-          # adapte cette variable (OPENAI_API_KEY, OLLAMA_API_KEY, etc.).
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 
       - name: Run OpenCode with Ollama Cloud
-        uses: anomalyco/opencode/github@latest
+        uses: anomalyco/opencode/github@<PINNED_ACTION_TAG_OR_SHA>
         env:
-          # Si OpenCode attend OPENAI_API_KEY pour un provider OpenAI-compatible,
-          # tu peux mapper ta clé Ollama Cloud ici :
+          # Map to whichever env var opencode expects for the adapter you used.
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
         with:
-          model: ollama/llama3.1-70b
+          model: ollama/MODEL_KEY
           # share: true
-          # github_token: ${{ secrets.GITHUB_TOKEN }}

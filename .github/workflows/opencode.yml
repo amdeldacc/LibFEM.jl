@@ -52,12 +52,13 @@ jobs:
           EOF
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
-          
+
       - name: Run OpenCode with Ollama Cloud
         uses: anomalyco/opencode/github@latest
         env:
-          # Map to whichever env var opencode expects for the adapter you used.
+          # OpenCode expects OPENAI_API_KEY for Ollama Cloud
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          # Also set for the ai-sdk configuration
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
         with:
           model: ollama/nemotron-3-nano:30b
-          # share: true

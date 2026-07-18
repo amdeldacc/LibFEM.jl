@@ -58,4 +58,6 @@ jobs:
         uses: anomalyco/opencode/github@latest
         with:
           model: ollama/nemotron-3-nano:30b
-          api-key: ${{ secrets.OLLAMA_API_KEY }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}

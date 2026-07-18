@@ -57,5 +57,5 @@ jobs:
           # Map to whichever env var opencode expects for the adapter you used.
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
         with:
-          model: ollama/neural_chat
+          model: ollama/mistral
           # share: true

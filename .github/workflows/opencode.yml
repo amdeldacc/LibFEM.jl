@@ -40,7 +40,7 @@ jobs:
                   "baseURL": "https://ollama.com/v1"
                 },
                 "models": {
-                  "MODEL_KEY": {
+                  "mistral": {
                     "tools": false
                   }
                 }
@@ -57,5 +57,5 @@ jobs:
           # Map to whichever env var opencode expects for the adapter you used.
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
         with:
-          model: ollama/MODEL_KEY
+          model: ollama/mistral
           # share: true

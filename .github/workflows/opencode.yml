@@ -31,19 +31,21 @@ jobs:
       - name: Configure OpenCode for Ollama Cloud
         run: |
           mkdir -p ~/.config/opencode
-          cat << EOF > ~/.config/opencode/opencode.json
+          cat << 'EOF' > ~/.config/opencode/opencode.json
           {
-            "\$schema": "https://opencode.ai/config.json",
+            "$schema": "https://opencode.ai/config.json",
             "provider": {
               "ollama": {
                 "npm": "@ai-sdk/openai-compatible",
                 "name": "Ollama Cloud",
                 "options": {
-                  "baseURL": "https://ollama.com/v1",
-                  "apiKey": "$OLLAMA_API_KEY"
+                  "baseURL": "https://ollama.com/v1"
                 },
                 "models": {
-                  "mistral": {
+                  "nemotron-3-nano:30b": {
+                    "tools": false
+                  },
+                  "mistral-large-3:675b": {
                     "tools": false
                   }
                 }
@@ -53,12 +55,11 @@ jobs:
           EOF
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
-
       - name: Run OpenCode with Ollama Cloud
         uses: anomalyco/opencode/github@latest
         env:
           # Map to whichever env var opencode expects for the adapter you used.
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
         with:
-          model: nemotron-3-nano:30b
+          model: ollama/nemotron-3-nano:30b
           # share: true

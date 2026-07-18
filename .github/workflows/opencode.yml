@@ -20,6 +20,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
@@ -67,3 +69,4 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

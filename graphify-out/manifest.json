@@ -1,0 +1,537 @@
+{
+  ".opencode/plugins/graphify.js": {
+    "mtime": 1784466266.1939797,
+    "ast_hash": "3ea725724bc8ebe483c9f13d6aa1124f",
+    "semantic_hash": "3ea725724bc8ebe483c9f13d6aa1124f"
+  },
+  ".opencode/skills/caveman-compress/scripts/__init__.py": {
+    "mtime": 1784466266.1945112,
+    "ast_hash": "4bfea67395a7ba04f363df51355d1ef8",
+    "semantic_hash": "4bfea67395a7ba04f363df51355d1ef8"
+  },
+  ".opencode/skills/caveman-compress/scripts/__main__.py": {
+    "mtime": 1784466266.1947486,
+    "ast_hash": "746aff14c3a098a28fe9d01d54f174a9",
+    "semantic_hash": "746aff14c3a098a28fe9d01d54f174a9"
+  },
+  ".opencode/skills/caveman-compress/scripts/benchmark.py": {
+    "mtime": 1784466266.1947486,
+    "ast_hash": "b4a8fd8070777a15f1f183d7c9992dcd",
+    "semantic_hash": "b4a8fd8070777a15f1f183d7c9992dcd"
+  },
+  ".opencode/skills/caveman-compress/scripts/cli.py": {
+    "mtime": 1784466266.1947486,
+    "ast_hash": "993604200cad4bb12bdb2efcdb45fcf5",
+    "semantic_hash": "993604200cad4bb12bdb2efcdb45fcf5"
+  },
+  ".opencode/skills/caveman-compress/scripts/compress.py": {
+    "mtime": 1784466266.1949797,
+    "ast_hash": "3ba8e48116e0a534d997f40e2da7f241",
+    "semantic_hash": "3ba8e48116e0a534d997f40e2da7f241"
+  },
+  ".opencode/skills/caveman-compress/scripts/detect.py": {
+    "mtime": 1784466266.1949797,
+    "ast_hash": "b0fe8099be4fae2bade0de8253c950f1",
+    "semantic_hash": "b0fe8099be4fae2bade0de8253c950f1"
+  },
+  ".opencode/skills/caveman-compress/scripts/validate.py": {
+    "mtime": 1784466266.1949797,
+    "ast_hash": "b4f283bc53e5d352fb0120827fd4fafa",
+    "semantic_hash": "b4f283bc53e5d352fb0120827fd4fafa"
+  },
+  "Doc/Kattan/M-Files/BeamAssemble.m": {
+    "mtime": 1784466266.1974916,
+    "ast_hash": "7d1af9de45e8648ac76cfc19c03a1875",
+    "semantic_hash": "7d1af9de45e8648ac76cfc19c03a1875"
+  },
+  "Doc/Kattan/M-Files/BeamElementForces.m": {
+    "mtime": 1784466266.1975505,
+    "ast_hash": "2f3c74282a1cc8c146e7116c112fcb04",
+    "semantic_hash": "2f3c74282a1cc8c146e7116c112fcb04"
+  },
+  "Doc/Kattan/M-Files/BeamElementMomentDiagram.m": {
+    "mtime": 1784466266.1975505,
+    "ast_hash": "85a60aad0b24e7df53485be9f97838ce",
+    "semantic_hash": "85a60aad0b24e7df53485be9f97838ce"
+  },
+  "Doc/Kattan/M-Files/BeamElementShearDiagram.m": {
+    "mtime": 1784466266.1975505,
+    "ast_hash": "6fd4ed4716c8f819a3884222b4b4d853",
+    "semantic_hash": "6fd4ed4716c8f819a3884222b4b4d853"
+  },
+  "Doc/Kattan/M-Files/BeamElementStiffness.m": {
+    "mtime": 1784466266.1975505,
+    "ast_hash": "c10ba995510f8c9fd51111072673ea36",
+    "semantic_hash": "c10ba995510f8c9fd51111072673ea36"
+  },
+  "Doc/Kattan/M-Files/BilinearQuadAssemble.m": {
+    "mtime": 1784466266.1975505,
+    "ast_hash": "22b774c1a96a79bb376a091ba20cd512",
+    "semantic_hash": "22b774c1a96a79bb376a091ba20cd512"
+  },
+  "Doc/Kattan/M-Files/BilinearQuadElementArea.m": {
+    "mtime": 1784466266.1975505,
+    "ast_hash": "bf175d516ea98577eafa4458fee2e205",
+    "semantic_hash": "bf175d516ea98577eafa4458fee2e205"
+  },
+  "Doc/Kattan/M-Files/BilinearQuadElementPStresses.m": {
+    "mtime": 1784466266.1975505,
+    "ast_hash": "1c573406b75ddec8b4fbc823c229da3f",
+    "semantic_hash": "1c573406b75ddec8b4fbc823c229da3f"
+  },
+  "Doc/Kattan/M-Files/BilinearQuadElementStiffness.m": {
+    "mtime": 1784466266.1975505,
+    "ast_hash": "a7005585d1b8d0e07604792a9125f427",
+    "semantic_hash": "a7005585d1b8d0e07604792a9125f427"
+  },
+  "Doc/Kattan/M-Files/BilinearQuadElementStiffness2.m": {
+    "mtime": 1784466266.1975505,
+    "ast_hash": "e92a3fd0f6a7aba5fce8cf974cd9a560",
+    "semantic_hash": "e92a3fd0f6a7aba5fce8cf974cd9a560"
+  },
+  "Doc/Kattan/M-Files/BilinearQuadElementStresses.m": {
+    "mtime": 1784466266.1975505,
+    "ast_hash": "f5410a6aeb865dea304bc6314ef71bb2",
+    "semantic_hash": "f5410a6aeb865dea304bc6314ef71bb2"
+  },
+  "Doc/Kattan/M-Files/FluidFlow1DAssemble.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "53d3a2a60398d8ee01e4fcc7bd5c6f4b",
+    "semantic_hash": "53d3a2a60398d8ee01e4fcc7bd5c6f4b"
+  },
+  "Doc/Kattan/M-Files/FluidFlow1DElementStiffness.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "cbce7849f1598024e1e852a4cbbf5653",
+    "semantic_hash": "cbce7849f1598024e1e852a4cbbf5653"
+  },
+  "Doc/Kattan/M-Files/FluidFlow1DElementVFR.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "94e2e53c1650b09dda933f7ead5806ee",
+    "semantic_hash": "94e2e53c1650b09dda933f7ead5806ee"
+  },
+  "Doc/Kattan/M-Files/FluidFlow1DElementVelocities.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "92b701a08bbc6ef0a886a5e02ba399cd",
+    "semantic_hash": "92b701a08bbc6ef0a886a5e02ba399cd"
+  },
+  "Doc/Kattan/M-Files/GridAssemble.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "42bc62997337f331dd3814748e22b62d",
+    "semantic_hash": "42bc62997337f331dd3814748e22b62d"
+  },
+  "Doc/Kattan/M-Files/GridElementForces.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "2e95215218dba57bd003bed4bb548e18",
+    "semantic_hash": "2e95215218dba57bd003bed4bb548e18"
+  },
+  "Doc/Kattan/M-Files/GridElementLength.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "5f6386d21d79f18dd6f31e98b1e85757",
+    "semantic_hash": "5f6386d21d79f18dd6f31e98b1e85757"
+  },
+  "Doc/Kattan/M-Files/GridElementStiffness.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "8c9cefc98031604becf9aa2c239aee73",
+    "semantic_hash": "8c9cefc98031604becf9aa2c239aee73"
+  },
+  "Doc/Kattan/M-Files/LinearBarAssemble.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "44d30b7e34d53d4b5fa883220fb5ac16",
+    "semantic_hash": "44d30b7e34d53d4b5fa883220fb5ac16"
+  },
+  "Doc/Kattan/M-Files/LinearBarElementForces.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "d59554904235bdd7ea865c8a9fd92757",
+    "semantic_hash": "d59554904235bdd7ea865c8a9fd92757"
+  },
+  "Doc/Kattan/M-Files/LinearBarElementStiffness.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "44393783fcd4f3a68ca5dd410932fdda",
+    "semantic_hash": "44393783fcd4f3a68ca5dd410932fdda"
+  },
+  "Doc/Kattan/M-Files/LinearBarElementStresses.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "4f2d8bf0d144d1323478e33aad788876",
+    "semantic_hash": "4f2d8bf0d144d1323478e33aad788876"
+  },
+  "Doc/Kattan/M-Files/LinearBrickAssemble.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "ffa9689dd6643b1d460dafabe4d06d75",
+    "semantic_hash": "ffa9689dd6643b1d460dafabe4d06d75"
+  },
+  "Doc/Kattan/M-Files/LinearBrickElementPStresses.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "97f2e94dafc004212dd71da0aeeb7ff6",
+    "semantic_hash": "97f2e94dafc004212dd71da0aeeb7ff6"
+  },
+  "Doc/Kattan/M-Files/LinearBrickElementStiffness.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "9aa9cf92bb3865947db53ef80bcf9829",
+    "semantic_hash": "9aa9cf92bb3865947db53ef80bcf9829"
+  },
+  "Doc/Kattan/M-Files/LinearBrickElementStresses.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "28891a1a5d545fc9dd0a5c8b4993ef05",
+    "semantic_hash": "28891a1a5d545fc9dd0a5c8b4993ef05"
+  },
+  "Doc/Kattan/M-Files/LinearBrickElementVolume.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "92d1bf58843a2db099d3a030ca465350",
+    "semantic_hash": "92d1bf58843a2db099d3a030ca465350"
+  },
+  "Doc/Kattan/M-Files/LinearTriangleAssemble.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "1fcca1c8d8e07bcde391deaae3de5478",
+    "semantic_hash": "1fcca1c8d8e07bcde391deaae3de5478"
+  },
+  "Doc/Kattan/M-Files/LinearTriangleElementArea.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "d1c8bd6258922782f439c1ef931297df",
+    "semantic_hash": "d1c8bd6258922782f439c1ef931297df"
+  },
+  "Doc/Kattan/M-Files/LinearTriangleElementPStresses.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "f1ab1ef7e63a75d8492742e34c4c6fe7",
+    "semantic_hash": "f1ab1ef7e63a75d8492742e34c4c6fe7"
+  },
+  "Doc/Kattan/M-Files/LinearTriangleElementStiffness.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "3b9f90ed5fa9f1f3b353adda6d1692a2",
+    "semantic_hash": "3b9f90ed5fa9f1f3b353adda6d1692a2"
+  },
+  "Doc/Kattan/M-Files/LinearTriangleElementStresses.m": {
+    "mtime": 1784466266.1979797,
+    "ast_hash": "50a457ab64447811f79ba8cd88d94ea6",
+    "semantic_hash": "50a457ab64447811f79ba8cd88d94ea6"
+  },
+  "Doc/Kattan/M-Files/PlaneFrameAssemble.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "777c257fe9bbae0c55174fbdae13e620",
+    "semantic_hash": "777c257fe9bbae0c55174fbdae13e620"
+  },
+  "Doc/Kattan/M-Files/PlaneFrameElementAxialDiagram.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "743af8f4dac6ab4db6dc45ab7cc06a0f",
+    "semantic_hash": "743af8f4dac6ab4db6dc45ab7cc06a0f"
+  },
+  "Doc/Kattan/M-Files/PlaneFrameElementForces.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "1a86caf8fabbe573457e3950992feb01",
+    "semantic_hash": "1a86caf8fabbe573457e3950992feb01"
+  },
+  "Doc/Kattan/M-Files/PlaneFrameElementLength.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "ab6bbb097793f7891ec908e5f7eb4fae",
+    "semantic_hash": "ab6bbb097793f7891ec908e5f7eb4fae"
+  },
+  "Doc/Kattan/M-Files/PlaneFrameElementMomentDiagram.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "2a5772365d38b2253741c9dbd91641b5",
+    "semantic_hash": "2a5772365d38b2253741c9dbd91641b5"
+  },
+  "Doc/Kattan/M-Files/PlaneFrameElementShearDiagram.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "40e1d3416c3af4b629685956620341c1",
+    "semantic_hash": "40e1d3416c3af4b629685956620341c1"
+  },
+  "Doc/Kattan/M-Files/PlaneFrameElementStiffness.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "36b90c9f2741dea92926c1b68f1848da",
+    "semantic_hash": "36b90c9f2741dea92926c1b68f1848da"
+  },
+  "Doc/Kattan/M-Files/PlaneFrameInclinedSupport.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "53a7a238f54f48f47490ae45ded87579",
+    "semantic_hash": "53a7a238f54f48f47490ae45ded87579"
+  },
+  "Doc/Kattan/M-Files/PlaneTrussAssemble.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "8ff4aa483865cab514244229461ace88",
+    "semantic_hash": "8ff4aa483865cab514244229461ace88"
+  },
+  "Doc/Kattan/M-Files/PlaneTrussElementForce.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "43bf210c3531ae09b4acc52925821f08",
+    "semantic_hash": "43bf210c3531ae09b4acc52925821f08"
+  },
+  "Doc/Kattan/M-Files/PlaneTrussElementLength.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "281abaca347eea21effbabad08230b7d",
+    "semantic_hash": "281abaca347eea21effbabad08230b7d"
+  },
+  "Doc/Kattan/M-Files/PlaneTrussElementStiffness.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "5e15bbd40e919aaf10aa8fbfc69de4ed",
+    "semantic_hash": "5e15bbd40e919aaf10aa8fbfc69de4ed"
+  },
+  "Doc/Kattan/M-Files/PlaneTrussElementStress.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "5b11df662c4a02d469f3215b9c4a0918",
+    "semantic_hash": "5b11df662c4a02d469f3215b9c4a0918"
+  },
+  "Doc/Kattan/M-Files/PlaneTrussInclinedSupport.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "63051324cb29900cf3e31c4d1af50dc8",
+    "semantic_hash": "63051324cb29900cf3e31c4d1af50dc8"
+  },
+  "Doc/Kattan/M-Files/QuadTriangleAssemble.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "18582952ef769f4cc3126b960cbebed1",
+    "semantic_hash": "18582952ef769f4cc3126b960cbebed1"
+  },
+  "Doc/Kattan/M-Files/QuadTriangleElementArea.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "5aec51971df48d6ebec32540d9d26dae",
+    "semantic_hash": "5aec51971df48d6ebec32540d9d26dae"
+  },
+  "Doc/Kattan/M-Files/QuadTriangleElementPStresses.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "e5f7aa27706597cbd8da87c76744bbe2",
+    "semantic_hash": "e5f7aa27706597cbd8da87c76744bbe2"
+  },
+  "Doc/Kattan/M-Files/QuadTriangleElementStiffness.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "491f8a96ad321c8b789529ad724e58fa",
+    "semantic_hash": "491f8a96ad321c8b789529ad724e58fa"
+  },
+  "Doc/Kattan/M-Files/QuadTriangleElementStresses.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "69695bbbc79ad526b6249ba909257f37",
+    "semantic_hash": "69695bbbc79ad526b6249ba909257f37"
+  },
+  "Doc/Kattan/M-Files/QuadraticBarAssemble.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "4de61a9a1ea973bd292cc5e5f0450151",
+    "semantic_hash": "4de61a9a1ea973bd292cc5e5f0450151"
+  },
+  "Doc/Kattan/M-Files/QuadraticBarElementForces.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "fa3ad1334c434e1e4c28f867ef220077",
+    "semantic_hash": "fa3ad1334c434e1e4c28f867ef220077"
+  },
+  "Doc/Kattan/M-Files/QuadraticBarElementStiffness.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "bfcc96f11c4007d079aa679cf23da4b8",
+    "semantic_hash": "bfcc96f11c4007d079aa679cf23da4b8"
+  },
+  "Doc/Kattan/M-Files/QuadraticBarElementStresses.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "7e3ecbc448062f23c634a0bd3a8c626f",
+    "semantic_hash": "7e3ecbc448062f23c634a0bd3a8c626f"
+  },
+  "Doc/Kattan/M-Files/QuadraticQuadAssemble.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "594398773f8f9869ad082b16549d2c42",
+    "semantic_hash": "594398773f8f9869ad082b16549d2c42"
+  },
+  "Doc/Kattan/M-Files/QuadraticQuadElementArea.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "948406d88888b30b1fffeca7652303fd",
+    "semantic_hash": "948406d88888b30b1fffeca7652303fd"
+  },
+  "Doc/Kattan/M-Files/QuadraticQuadElementPStresses.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "1bbb78cbd84252e768b76df82fe80824",
+    "semantic_hash": "1bbb78cbd84252e768b76df82fe80824"
+  },
+  "Doc/Kattan/M-Files/QuadraticQuadElementStiffness.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "34db98b34d56c39aca027aed12ed1491",
+    "semantic_hash": "34db98b34d56c39aca027aed12ed1491"
+  },
+  "Doc/Kattan/M-Files/QuadraticQuadElementStresses.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "ba055987188353de834afe8dd84dd795",
+    "semantic_hash": "ba055987188353de834afe8dd84dd795"
+  },
+  "Doc/Kattan/M-Files/SpaceFrameAssemble.m": {
+    "mtime": 1784466266.1989796,
+    "ast_hash": "19c7cd3456e96e0a26f7e63885efc47a",
+    "semantic_hash": "19c7cd3456e96e0a26f7e63885efc47a"
+  },
+  "Doc/Kattan/M-Files/SpaceFrameElementAxialDiagram.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "1b6805d480e8b14383bb305c5840d2bd",
+    "semantic_hash": "1b6805d480e8b14383bb305c5840d2bd"
+  },
+  "Doc/Kattan/M-Files/SpaceFrameElementForces.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "f76ca73c25cbab4f6027aeb7e3e01d75",
+    "semantic_hash": "f76ca73c25cbab4f6027aeb7e3e01d75"
+  },
+  "Doc/Kattan/M-Files/SpaceFrameElementLength.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "a25899e79191bba0e6919cbf5c605dd2",
+    "semantic_hash": "a25899e79191bba0e6919cbf5c605dd2"
+  },
+  "Doc/Kattan/M-Files/SpaceFrameElementMomentYDiagram.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "c6ccc7e6ae458b5e6ac72e78c4da34dc",
+    "semantic_hash": "c6ccc7e6ae458b5e6ac72e78c4da34dc"
+  },
+  "Doc/Kattan/M-Files/SpaceFrameElementMomentZDiagram.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "520377ee2da899a7c157f280c08d1c5c",
+    "semantic_hash": "520377ee2da899a7c157f280c08d1c5c"
+  },
+  "Doc/Kattan/M-Files/SpaceFrameElementShearYDiagram.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "01a3dea2b991e715284e1b339c5a0d26",
+    "semantic_hash": "01a3dea2b991e715284e1b339c5a0d26"
+  },
+  "Doc/Kattan/M-Files/SpaceFrameElementShearZDiagram.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "3a06d6f98ccde7e2f60886ae90ca1428",
+    "semantic_hash": "3a06d6f98ccde7e2f60886ae90ca1428"
+  },
+  "Doc/Kattan/M-Files/SpaceFrameElementStiffness.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "50626918438c207a7cf8aaf33717543c",
+    "semantic_hash": "50626918438c207a7cf8aaf33717543c"
+  },
+  "Doc/Kattan/M-Files/SpaceFrameElementTorsionDiagram.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "1d95746daf2cf4bf225a755120e64100",
+    "semantic_hash": "1d95746daf2cf4bf225a755120e64100"
+  },
+  "Doc/Kattan/M-Files/SpaceTrussAssemble.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "cbe82d295a8b073782405cc8234d52ff",
+    "semantic_hash": "cbe82d295a8b073782405cc8234d52ff"
+  },
+  "Doc/Kattan/M-Files/SpaceTrussElementForce.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "e0cb240c5f1102db9f20476fbb5c1ce1",
+    "semantic_hash": "e0cb240c5f1102db9f20476fbb5c1ce1"
+  },
+  "Doc/Kattan/M-Files/SpaceTrussElementLength.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "e3c470bd5bd8795c66286635848b7822",
+    "semantic_hash": "e3c470bd5bd8795c66286635848b7822"
+  },
+  "Doc/Kattan/M-Files/SpaceTrussElementStiffness.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "e28549e935ff9fd06a1b599058475534",
+    "semantic_hash": "e28549e935ff9fd06a1b599058475534"
+  },
+  "Doc/Kattan/M-Files/SpaceTrussElementStress.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "05a46f5543f6a940c3b8ed0e4972a2f1",
+    "semantic_hash": "05a46f5543f6a940c3b8ed0e4972a2f1"
+  },
+  "Doc/Kattan/M-Files/SpringAssemble.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "5bdf3cb0d8f7230573be1d94e334b866",
+    "semantic_hash": "5bdf3cb0d8f7230573be1d94e334b866"
+  },
+  "Doc/Kattan/M-Files/SpringElementForces.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "7b6c7e13c22c9b82ae3e9b80b66b32c6",
+    "semantic_hash": "7b6c7e13c22c9b82ae3e9b80b66b32c6"
+  },
+  "Doc/Kattan/M-Files/SpringElementStiffness.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "7860f47548c6e22a8144530a44ab4a60",
+    "semantic_hash": "7860f47548c6e22a8144530a44ab4a60"
+  },
+  "Doc/Kattan/M-Files/TetrahedronAssemble.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "3c1025a61313060712935d1c21ad991c",
+    "semantic_hash": "3c1025a61313060712935d1c21ad991c"
+  },
+  "Doc/Kattan/M-Files/TetrahedronElementPStresses.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "35c7b45b0aa4e25b9a7fa9e1ca5339bd",
+    "semantic_hash": "35c7b45b0aa4e25b9a7fa9e1ca5339bd"
+  },
+  "Doc/Kattan/M-Files/TetrahedronElementStiffness.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "a164a928b283ce45a57b4b6d484740de",
+    "semantic_hash": "a164a928b283ce45a57b4b6d484740de"
+  },
+  "Doc/Kattan/M-Files/TetrahedronElementStresses.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "15947fa1af8576116e9b35fe3705fce4",
+    "semantic_hash": "15947fa1af8576116e9b35fe3705fce4"
+  },
+  "Doc/Kattan/M-Files/TetrahedronElementVolume.m": {
+    "mtime": 1784466266.1999798,
+    "ast_hash": "e22d9514a3853e24e0eab59557dd9b1c",
+    "semantic_hash": "e22d9514a3853e24e0eab59557dd9b1c"
+  },
+  "openwiki/.last-update.json": {
+    "mtime": 1784466266.2319796,
+    "ast_hash": "499abb01f8e7b5cb761ccf388476ccf6",
+    "semantic_hash": "499abb01f8e7b5cb761ccf388476ccf6"
+  },
+  "scripts/linear_truss_mtk.jl": {
+    "mtime": 1784466266.234311,
+    "ast_hash": "d1fefdfd4dce1cf30d6170fe178947a3",
+    "semantic_hash": "d1fefdfd4dce1cf30d6170fe178947a3"
+  },
+  "scripts/linear_truss_mtk_2.jl": {
+    "mtime": 1784466266.2344673,
+    "ast_hash": "51217691deb3d0472cd53105ccfaf762",
+    "semantic_hash": "51217691deb3d0472cd53105ccfaf762"
+  },
+  "src/LibFEM.jl": {
+    "mtime": 1784466266.2344673,
+    "ast_hash": "47a50f34ef2b41379df4fcc604b3fc1b",
+    "semantic_hash": "47a50f34ef2b41379df4fcc604b3fc1b"
+  },
+  "src/assembly.jl": {
+    "mtime": 1784466266.2345898,
+    "ast_hash": "ad473f55a1270af77f9db23d213a7f6a",
+    "semantic_hash": "ad473f55a1270af77f9db23d213a7f6a"
+  },
+  "src/beam.jl": {
+    "mtime": 1784466266.2345898,
+    "ast_hash": "331450046e74736558d3b0e60cbe6631",
+    "semantic_hash": "331450046e74736558d3b0e60cbe6631"
+  },
+  "src/errors.jl": {
+    "mtime": 1784466266.2345898,
+    "ast_hash": "a9cb6c3d2fbd4f0dee4c08081cd17240",
+    "semantic_hash": "a9cb6c3d2fbd4f0dee4c08081cd17240"
+  },
+  "src/plot.jl": {
+    "mtime": 1784466266.2345898,
+    "ast_hash": "42d8a51a841c23baf0d1f25a43c7134a",
+    "semantic_hash": "42d8a51a841c23baf0d1f25a43c7134a"
+  },
+  "src/spring.jl": {
+    "mtime": 1784466266.2345898,
+    "ast_hash": "f221aed83bb28cb0b5da0791fde2833f",
+    "semantic_hash": "f221aed83bb28cb0b5da0791fde2833f"
+  },
+  "src/truss.jl": {
+    "mtime": 1784466266.2345898,
+    "ast_hash": "9eabefe3ada954a73917f461fba6d030",
+    "semantic_hash": "9eabefe3ada954a73917f461fba6d030"
+  },
+  "src/types.jl": {
+    "mtime": 1784466266.2345898,
+    "ast_hash": "5dada180eaec8dce402e294a225370f5",
+    "semantic_hash": "5dada180eaec8dce402e294a225370f5"
+  },
+  "src/utils.jl": {
+    "mtime": 1784466266.2345898,
+    "ast_hash": "1b2a364ca73fc56e0755aad44545aefb",
+    "semantic_hash": "1b2a364ca73fc56e0755aad44545aefb"
+  },
+  "test/benchmark.jl": {
+    "mtime": 1784466266.2350242,
+    "ast_hash": "0fe8ec82568c78071f957316bd09549e",
+    "semantic_hash": "0fe8ec82568c78071f957316bd09549e"
+  },
+  "test/comparison.jl": {
+    "mtime": 1784466266.2350242,
+    "ast_hash": "d4d0928bcfa9fe7faf745e5ecd44fbeb",
+    "semantic_hash": "d4d0928bcfa9fe7faf745e5ecd44fbeb"
+  },
+  "test/runtests.jl": {
+    "mtime": 1784466266.2350242,
+    "ast_hash": "177b62c1054e3c8faed3f31f7e2fb81d",
+    "semantic_hash": "177b62c1054e3c8faed3f31f7e2fb81d"
+  }
+}

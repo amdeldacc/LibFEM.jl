@@ -33,7 +33,6 @@ jobs:
       - name: Configure OpenCode for Ollama Cloud
         run: |
           mkdir -p ~/.config/opencode
-          mkdir -p ~/.local/share/opencode
           python3 - <<'PY'
           import json
           import os
@@ -45,7 +44,8 @@ jobs:
                 "npm": "@ai-sdk/openai-compatible",
                 "name": "Ollama Cloud",
                 "options": {
-                  "baseURL": "https://ollama.com/v1"
+                  "baseURL": "https://ollama.com/v1",
+                  "apiKey": "{env:OLLAMA_API_KEY}"
                 },
                 "models": {
                   "nemotron-3-nano:30b-cloud": {
@@ -60,43 +60,11 @@ jobs:
               json.dump(config, handle, indent=2)
               handle.write("\n")
           PY
-          python3 - <<PY
-import json, os
-key = os.environ.get("OLLAMA_API_KEY", "")
-config = {
-  "$schema": "https://opencode.ai/config.json",
-  "provider": {
-    "ollama": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama Cloud",
-      "options": {
-        "baseURL": "https://ollama.com/v1",
-        "apiKey": key
-      },
-      "models": {
-        "nemotron-3-nano:30b-cloud": {
-          "tools": True
-        }
-      }
-    }
-  }
-}
-with open(os.path.expanduser("~/.config/opencode/opencode.json"), "w", encoding="utf-8") as f:
-    json.dump(config, f, indent=2)
-    f.write("\n")
-
-with open(os.path.expanduser("~/.local/share/opencode/auth.json"), "w", encoding="utf-8") as f:
-    json.dump({"ollama": {"type":"api","key":key}}, f, indent=2)
-    f.write("\n")
-PY
-        env:
-          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 
       - name: Run OpenCode with Ollama Cloud
         uses: anomalyco/opencode/github@latest
         with:
           model: ollama/nemotron-3-nano:30b-cloud
         env:
-          OPENAI_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

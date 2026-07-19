@@ -47,7 +47,7 @@ jobs:
                   "apiKey": "{env:OLLAMA_API_KEY}"
                 },
                 "models": {
-                  "nemotron-3-super:cloud": {
+                  "nemotron-3-ultra:cloud": {
                     "tools": True
                   }
                 }
@@ -74,7 +74,7 @@ jobs:
       - name: Run OpenCode
         run: opencode github run
         env:
-          MODEL: ollama/nemotron-3-super:cloud
+          MODEL: ollama/nemotron-3-ultra:cloud
           USE_GITHUB_TOKEN: "true"
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -60,14 +60,35 @@ jobs:
               json.dump(config, handle, indent=2)
               handle.write("\n")
           PY
-          cat << 'EOF' > ~/.local/share/opencode/auth.json
-          {
-            "ollama": {
-              "type": "api",
-              "key": "${OLLAMA_API_KEY}"
-            }
-          }
-          EOF
+          python3 - <<PY
+import json, os
+key = os.environ.get("OLLAMA_API_KEY", "")
+config = {
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama Cloud",
+      "options": {
+        "baseURL": "https://ollama.com/v1",
+        "apiKey": key
+      },
+      "models": {
+        "nemotron-3-nano:30b-cloud": {
+          "tools": True
+        }
+      }
+    }
+  }
+}
+with open(os.path.expanduser("~/.config/opencode/opencode.json"), "w", encoding="utf-8") as f:
+    json.dump(config, f, indent=2)
+    f.write("\n")
+
+with open(os.path.expanduser("~/.local/share/opencode/auth.json"), "w", encoding="utf-8") as f:
+    json.dump({"ollama": {"type":"api","key":key}}, f, indent=2)
+    f.write("\n")
+PY
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 

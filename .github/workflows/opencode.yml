@@ -67,6 +67,11 @@ jobs:
       - name: Add OpenCode to PATH
         run: echo "$HOME/.opencode/bin" >> $GITHUB_PATH
 
+      - name: Configure git identity
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
       - name: Run OpenCode
         run: opencode github run
         env:

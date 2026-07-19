@@ -1,4 +1,4 @@
-name: opencode-ollama-cloud
+name: opencode-nvidia-nim
 
 on:
   issue_comment:
@@ -7,7 +7,7 @@ on:
     types: [created]
 
 concurrency:
-  group: opencode-ollama-cloud
+  group: opencode-nvidia-nim
   cancel-in-progress: true
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Configure OpenCode for Ollama Cloud
+      - name: Configure OpenCode for NVIDIA NIM
         run: |
           mkdir -p ~/.config/opencode
           python3 - <<'PY'
@@ -39,15 +39,29 @@ jobs:
           config = {
             "$schema": "https://opencode.ai/config.json",
             "provider": {
-              "ollama": {
+              "nvidia": {
                 "npm": "@ai-sdk/openai-compatible",
-                "name": "Ollama Cloud",
+                "name": "NVIDIA_NIM",
                 "options": {
-                  "baseURL": "https://ollama.com/v1",
-                  "apiKey": "{env:OLLAMA_API_KEY}"
+                  "baseURL": "https://integrate.api.nvidia.com/v1",
+                  "apiKey": "{env:NVIDIA_API_KEY}",
+                  "reasoningEffort": "high",
+                  "textVerbosity": "low"
                 },
                 "models": {
-                  "nemotron-3-ultra:cloud": {
+                  "nvidia/nemotron-3-super-120b-a12b": {
+                    "tools": True
+                  },
+                  "nvidia/nemotron-3-ultra-550b-a55b": {
+                    "tools": True
+                  },
+                  "deepseek-ai/deepseek-v4-flash": {
+                    "tools": True
+                  },
+                  "deepseek-ai/deepseek-v4-pro": {
+                    "tools": True
+                  },
+                  "thinkingmachines/inkling": {
                     "tools": True
                   }
                 }
@@ -74,7 +88,7 @@ jobs:
       - name: Run OpenCode
         run: opencode github run
         env:
-          MODEL: ollama/nemotron-3-ultra:cloud
+          MODEL: nvidia/nvidia/nemotron-3-ultra-550b-a55b
           USE_GITHUB_TOKEN: "true"
-          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

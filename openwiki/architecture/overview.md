@@ -247,12 +247,27 @@ Key invariants to maintain:
 
 ## Known Issues
 
-See the repository's issue tracker for the full list. The **`ToDo.md`** file at the repository root is the canonical code review backlog, compiled from two independent AI reviews. It tracks:
+See the repository's issue tracker for the full list. The **`ToDo.md`** file at the repository root is the merged code review backlog from two independent AI reviews. The cross-verified review (`ToDo_Promethus_inkling.md`) identified **false positives** in the merged list:
 
-- **Critical bugs** (C1–C5): wrong 3D beam force transformation, inverted 2D beam force matrix, missing parameter validation for `A`, `I`, `E`, `G`
-- **Refactoring items** (R1–R5): deduplicate rotation matrix construction, move `_d3_beam_kprime` to `beam.jl`, standardize return types
-- **Testing/hygiene** (M1–M5, D1–D7): missing CI test workflow, no README, inconsistent coverage
+**⚠️ False Positives (NOT bugs — mathematically correct per MATLAB reference):**
+- **C1**: `d3_beam_elementforces` uses `R` not `R'` — MATLAB `SpaceFrameElementForces.m:57` uses `kprime * R * u` (identical to Julia). Standard FEM: stiffness uses `R' * k_local * R` (global), forces use `k_local * R * u` (local).
+- **C2**: `d2_beam_elementforces` "inverted transformation" — MATLAB `PlaneFrameElementForces.m:21` uses `kprime * T * u` (identical to Julia).
 
-Notable items beyond the ToDo.md:
+**✅ Verified Real Issues (from cross-verified review):**
+
+| ID | Severity | Issue | Location |
+|---|---|---|---|
+| **H1** | HIGH | Duplicated rotation matrix (Λ/R) in 3D beam stiffness & force (~30 lines each) | `src/beam.jl:200-228`, `297-322` |
+| **H2** | HIGH | Inconsistent force return types: 1D returns 2-element Vector, 2D/3D return scalar | `src/truss.jl:161, 313, 339, 366` |
+| **H3** | HIGH | `_d3_beam_kprime` misplaced in `assembly.jl` (belongs in `beam.jl`) | `src/assembly.jl:32-87` |
+| **H4** | MEDIUM | `_assemble!` missing bounds checks on `K` size vs indices | `src/assembly.jl:21-27` |
+| **H5** | HIGH | `LinearAlgebra` not declared in `Project.toml` deps | `Project.toml` |
+| **M1** | MEDIUM | `d3_truss` angle variable naming: `u` vs `w` for `thetay` | `src/truss.jl:282-284` vs `315+` |
+| **M2** | MEDIUM | No arbitrary-orientation test for 3D beam forces (all tests use θ=0) | `test/runtests.jl` |
+| **M3** | LOW | `ElementDimensionError` exported but never thrown/tested | `test/runtests.jl` |
+| **M4** | MEDIUM | Benchmark suite not in CI | `.github/workflows/ci.yml` |
+| **M5** | LOW | `plot.jl` docstrings contain spurious `export` keyword | `src/plot.jl` |
+
+Notable items beyond the verified issues:
 - No boundary condition or solver functions yet (users must solve `K·U = F` themselves)
 - `Project.toml` has `[extras]`/`[targets]` for `BenchmarkTools` (test-only), but `Test` stdlib is not declared there

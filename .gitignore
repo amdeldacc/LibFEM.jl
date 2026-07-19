@@ -10,10 +10,9 @@ Manifest.toml
 .omo/
 .codegraph/
 .superpowers/
-/docs/
+docs/
 
 # Generated files
 LibFEM_DS_2020.ipynb
 ToDo.md
 ToDo/
-graphify-out/

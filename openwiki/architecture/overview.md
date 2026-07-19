@@ -222,11 +222,13 @@ Tests are in `test/`:
 To run tests:
 ```julia
 julia --project=. -e 'using Pkg; Pkg.test()'
-# Or manually:
+# or manually:
 # julia --project=. test/runtests.jl
 ```
 
-**CI**: GitHub Actions (`.github/workflows/ci.yml`) runs `runtests.jl` on push/PR to `main` against Julia 1 and 1.10. A badge is displayed in `README.md`. Benchmarks are not included in CI — they run standalone due to noise and slowness in automated environments.
+**CI**: There is no automated test runner workflow currently. The test suite is run manually. Benchmarks are not automated — they run standalone due to noise and slowness in automated environments.
+
+**GitHub Actions workflows**: `.github/workflows/super-linter.yml` lints changed files on push/PR to `master`. `.github/workflows/opencode.yml` runs the OpenCode AI assistant on issue/PR comments containing `/oc` or `/opencode`, using an Ollama Cloud backend. `.github/workflows/openwiki-update.yml` runs a scheduled daily OpenWiki documentation refresh and opens a PR with any changes.
 
 ## Extension Points
 

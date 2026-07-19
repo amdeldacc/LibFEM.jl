@@ -228,7 +228,7 @@ julia --project=. -e 'using Pkg; Pkg.test()'
 
 **CI**: There is no automated test runner workflow currently. The test suite is run manually. Benchmarks are not automated — they run standalone due to noise and slowness in automated environments.
 
-**GitHub Actions workflows**: `.github/workflows/super-linter.yml` lints changed files on push/PR to `master`. `.github/workflows/opencode.yml` runs the OpenCode AI assistant on issue/PR comments containing `/oc` or `/opencode`, using an Ollama Cloud backend. `.github/workflows/openwiki-update.yml` runs a scheduled daily OpenWiki documentation refresh and opens a PR with any changes.
+**GitHub Actions workflows**: `.github/workflows/opencode.yml` runs the OpenCode AI assistant on issue/PR comments containing `/oc` or `/opencode`, using an NVIDIA NIM backend. `.github/workflows/openwiki-update.yml` runs a scheduled daily OpenWiki documentation refresh and opens a PR with any changes.
 
 ## Extension Points
 
@@ -247,6 +247,12 @@ Key invariants to maintain:
 
 ## Known Issues
 
-See the repository's issue tracker for the full list. Notable items:
+See the repository's issue tracker for the full list. The **`ToDo.md`** file at the repository root is the canonical code review backlog, compiled from two independent AI reviews. It tracks:
+
+- **Critical bugs** (C1–C5): wrong 3D beam force transformation, inverted 2D beam force matrix, missing parameter validation for `A`, `I`, `E`, `G`
+- **Refactoring items** (R1–R5): deduplicate rotation matrix construction, move `_d3_beam_kprime` to `beam.jl`, standardize return types
+- **Testing/hygiene** (M1–M5, D1–D7): missing CI test workflow, no README, inconsistent coverage
+
+Notable items beyond the ToDo.md:
 - No boundary condition or solver functions yet (users must solve `K·U = F` themselves)
 - `Project.toml` has `[extras]`/`[targets]` for `BenchmarkTools` (test-only), but `Test` stdlib is not declared there

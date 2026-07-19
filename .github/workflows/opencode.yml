@@ -48,7 +48,7 @@ jobs:
                   "apiKey": "{env:OLLAMA_API_KEY}"
                 },
                 "models": {
-                  "nemotron-3-super:120b-cloud": {
+                  "nemotron-3-super:cloud": {
                     "tools": True
                   }
                 }
@@ -64,7 +64,7 @@ jobs:
       - name: Run OpenCode with Ollama Cloud
         uses: anomalyco/opencode/github@latest
         with:
-          model: ollama/nemotron-3-super:120b-cloud
+          model: ollama/nemotron-3-super:cloud
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

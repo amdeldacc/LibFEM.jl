@@ -6,6 +6,9 @@ on:
   pull_request_review_comment:
     types: [created]
 
+# Minimum default permissions — locked down at top level
+permissions: {}
+
 concurrency:
   group: opencode-nvidia-nim
   cancel-in-progress: true
@@ -14,7 +17,7 @@ jobs:
   opencode:
     if: |
       (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode')) &&
-      (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')
+      github.event.comment.author_association == 'OWNER'
     runs-on: ubuntu-latest
     environment: julia-codebase
     permissions:

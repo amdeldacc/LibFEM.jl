@@ -1,0 +1,392 @@
+{
+  "communities": {
+    "0": [
+      "test_comparison",
+      "test_comparison_linearbarassemble",
+      "test_comparison_linearbarelementforces",
+      "test_comparison_linearbarelementstiffness",
+      "test_comparison_linearbarelementstresses",
+      "test_comparison_planeframeassemble",
+      "test_comparison_planeframeelementaxialdiagram",
+      "test_comparison_planeframeelementforces",
+      "test_comparison_planeframeelementlength",
+      "test_comparison_planeframeelementmomentdiagram",
+      "test_comparison_planeframeelementsheardiagram",
+      "test_comparison_planeframeelementstiffness",
+      "test_comparison_planetrussassemble",
+      "test_comparison_planetrusselementforce",
+      "test_comparison_planetrusselementlength",
+      "test_comparison_planetrusselementstiffness",
+      "test_comparison_planetrusselementstress",
+      "test_comparison_spaceframeassemble",
+      "test_comparison_spaceframeelementaxialdiagram",
+      "test_comparison_spaceframeelementforces",
+      "test_comparison_spaceframeelementlength",
+      "test_comparison_spaceframeelementmomentydiagram",
+      "test_comparison_spaceframeelementmomentzdiagram",
+      "test_comparison_spaceframeelementshearydiagram",
+      "test_comparison_spaceframeelementshearzdiagram",
+      "test_comparison_spaceframeelementstiffness",
+      "test_comparison_spaceframeelementtorsiondiagram",
+      "test_comparison_spacetrussassemble",
+      "test_comparison_spacetrusselementforce",
+      "test_comparison_spacetrusselementlength",
+      "test_comparison_spacetrusselementstiffness",
+      "test_comparison_spacetrusselementstress",
+      "test_comparison_springassemble",
+      "test_comparison_springelementforces",
+      "test_comparison_springelementstiffness"
+    ],
+    "1": [
+      "opencode_skills_caveman_compress_scripts_cli",
+      "opencode_skills_caveman_compress_scripts_cli_main",
+      "opencode_skills_caveman_compress_scripts_cli_print_usage",
+      "opencode_skills_caveman_compress_scripts_compress",
+      "opencode_skills_caveman_compress_scripts_compress_backup_dir_for",
+      "opencode_skills_caveman_compress_scripts_compress_build_compress_prompt",
+      "opencode_skills_caveman_compress_scripts_compress_build_fix_prompt",
+      "opencode_skills_caveman_compress_scripts_compress_call_claude",
+      "opencode_skills_caveman_compress_scripts_compress_compress_file",
+      "opencode_skills_caveman_compress_scripts_compress_is_sensitive_path",
+      "opencode_skills_caveman_compress_scripts_compress_py_path",
+      "opencode_skills_caveman_compress_scripts_compress_rationale_107",
+      "opencode_skills_caveman_compress_scripts_compress_rationale_123",
+      "opencode_skills_caveman_compress_scripts_compress_rationale_29",
+      "opencode_skills_caveman_compress_scripts_compress_rationale_70",
+      "opencode_skills_caveman_compress_scripts_compress_rationale_94",
+      "opencode_skills_caveman_compress_scripts_compress_split_frontmatter",
+      "opencode_skills_caveman_compress_scripts_compress_strip_llm_wrapper",
+      "opencode_skills_caveman_compress_scripts_detect",
+      "opencode_skills_caveman_compress_scripts_detect_detect_file_type",
+      "opencode_skills_caveman_compress_scripts_detect_is_code_line",
+      "opencode_skills_caveman_compress_scripts_detect_is_json_content",
+      "opencode_skills_caveman_compress_scripts_detect_is_yaml_content",
+      "opencode_skills_caveman_compress_scripts_detect_py_path",
+      "opencode_skills_caveman_compress_scripts_detect_rationale_101",
+      "opencode_skills_caveman_compress_scripts_detect_rationale_33",
+      "opencode_skills_caveman_compress_scripts_detect_rationale_38",
+      "opencode_skills_caveman_compress_scripts_detect_rationale_47",
+      "opencode_skills_caveman_compress_scripts_detect_rationale_63",
+      "opencode_skills_caveman_compress_scripts_detect_should_compress",
+      "opencode_skills_caveman_compress_scripts_main"
+    ],
+    "2": [
+      "opencode_skills_caveman_compress_scripts_validate",
+      "opencode_skills_caveman_compress_scripts_validate_count_bullets",
+      "opencode_skills_caveman_compress_scripts_validate_extract_code_blocks",
+      "opencode_skills_caveman_compress_scripts_validate_extract_headings",
+      "opencode_skills_caveman_compress_scripts_validate_extract_inline_codes",
+      "opencode_skills_caveman_compress_scripts_validate_extract_paths",
+      "opencode_skills_caveman_compress_scripts_validate_extract_urls",
+      "opencode_skills_caveman_compress_scripts_validate_py_path",
+      "opencode_skills_caveman_compress_scripts_validate_rationale_42",
+      "opencode_skills_caveman_compress_scripts_validate_read_file",
+      "opencode_skills_caveman_compress_scripts_validate_validate",
+      "opencode_skills_caveman_compress_scripts_validate_validate_bullets",
+      "opencode_skills_caveman_compress_scripts_validate_validate_code_blocks",
+      "opencode_skills_caveman_compress_scripts_validate_validate_headings",
+      "opencode_skills_caveman_compress_scripts_validate_validate_inline_codes",
+      "opencode_skills_caveman_compress_scripts_validate_validate_paths",
+      "opencode_skills_caveman_compress_scripts_validate_validate_urls",
+      "opencode_skills_caveman_compress_scripts_validate_validationresult",
+      "opencode_skills_caveman_compress_scripts_validate_validationresult_add_error",
+      "opencode_skills_caveman_compress_scripts_validate_validationresult_add_warning",
+      "opencode_skills_caveman_compress_scripts_validate_validationresult_init"
+    ],
+    "3": [
+      "src_truss",
+      "src_truss_d1_truss_assemble",
+      "src_truss_d1_truss_elementforces",
+      "src_truss_d1_truss_elementstiffness",
+      "src_truss_d1_truss_elementstrain",
+      "src_truss_d1_truss_elementstress",
+      "src_truss_d2_truss_assemble",
+      "src_truss_d2_truss_elementforces",
+      "src_truss_d2_truss_elementlength",
+      "src_truss_d2_truss_elementstiffness",
+      "src_truss_d2_truss_elementstrain",
+      "src_truss_d2_truss_elementstress",
+      "src_truss_d3_truss_assemble",
+      "src_truss_d3_truss_elementforces",
+      "src_truss_d3_truss_elementlength",
+      "src_truss_d3_truss_elementstiffness",
+      "src_truss_d3_truss_elementstrain",
+      "src_truss_d3_truss_elementstress"
+    ],
+    "4": [
+      "src_spring",
+      "src_spring_d1_spring_assemble",
+      "src_spring_d1_spring_elementforce",
+      "src_spring_d1_spring_elementstiffness",
+      "src_spring_d1_spring_elementstress",
+      "src_spring_d2_spring_assemble",
+      "src_spring_d2_spring_elementforce",
+      "src_spring_d2_spring_elementstiffness",
+      "src_spring_d3_spring_assemble",
+      "src_spring_d3_spring_elementforce",
+      "src_spring_d3_spring_elementstiffness"
+    ],
+    "5": [
+      "src_plot",
+      "src_plot_d2_beam_elementaxialdiagram",
+      "src_plot_d2_beam_elementmomentdiagram",
+      "src_plot_d2_beam_elementsheardiagram",
+      "src_plot_d3_beam_elementaxialdiagram",
+      "src_plot_d3_beam_elementmomentydiagram",
+      "src_plot_d3_beam_elementmomentzdiagram",
+      "src_plot_d3_beam_elementshearydiagram",
+      "src_plot_d3_beam_elementshearzdiagram",
+      "src_plot_d3_beam_elementtorsiondiagram"
+    ],
+    "6": [
+      "scripts_linear_truss_mtk_2",
+      "scripts_linear_truss_mtk_2_assemble",
+      "scripts_linear_truss_mtk_2_element_length",
+      "scripts_linear_truss_mtk_2_jl_linearalgebra",
+      "scripts_linear_truss_mtk_2_jl_plots",
+      "scripts_linear_truss_mtk_2_k_e",
+      "scripts_linear_truss_mtk_2_truss_force",
+      "scripts_linear_truss_mtk_2_truss_strain",
+      "scripts_linear_truss_mtk_2_truss_stress"
+    ],
+    "7": [
+      "src_beam",
+      "src_beam_d2_beam_assemble",
+      "src_beam_d2_beam_elementforces",
+      "src_beam_d2_beam_elementlength",
+      "src_beam_d2_beam_elementstiffness",
+      "src_beam_d3_beam_assemble",
+      "src_beam_d3_beam_elementforces",
+      "src_beam_d3_beam_elementlength",
+      "src_beam_d3_beam_elementstiffness"
+    ],
+    "8": [
+      "exception",
+      "int",
+      "src_errors",
+      "src_errors_assemblyerror",
+      "src_errors_diagramerror",
+      "src_errors_elementdimensionerror",
+      "src_errors_elementparametererror",
+      "string"
+    ],
+    "9": [
+      "modelingtoolkit",
+      "scripts_linear_truss_mtk",
+      "scripts_linear_truss_mtk_element_length",
+      "scripts_linear_truss_mtk_jl_linearalgebra",
+      "scripts_linear_truss_mtk_k_e",
+      "scripts_linear_truss_mtk_truss_force",
+      "scripts_linear_truss_mtk_truss_strain"
+    ],
+    "10": [
+      "opencode_skills_caveman_compress_scripts_benchmark",
+      "opencode_skills_caveman_compress_scripts_benchmark_benchmark_pair",
+      "opencode_skills_caveman_compress_scripts_benchmark_count_tokens",
+      "opencode_skills_caveman_compress_scripts_benchmark_main",
+      "opencode_skills_caveman_compress_scripts_benchmark_print_table",
+      "opencode_skills_caveman_compress_scripts_benchmark_py_path"
+    ],
+    "11": [
+      "benchmarktools",
+      "test_benchmark",
+      "test_benchmark_jl_libfem",
+      "test_benchmark_jl_linearalgebra"
+    ],
+    "12": [
+      "test",
+      "test_runtests",
+      "test_runtests_jl_libfem",
+      "test_runtests_jl_plots"
+    ],
+    "13": [
+      "opencode_plugins_graphify",
+      "opencode_plugins_graphify_graphifyplugin",
+      "opencode_plugins_graphify_rationale_4"
+    ],
+    "14": [
+      "src_assembly",
+      "src_assembly_assemble",
+      "src_assembly_d3_beam_kprime"
+    ],
+    "15": [
+      "src_libfem",
+      "src_libfem_jl_plots",
+      "src_libfem_libfem"
+    ],
+    "16": [
+      "base",
+      "src_types"
+    ],
+    "17": [
+      "opencode_skills_caveman_compress_scripts_init",
+      "opencode_skills_caveman_compress_scripts_init_rationale_1"
+    ],
+    "18": [
+      "src_utils",
+      "src_utils_deg2rad"
+    ]
+  },
+  "cohesion": {
+    "0": 0.06050420168067227,
+    "1": 0.12258064516129032,
+    "2": 0.20476190476190476,
+    "3": 0.1111111111111111,
+    "4": 0.18181818181818182,
+    "5": 0.2,
+    "6": 0.2777777777777778,
+    "7": 0.2777777777777778,
+    "8": 0.4642857142857143,
+    "9": 0.2857142857142857,
+    "10": 0.6,
+    "11": 0.5,
+    "12": 0.5,
+    "13": 0.6666666666666666,
+    "14": 0.6666666666666666,
+    "15": 0.6666666666666666,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0
+  },
+  "gods": [
+    {
+      "id": "opencode_skills_caveman_compress_scripts_validate_validate",
+      "label": "validate()",
+      "degree": 14
+    },
+    {
+      "id": "opencode_skills_caveman_compress_scripts_compress_compress_file",
+      "label": "compress_file()",
+      "degree": 12
+    },
+    {
+      "id": "opencode_skills_caveman_compress_scripts_detect_detect_file_type",
+      "label": "detect_file_type()",
+      "degree": 9
+    },
+    {
+      "id": "opencode_skills_caveman_compress_scripts_detect_should_compress",
+      "label": "should_compress()",
+      "degree": 8
+    },
+    {
+      "id": "opencode_skills_caveman_compress_scripts_cli_main",
+      "label": "main()",
+      "degree": 7
+    },
+    {
+      "id": "opencode_skills_caveman_compress_scripts_compress_backup_dir_for",
+      "label": "backup_dir_for()",
+      "degree": 6
+    },
+    {
+      "id": "opencode_skills_caveman_compress_scripts_benchmark_benchmark_pair",
+      "label": "benchmark_pair()",
+      "degree": 5
+    },
+    {
+      "id": "opencode_skills_caveman_compress_scripts_validate_validationresult",
+      "label": "ValidationResult",
+      "degree": 5
+    },
+    {
+      "id": "opencode_skills_caveman_compress_scripts_validate_validate_headings",
+      "label": "validate_headings()",
+      "degree": 5
+    },
+    {
+      "id": "opencode_skills_caveman_compress_scripts_validate_validate_inline_codes",
+      "label": "validate_inline_codes()",
+      "degree": 5
+    }
+  ],
+  "surprises": [
+    {
+      "source": "benchmark_pair()",
+      "target": "validate()",
+      "source_files": [
+        ".opencode/skills/caveman-compress/scripts/benchmark.py",
+        ".opencode/skills/caveman-compress/scripts/validate.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "compress_file()",
+      "target": "validate()",
+      "source_files": [
+        ".opencode/skills/caveman-compress/scripts/compress.py",
+        ".opencode/skills/caveman-compress/scripts/validate.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "main()",
+      "target": "backup_dir_for()",
+      "source_files": [
+        ".opencode/skills/caveman-compress/scripts/cli.py",
+        ".opencode/skills/caveman-compress/scripts/compress.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "main()",
+      "target": "compress_file()",
+      "source_files": [
+        ".opencode/skills/caveman-compress/scripts/cli.py",
+        ".opencode/skills/caveman-compress/scripts/compress.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "main()",
+      "target": "detect_file_type()",
+      "source_files": [
+        ".opencode/skills/caveman-compress/scripts/cli.py",
+        ".opencode/skills/caveman-compress/scripts/detect.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `validate()` connect `validate.py` to `compress.py`, `benchmark.py`?",
+      "why": "High betweenness centrality (0.029) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `compress_file()` connect `compress.py` to `validate.py`?",
+      "why": "High betweenness centrality (0.015) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `ModelingToolkit`, `LinearAlgebra`, `LinearAlgebra` to the rest of the system?",
+      "why": "12 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `comparison.jl` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06050420168067227 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `compress.py` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.12258064516129032 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `truss.jl` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.1111111111111111 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

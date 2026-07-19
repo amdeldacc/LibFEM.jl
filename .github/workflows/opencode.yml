@@ -61,10 +61,16 @@ jobs:
               handle.write("\n")
           PY
 
-      - name: Run OpenCode with Ollama Cloud
-        uses: anomalyco/opencode/github@latest
-        with:
-          model: ollama/nemotron-3-super:cloud
+      - name: Install OpenCode CLI
+        run: curl -fsSL https://opencode.ai/install | bash
+
+      - name: Add OpenCode to PATH
+        run: echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+
+      - name: Run OpenCode
+        run: opencode github run
         env:
+          MODEL: ollama/nemotron-3-super:cloud
+          USE_GITHUB_TOKEN: "true"
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

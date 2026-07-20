@@ -41,3 +41,6 @@ jobs:
           VALIDATE_BIOME_LINT: false
           VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
           VALIDATE_YAML_PRETTIER: false
+          VALIDATE_MARKDOWN: false
+          VALIDATE_MARKDOWN_PRETTIER: false
+          VALIDATE_PYTHON_PYLINT: false

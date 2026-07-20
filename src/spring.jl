@@ -34,22 +34,6 @@ function d1_spring_elementforce(Ke::AbstractMatrix, u::AbstractVector)
 end
 
 """
-    d1_spring_elementstress(Ke, u)
-
-Return the element stress for a 1-D spring element.
-
-# Arguments
-- `Ke::AbstractMatrix`: Element stiffness matrix.
-- `u::AbstractVector`: Element nodal displacement vector.
-
-# Returns
-The element stress (scalar).
-"""
-function d1_spring_elementstress(Ke::AbstractMatrix, u::AbstractVector)
-    return Ke * u
-end
-
-"""
     d1_spring_assemble(K, k, i, j)
 
 Assemble the spring element stiffness matrix `k` with nodes `i` and `j`

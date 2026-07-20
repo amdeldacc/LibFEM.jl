@@ -83,7 +83,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 |----------|-------------|
 | `d1_spring_elementstiffness(k)` | 2×2 stiffness matrix for spring with stiffness `k` |
 | `d1_spring_elementforce(Ke, u)` | Nodal force vector (2×1) |
-| `d1_spring_elementstress(Ke, u)` | Stress vector (2×1) |
+| ~~`d1_spring_elementstress(Ke, u)`~~ | ~~Stress vector (2×1)~~ *(removed — meaningless for 0D spring, identical to `elementforce`)* |
 | `d1_spring_assemble(K, k, i, j)` | Assemble into global matrix (1 DOF/node) |
 | `d1_truss_elementstiffness(E, A, L)` | 2×2 stiffness for linear bar |
 | `d1_truss_elementforces(Ke, u)` | Nodal force vector (2×1) |
@@ -116,7 +116,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 
 ---
 
-### 3-D Elements
+### 3D Elements
 
 | Function | Description |
 |----------|-------------|
@@ -153,7 +153,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 ## Conventions
 
 - **Angle units**: All angle parameters are in **degrees** (converted internally via `deg2rad`).
-- **Dimension prefixes**: 
+- **Dimension prefixes**:
   - `d1_` — 1 DOF/node (1D spring, linear bar)
   - `d2_` — 2 DOF/node (2D spring, plane truss); 3 DOF/node for 2D beam
   - `d3_` — 3 DOF/node (3D spring, space truss); **6 DOF/node** for 3D beam (space frame)
@@ -166,7 +166,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 
 ## Project Structure
 
-```
+```text
 LibFEM.jl/
 ├── src/
 │   ├── LibFEM.jl          # Module declaration, includes, exports
@@ -300,7 +300,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 The `Doc/Kattan/M-Files/` directory contains 80 read-only MATLAB `.m` files from the Kattan textbook. LibFEM functions are numerically validated against these references in `test/comparison.jl` and `test/runtests.jl`.
 
 Mapping convention:
-```
+```text
 MATLAB {Domain}{Operation}.m → Julia d{N}_{domain}_{operation}
 ```
 

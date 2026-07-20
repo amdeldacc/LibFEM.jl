@@ -43,16 +43,6 @@ using Test
             @test d1_spring_elementforce(Ke, u_rb) ≈ [0.0; 0.0] atol = 1e-15
         end
 
-        @testset "elementstress" begin
-            k = 1000.0
-            Ke = d1_spring_elementstiffness(k)
-            u = [0.01; 0.0]
-            sigma = d1_spring_elementstress(Ke, u)
-            @test sigma ≈ [10.0; -10.0]  # same as elementforce for spring
-            # zero displacement → zero stress
-            @test d1_spring_elementstress(Ke, [0.0; 0.0]) ≈ [0.0; 0.0]
-        end
-
         @testset "assemble" begin
             K = zeros(2, 2)
             k = [1000 -1000; -1000 1000]
@@ -71,7 +61,6 @@ using Test
 
         @testset "L>0 error paths" begin
             # d1_spring_elementstiffness doesn't validate L (no L parameter)
-            # d1_spring_elementstress doesn't validate L (no L parameter)
             # No L>0 checks needed for spring elements
         end
 

@@ -24,7 +24,8 @@ jobs:
       contents: write      # push agent branches
       issues: write        # comment on issues
       pull-requests: write # create/merge PRs
-      # deliberately omitted: id-token (no OIDC), workflows (no yml injection)
+      workflows: write     # push .github/workflows/ changes (gated by env approval)
+      # omitted: id-token  -- no OIDC cloud access needed
 
     steps:
       - name: Checkout repository

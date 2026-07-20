@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-19T20:04:03.936Z",
+  "updatedAt": "2026-07-20T22:13:15.995Z",
   "command": "update",
-  "gitHead": "2fdbda38e01b4259993cb49250d95439c60ddbfb",
-  "model": "nvidia/nemotron-3-ultra-550b-a55b"
+  "gitHead": "fd8cd5f942249c1457b19246a62dbb3aa78375c5",
+  "model": "deepseek-ai/deepseek-v4-pro"
 }

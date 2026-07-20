@@ -32,7 +32,7 @@ export ElementDimensionError, ElementParameterError, AssemblyError, DiagramError
 export deg2rad
 
 # 1-D Spring
-export d1_spring_elementstiffness, d1_spring_elementforce, d1_spring_elementstress, d1_spring_assemble
+export d1_spring_elementstiffness, d1_spring_elementforce, d1_spring_assemble
 
 # 2-D Spring
 export d2_spring_elementstiffness, d2_spring_elementforce, d2_spring_assemble

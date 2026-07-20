@@ -61,7 +61,6 @@ using Test
 
         @testset "L>0 error paths" begin
             # d1_spring_elementstiffness doesn't validate L (no L parameter)
-            # d1_spring_elementstress doesn't validate L (no L parameter)
             # No L>0 checks needed for spring elements
         end
 

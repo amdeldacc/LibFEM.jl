@@ -83,7 +83,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 |----------|-------------|
 | `d1_spring_elementstiffness(k)` | 2×2 stiffness matrix for spring with stiffness `k` |
 | `d1_spring_elementforce(Ke, u)` | Nodal force vector (2×1) |
-| `d1_spring_elementstress(Ke, u)` | Stress vector (2×1) |
+| ~~`d1_spring_elementstress(Ke, u)`~~ | ~~Stress vector (2×1)~~ *(removed — meaningless for 0D spring, identical to `elementforce`)* |
 | `d1_spring_assemble(K, k, i, j)` | Assemble into global matrix (1 DOF/node) |
 | `d1_truss_elementstiffness(E, A, L)` | 2×2 stiffness for linear bar |
 | `d1_truss_elementforces(Ke, u)` | Nodal force vector (2×1) |

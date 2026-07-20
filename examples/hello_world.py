@@ -110,11 +110,11 @@ def main():
     f_e2 = d1_spring_elementforce(K2, u_e2)
     println("Element 2 force: ", f_e2[1], " N")
 
-    # Compute element stresses
-    sigma1 = d1_spring_elementstress(K1, u_e1)
-    sigma2 = d1_spring_elementstress(K2, u_e2)
-    println("Element 1 stress: ", sigma1[1], " Pa")
-    println("Element 2 stress: ", sigma2[1], " Pa")
+    # Compute element forces (d1_spring_elementstress removed — meaningless for 0D spring)
+    sigma1 = d1_spring_elementforce(K1, u_e1)
+    sigma2 = d1_spring_elementforce(K2, u_e2)
+    println("Element 1 force: ", sigma1[1], " N")
+    println("Element 2 force: ", sigma2[1], " N")
 
     println()
     println("✓ Hello World FEM solve complete!")

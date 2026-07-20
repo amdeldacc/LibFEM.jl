@@ -24,7 +24,6 @@ jobs:
       contents: write      # push agent branches
       issues: write        # comment on issues
       pull-requests: write # create/merge PRs
-      workflows: write     # push .github/workflows/ changes (gated by env approval)
       # omitted: id-token  -- no OIDC cloud access needed
 
     steps:

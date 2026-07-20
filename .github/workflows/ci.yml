@@ -39,5 +39,6 @@ jobs:
         with:
           version: '1.12'
       - run: sudo apt-get update && sudo apt-get install -y octave
+      - run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
       - run: julia --project=. scripts/validate_matlab.jl all
 

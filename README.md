@@ -116,7 +116,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 
 ---
 
-### 3-D Elements
+### 3D Elements
 
 | Function | Description |
 |----------|-------------|

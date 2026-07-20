@@ -13,7 +13,6 @@ Or run via julia command directly if PyJulia not installed.
 
 import subprocess
 import sys
-import json
 
 
 def run_via_julia_cmd(julia_code: str) -> str | None:
@@ -22,7 +21,7 @@ def run_via_julia_cmd(julia_code: str) -> str | None:
         ["julia", "--project=.", "-e", julia_code],
         capture_output=True,
         text=True,
-        cwd="/home/piou/LibFEM.jl"
+        cwd="/home/piou/LibFEM.jl",
     )
     if result.returncode != 0:
         print(f"Julia error: {result.stderr}", file=sys.stderr)
@@ -38,7 +37,7 @@ def main():
 
     # Julia code for a simple 2-spring system (classic FEM example)
     # Two springs in series: k1=200, k2=250, force=10 at node 2
-    julia_code = '''
+    julia_code = """
     using Pkg; Pkg.activate(".")
     using LibFEM
     using LinearAlgebra
@@ -119,7 +118,7 @@ def main():
 
     println()
     println("✓ Hello World FEM solve complete!")
-    '''
+    """
 
     print("Running LibFEM.jl example via Julia...")
     print("-" * 60)

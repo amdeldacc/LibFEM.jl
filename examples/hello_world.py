@@ -22,6 +22,7 @@ def run_via_julia_cmd(julia_code: str) -> str | None:
         capture_output=True,
         text=True,
         cwd="/home/piou/LibFEM.jl",
+        check=False,
     )
     if result.returncode != 0:
         print(f"Julia error: {result.stderr}", file=sys.stderr)
@@ -30,6 +31,7 @@ def run_via_julia_cmd(julia_code: str) -> str | None:
 
 
 def main():
+    """Run the LibFEM.jl hello world example by executing Julia code."""
     print("=" * 60)
     print("LibFEM.jl Hello World - 1D Spring System")
     print("=" * 60)

@@ -15,3 +15,4 @@ docs/
 # Generated files
 LibFEM_DS_2020.ipynb
 ToDo/
+node_modules/

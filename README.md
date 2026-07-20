@@ -4,7 +4,7 @@
 
 A simple educational Finite Element Method library in Julia, for springs, trusses, and beams in 1D, 2D, and 3D.
 
-Inspired by **Peter Kattan's *MATLAB Guide to Finite Elements: An Interactive Approach*** (2nd ed., Springer, 2007). The reference MATLAB code is preserved in `Doc/Kattan/M-Files/` as a read-only verification source.
+Inspired by **Peter Kattan's _MATLAB Guide to Finite Elements: An Interactive Approach_** (2nd ed., Springer, 2007). The reference MATLAB code is preserved in `Doc/Kattan/M-Files/` as a read-only verification source.
 
 ---
 
@@ -59,11 +59,11 @@ julia> u = [0.0; K[2:2, 2:2] \ [10.0]; 0.0]
 
 All functions follow the pattern: `d{N}_{domain}_{operation}`
 
-| Component | Values | Description |
-|-----------|--------|-------------|
-| `{N}` | `1`, `2`, `3` | Spatial dimensionality |
-| `{domain}` | `spring`, `truss`, `beam` | Element type |
-| `{operation}` | `elementstiffness`, `assemble`, `elementforce`, `elementstress`, `elementstrain`, `elementlength`, `elementaxialdiagram`, etc. | Operation |
+| Component     | Values                                                                                                                         | Description            |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
+| `{N}`         | `1`, `2`, `3`                                                                                                                  | Spatial dimensionality |
+| `{domain}`    | `spring`, `truss`, `beam`                                                                                                      | Element type           |
+| `{operation}` | `elementstiffness`, `assemble`, `elementforce`, `elementstress`, `elementstrain`, `elementlength`, `elementaxialdiagram`, etc. | Operation              |
 
 ### Core Pattern (3 Functions per Element Type)
 
@@ -79,73 +79,73 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 
 ### 1-D Elements
 
-| Function | Description |
-|----------|-------------|
-| `d1_spring_elementstiffness(k)` | 2×2 stiffness matrix for spring with stiffness `k` |
-| `d1_spring_elementforce(Ke, u)` | Nodal force vector (2×1) |
-| ~~`d1_spring_elementstress(Ke, u)`~~ | ~~Stress vector (2×1)~~ *(removed — meaningless for 0D spring, identical to `elementforce`)* |
-| `d1_spring_assemble(K, k, i, j)` | Assemble into global matrix (1 DOF/node) |
-| `d1_truss_elementstiffness(E, A, L)` | 2×2 stiffness for linear bar |
-| `d1_truss_elementforces(Ke, u)` | Nodal force vector (2×1) |
-| `d1_truss_elementstress(Ke, u, A)` | Stress vector (2×1) |
-| `d1_truss_elementstrain(L, u)` | Strain vector (2×1) |
-| `d1_truss_assemble(K, k, i, j)` | Assemble into global matrix (1 DOF/node) |
+| Function                             | Description                                                                                  |
+| ------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `d1_spring_elementstiffness(k)`      | 2×2 stiffness matrix for spring with stiffness `k`                                           |
+| `d1_spring_elementforce(Ke, u)`      | Nodal force vector (2×1)                                                                     |
+| ~~`d1_spring_elementstress(Ke, u)`~~ | ~~Stress vector (2×1)~~ _(removed — meaningless for 0D spring, identical to `elementforce`)_ |
+| `d1_spring_assemble(K, k, i, j)`     | Assemble into global matrix (1 DOF/node)                                                     |
+| `d1_truss_elementstiffness(E, A, L)` | 2×2 stiffness for linear bar                                                                 |
+| `d1_truss_elementforces(Ke, u)`      | Nodal force vector (2×1)                                                                     |
+| `d1_truss_elementstress(Ke, u, A)`   | Stress vector (2×1)                                                                          |
+| `d1_truss_elementstrain(L, u)`       | Strain vector (2×1)                                                                          |
+| `d1_truss_assemble(K, k, i, j)`      | Assemble into global matrix (1 DOF/node)                                                     |
 
 ---
 
 ### 2-D Elements
 
-| Function | Description |
-|----------|-------------|
-| `d2_spring_elementstiffness(k, theta)` | 4×4 stiffness (angle `theta` in degrees) |
-| `d2_spring_elementforce(k, theta, u)` | Scalar force |
-| `d2_spring_assemble(K, k, i, j)` | Assemble (2 DOF/node) |
-| `d2_truss_elementlength(x1, y1, x2, y2)` | Element length |
-| `d2_truss_elementstiffness(E, A, L, theta)` | 4×4 stiffness |
-| `d2_truss_elementforces(E, A, L, theta, u)` | Scalar force |
-| `d2_truss_elementstrain(L, theta, u)` | Scalar strain |
-| `d2_truss_elementstress(E, L, theta, u)` | Scalar stress |
-| `d2_truss_assemble(K, k, i, j)` | Assemble (2 DOF/node) |
-| `d2_beam_elementlength(x1, y1, x2, y2)` | Element length |
-| `d2_beam_elementstiffness(E, A, I, L, theta)` | 6×6 stiffness (3 DOF/node) |
-| `d2_beam_elementforces(E, A, I, L, theta, u)` | 6-element force vector |
-| `d2_beam_elementaxialdiagram(f, L)` | Plots.jl axial force diagram |
-| `d2_beam_elementsheardiagram(f, L)` | Plots.jl shear force diagram |
-| `d2_beam_elementmomentdiagram(f, L)` | Plots.jl bending moment diagram |
-| `d2_beam_assemble(K, k, i, j)` | Assemble (3 DOF/node) |
+| Function                                      | Description                              |
+| --------------------------------------------- | ---------------------------------------- |
+| `d2_spring_elementstiffness(k, theta)`        | 4×4 stiffness (angle `theta` in degrees) |
+| `d2_spring_elementforce(k, theta, u)`         | Scalar force                             |
+| `d2_spring_assemble(K, k, i, j)`              | Assemble (2 DOF/node)                    |
+| `d2_truss_elementlength(x1, y1, x2, y2)`      | Element length                           |
+| `d2_truss_elementstiffness(E, A, L, theta)`   | 4×4 stiffness                            |
+| `d2_truss_elementforces(E, A, L, theta, u)`   | Scalar force                             |
+| `d2_truss_elementstrain(L, theta, u)`         | Scalar strain                            |
+| `d2_truss_elementstress(E, L, theta, u)`      | Scalar stress                            |
+| `d2_truss_assemble(K, k, i, j)`               | Assemble (2 DOF/node)                    |
+| `d2_beam_elementlength(x1, y1, x2, y2)`       | Element length                           |
+| `d2_beam_elementstiffness(E, A, I, L, theta)` | 6×6 stiffness (3 DOF/node)               |
+| `d2_beam_elementforces(E, A, I, L, theta, u)` | 6-element force vector                   |
+| `d2_beam_elementaxialdiagram(f, L)`           | Plots.jl axial force diagram             |
+| `d2_beam_elementsheardiagram(f, L)`           | Plots.jl shear force diagram             |
+| `d2_beam_elementmomentdiagram(f, L)`          | Plots.jl bending moment diagram          |
+| `d2_beam_assemble(K, k, i, j)`                | Assemble (3 DOF/node)                    |
 
 ---
 
 ### 3D Elements
 
-| Function | Description |
-|----------|-------------|
-| `d3_spring_elementstiffness(k, thetax, thetay, thetaz)` | 6×6 stiffness |
-| `d3_spring_elementforce(k, thetax, thetay, thetaz, u)` | Scalar force |
-| `d3_spring_assemble(K, k, i, j)` | Assemble (3 DOF/node) |
-| `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)` | Element length |
-| `d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)` | 6×6 stiffness |
-| `d3_truss_elementforces(E, A, L, thetax, thetay, thetaz, u)` | Scalar force |
-| `d3_truss_elementstrain(L, thetax, thetay, thetaz, u)` | Scalar strain |
-| `d3_truss_elementstress(E, L, thetax, thetay, thetaz, u)` | Scalar stress |
-| `d3_truss_assemble(K, k, i, j)` | Assemble (3 DOF/node) |
-| `d3_beam_elementlength(x1, y1, z1, x2, y2, z2)` | Element length |
-| `d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` | 12×12 stiffness (6 DOF/node) |
+| Function                                                               | Description                           |
+| ---------------------------------------------------------------------- | ------------------------------------- |
+| `d3_spring_elementstiffness(k, thetax, thetay, thetaz)`                | 6×6 stiffness                         |
+| `d3_spring_elementforce(k, thetax, thetay, thetaz, u)`                 | Scalar force                          |
+| `d3_spring_assemble(K, k, i, j)`                                       | Assemble (3 DOF/node)                 |
+| `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)`                       | Element length                        |
+| `d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)`           | 6×6 stiffness                         |
+| `d3_truss_elementforces(E, A, L, thetax, thetay, thetaz, u)`           | Scalar force                          |
+| `d3_truss_elementstrain(L, thetax, thetay, thetaz, u)`                 | Scalar strain                         |
+| `d3_truss_elementstress(E, L, thetax, thetay, thetaz, u)`              | Scalar stress                         |
+| `d3_truss_assemble(K, k, i, j)`                                        | Assemble (3 DOF/node)                 |
+| `d3_beam_elementlength(x1, y1, z1, x2, y2, z2)`                        | Element length                        |
+| `d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` | 12×12 stiffness (6 DOF/node)          |
 | `d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` | 12-element force vector (local frame) |
-| `d3_beam_elementaxialdiagram(f, L)` | Plots.jl axial force diagram |
-| `d3_beam_elementshearydiagram(f, L)` | Plots.jl shear-Y diagram |
-| `d3_beam_elementshearzdiagram(f, L)` | Plots.jl shear-Z diagram |
-| `d3_beam_elementmomentydiagram(f, L)` | Plots.jl moment-Y diagram |
-| `d3_beam_elementmomentzdiagram(f, L)` | Plots.jl moment-Z diagram |
-| `d3_beam_elementtorsiondiagram(f, L)` | Plots.jl torsion diagram |
-| `d3_beam_assemble(K, k, i, j)` | Assemble (6 DOF/node) |
+| `d3_beam_elementaxialdiagram(f, L)`                                    | Plots.jl axial force diagram          |
+| `d3_beam_elementshearydiagram(f, L)`                                   | Plots.jl shear-Y diagram              |
+| `d3_beam_elementshearzdiagram(f, L)`                                   | Plots.jl shear-Z diagram              |
+| `d3_beam_elementmomentydiagram(f, L)`                                  | Plots.jl moment-Y diagram             |
+| `d3_beam_elementmomentzdiagram(f, L)`                                  | Plots.jl moment-Z diagram             |
+| `d3_beam_elementtorsiondiagram(f, L)`                                  | Plots.jl torsion diagram              |
+| `d3_beam_assemble(K, k, i, j)`                                         | Assemble (6 DOF/node)                 |
 
 ---
 
 ### Utility
 
-| Function | Description |
-|----------|-------------|
+| Function         | Description                              |
+| ---------------- | ---------------------------------------- |
 | `deg2rad(theta)` | Degrees to radians conversion (exported) |
 
 ---
@@ -212,6 +212,7 @@ julia -e 'using Pkg; Pkg.test()'
 ```
 
 **Test suite includes**:
+
 - **Unit tests** (`runtests.jl`, ~668 lines) — per-element correctness: stiffness matrix shape/symmetry, force/stress/strain numeric validation, assembly correctness, MATLAB reference comparison (Problem 10.1).
 - **MATLAB comparison** (`comparison.jl`) — Side-by-side MATLAB reference implementations transcribed from `Doc/Kattan/M-Files/`. Included from `runtests.jl`.
 - **Benchmarks** (`benchmark.jl`, 12 benchmarks) — Stiffness construction (8 element types), assembly (500-element chains), solve (random SPD), d3_beam forces. Run manually: `julia --project=. test/benchmark.jl`.
@@ -300,11 +301,13 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 The `Doc/Kattan/M-Files/` directory contains 80 read-only MATLAB `.m` files from the Kattan textbook. LibFEM functions are numerically validated against these references in `test/comparison.jl` and `test/runtests.jl`.
 
 Mapping convention:
+
 ```text
 MATLAB {Domain}{Operation}.m → Julia d{N}_{domain}_{operation}
 ```
 
 Examples:
+
 - `SpringElementStiffness.m` → `d1_spring_elementstiffness`
 - `PlaneTrussElementForce.m` → `d2_truss_elementforces`
 - `SpaceFrameElementStiffness.m` → `d3_beam_elementstiffness`
@@ -325,6 +328,7 @@ To add a new element type:
 5. Add tests in `test/runtests.jl`
 
 **Key invariants**:
+
 - All angles in degrees (use `deg2rad`)
 - Stiffness matrices must be symmetric
 - Assembly uses `.+=` (in-place addition) to accumulate multiple elements
@@ -345,7 +349,7 @@ See the repository's issue tracker for the full list. Highlights:
 
 ## Acknowledgments
 
-- **Peter I. Kattan**, *MATLAB Guide to Finite Elements: An Interactive Approach* (2nd ed., Springer, 2007) — the primary reference for algorithms and verification.
+- **Peter I. Kattan**, _MATLAB Guide to Finite Elements: An Interactive Approach_ (2nd ed., Springer, 2007) — the primary reference for algorithms and verification.
 - Julia community for `Plots.jl`, `BenchmarkTools.jl`, and the Julia language itself.
 
 ---

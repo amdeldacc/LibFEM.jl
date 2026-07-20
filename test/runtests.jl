@@ -40,7 +40,7 @@ using Test
             @test f ≈ [10.0; -10.0]
             # rigid-body motion → zero force
             u_rb = [0.005; 0.005]
-            @test d1_spring_elementforce(Ke, u_rb) ≈ [0.0; 0.0]
+            @test d1_spring_elementforce(Ke, u_rb) ≈ [0.0; 0.0] atol = 1e-15
         end
 
         @testset "elementstress" begin

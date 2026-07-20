@@ -21,11 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: julia-codebase
     permissions:
-      contents: write
-      id-token: write
-      issues: write
-      pull-requests: write
-      workflows: write
+      contents: write      # push agent branches
+      issues: write        # comment on issues
+      pull-requests: write # create/merge PRs
+      # deliberately omitted: id-token (no OIDC), workflows (no yml injection)
 
     steps:
       - name: Checkout repository

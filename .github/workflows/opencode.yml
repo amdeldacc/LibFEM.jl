@@ -93,7 +93,7 @@ jobs:
       - name: Run OpenCode
         run: opencode github run
         env:
-          MODEL: nvidia/deepseek-ai/deepseek-v4-pro
+          MODEL: nvidia/deepseek-ai/deepseek-v4-flash
           USE_GITHUB_TOKEN: "true"
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

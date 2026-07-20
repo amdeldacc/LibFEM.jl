@@ -878,6 +878,253 @@ end
             @test U_mat ≈ U_jl
             @test F_mat ≈ F_jl
         end
+
+        # ═══════════════════════════════════════════════════════════
+        # 2D Spring Full Problem — Horizontal + Vertical springs
+        #   Verified against analytical solution (no MATLAB ref)
+        #   Uses cross-configuration (θ=0° and θ=90°) for a
+        #   well-constrained 2D system.
+        # ═══════════════════════════════════════════════════════════
+        @testset "2D Spring Full Problem" begin
+            # Problem: 3 nodes, 2 orthogonal springs
+            #   Node 1: (0,0), fixed (u1x=0, u1y=0)
+            #   Node 2: (1,0)
+            #   Node 3: (1,1), fixed (u3x=0, u3y=0)
+            #
+            #   Element 1: k=200, θ=0°  (horizontal), nodes 1→2
+            #   Element 2: k=100, θ=90° (vertical),   nodes 2→3
+            #
+            #   Force at node 2: f2x=10, f2y=5
+            #
+            # Analytical (uncoupled x/y stiffness):
+            #   u2x = f2x / k1 = 10 / 200 = 0.05
+            #   u2y = f2y / k2 =  5 / 100 = 0.05
+            #   Element 1 force  = k1 · u2x = 200·0.05 = 10 (tension)
+            #   Element 2 force  = k2 · (u3y − u2y) = 100·(0−0.05) = −5 (compression)
+
+            # --- Element stiffness matrices ---
+            ke1 = d2_spring_elementstiffness(200.0, 0.0)
+            ke2 = d2_spring_elementstiffness(100.0, 90.0)
+
+            @test size(ke1) == (4, 4)
+            @test size(ke2) == (4, 4)
+            @test ke1 ≈ ke1'
+            @test ke2 ≈ ke2'
+
+            # --- Expected stiffness entries ---
+            # θ=0°:  C=1, S=0 → ke = 200·[1 0 -1 0; 0 0 0 0; -1 0 1 0; 0 0 0 0]
+            @test ke1[1, 1] ≈ 200.0
+            @test ke1[1, 3] ≈ -200.0
+            @test ke1[3, 1] ≈ -200.0
+            @test ke1[3, 3] ≈ 200.0
+            @test all(ke1[2, :] .≈ 0.0)
+            @test all(ke1[4, :] .≈ 0.0)
+            @test all(ke1[:, 2] .≈ 0.0)
+            @test all(ke1[:, 4] .≈ 0.0)
+
+            # θ=90°: C=0, S=1 → ke = 100·[0 0 0 0; 0 1 0 -1; 0 0 0 0; 0 -1 0 1]
+            # Note: cos(90°) ≈ 6.12e-17 in floating-point → near-zero entries use atol
+            @test ke2[2, 2] ≈ 100.0
+            @test ke2[2, 4] ≈ -100.0
+            @test ke2[4, 2] ≈ -100.0
+            @test ke2[4, 4] ≈ 100.0
+            @test maximum(abs.(ke2[1, :])) < 1e-12
+            @test maximum(abs.(ke2[3, :])) < 1e-12
+
+            # --- Assemble global stiffness (3 nodes × 2 DOF = 6×6) ---
+            K = zeros(6, 6)
+            K = d2_spring_assemble(K, ke1, 1, 2)
+            K = d2_spring_assemble(K, ke2, 2, 3)
+
+            @test size(K) == (6, 6)
+            @test K ≈ K'
+
+            # Expected K matrix (manual assembly verification)
+            #   K[1,1] = 200,  K[1,3] = -200     (elem 1: node 1→2, x only)
+            #   K[3,1] = -200, K[3,3] = 200       (elem 1: node 2→1, x only)
+            #   K[4,4] = 100,  K[4,6] = -100     (elem 2: node 2→3, y only)
+            #   K[6,4] = -100, K[6,6] = 100       (elem 2: node 3→2, y only)
+            K_expected = [200.0   0.0  -200.0   0.0    0.0    0.0
+                            0.0   0.0     0.0   0.0    0.0    0.0
+                         -200.0   0.0   200.0   0.0    0.0    0.0
+                            0.0   0.0     0.0 100.0    0.0 -100.0
+                            0.0   0.0     0.0   0.0    0.0    0.0
+                            0.0   0.0     0.0 -100.0    0.0  100.0]
+            @test K ≈ K_expected
+
+            # --- Apply BCs and solve ---
+            # Remove DOFs 1,2 (node 1 fixed) and DOFs 5,6 (node 3 fixed)
+            retained = [3, 4]  # u2x, u2y
+            K_reduced = K[retained, retained]
+
+            f_reduced = [10.0, 5.0]  # f2x=10, f2y=5
+
+            u_reduced = K_reduced \ f_reduced
+            @test u_reduced[1] ≈ 0.05  # u2x = 10/200
+            @test u_reduced[2] ≈ 0.05  # u2y = 5/100
+
+            # Full displacement vector
+            U = zeros(6)
+            U[3] = u_reduced[1]
+            U[4] = u_reduced[2]
+            F = K * U
+
+            @test U[3] ≈ 0.05
+            @test U[4] ≈ 0.05
+
+            # --- Reaction forces ---
+            # Equilibrium: F1x + f2x = 0, F1y + f2y + F3y = 0
+            @test F[1] ≈ -10.0           # F1x = -f2x
+            @test F[2] ≈   0.0  atol=1e-15
+            @test F[5] ≈   0.0  atol=1e-15
+            @test F[6] ≈  -5.0           # F3y = -f2y
+
+            # --- Internal element forces (scalar, positive = tension) ---
+            u_elem1 = [U[1], U[2], U[3], U[4]]
+            u_elem2 = [U[3], U[4], U[5], U[6]]
+
+            f_elem1 = d2_spring_elementforce(200.0, 0.0, u_elem1)  # 1-element vector
+            f_elem2 = d2_spring_elementforce(100.0, 90.0, u_elem2)
+
+            @test length(f_elem1) == 1
+            @test length(f_elem2) == 1
+            @test f_elem1[1] ≈ 10.0   # tension (stretch = 0.05)
+            @test f_elem2[1] ≈ -5.0   # compression (u3y < u2y)
+
+            # --- Element stiffness × displacement = nodal forces ---
+            # Element 1: horizontal spring
+            f_elem1_nodal = ke1 * u_elem1
+            @test f_elem1_nodal[1] ≈ -10.0  # force on node 1 in x
+            @test f_elem1_nodal[2] ≈   0.0  # no y-force
+            @test f_elem1_nodal[3] ≈  10.0  # force on node 2 in x
+            @test f_elem1_nodal[4] ≈   0.0  # no y-force
+
+            # Element 2: vertical spring
+            f_elem2_nodal = ke2 * u_elem2
+            @test f_elem2_nodal[1] ≈  0.0   atol=1e-15
+            @test f_elem2_nodal[2] ≈  5.0           # force on node 2 in y
+            @test f_elem2_nodal[3] ≈  0.0   atol=1e-15
+            @test f_elem2_nodal[4] ≈ -5.0           # force on node 3 in y
+        end
+
+        # ═══════════════════════════════════════════════════════════
+        # 3D Spring Full Problem — Two springs along x-axis
+        #   Verified against analytical solution (no MATLAB ref)
+        # ═══════════════════════════════════════════════════════════
+        @testset "3D Spring Full Problem" begin
+            # Problem: 3 nodes, 2 elements, 3 DOF/node
+            #   Node 1 (0,0,0) --k1=200-- Node 2 --k2=250-- Node 3
+            #   Springs along x-axis: thetax=0°, thetay=90°, thetaz=90°
+            #     → Cx=1, Cy=0, Cz=0 → only x-direction stiffness
+            #   BCs: Node 1 fixed (all DOFs), Node 3 fixed (all DOFs)
+            #        Node 2 y/z fixed, F2x = 10
+            #
+            # Analytical (reduces to 1D along x-direction):
+            #   Equivalent stiffness at node 2: k_eq = k1 + k2 = 450
+            #   u2x = F/k_eq = 10/450 = 1/45 ≈ 0.02222
+            #   Reaction at node 1: -k1·u2x = -40/9 ≈ -4.444
+            #   Reaction at node 3: -k2·u2x = -50/9 ≈ -5.556
+            #   Element 1 force: k1·u2x = 40/9 ≈ 4.444 (tension)
+            #   Element 2 force: -k2·u2x = -50/9 ≈ -5.556 (compression)
+
+            k1 = 200.0
+            k2 = 250.0
+            θx, θy, θz = 0.0, 90.0, 90.0
+            Cx, Cy, Cz = 1.0, 0.0, 0.0
+
+            # --- Element stiffness matrices (6×6) ---
+            ke1 = d3_spring_elementstiffness(k1, θx, θy, θz)
+            ke2 = d3_spring_elementstiffness(k2, θx, θy, θz)
+
+            @test size(ke1) == (6, 6)
+            @test size(ke2) == (6, 6)
+            @test ke1 ≈ ke1'
+            @test ke2 ≈ ke2'
+
+            # Expected element structure: k*[w -w; -w w] where w = [Cx² 0 0; 0 0 0; 0 0 0]
+            @test ke1[1, 1] ≈ k1 * Cx^2
+            @test ke1[1, 4] ≈ -k1 * Cx^2
+            @test ke1[4, 4] ≈ k1 * Cx^2
+            @test ke2[1, 1] ≈ k2 * Cx^2
+            @test ke2[1, 4] ≈ -k2 * Cx^2
+            @test ke2[4, 4] ≈ k2 * Cx^2
+
+            # --- Assemble global stiffness (3 nodes × 3 DOF = 9×9) ---
+            K = zeros(9, 9)
+            K = d3_spring_assemble(K, ke1, 1, 2)
+            K = d3_spring_assemble(K, ke2, 2, 3)
+
+            @test size(K) == (9, 9)
+            @test K ≈ K'
+
+            # Verify key entries (only x-direction DOFs have stiffness)
+            @test K[1, 1] ≈ k1                     # node 1x from element 1
+            @test K[1, 4] ≈ -k1                    # node 1x-2x coupling
+            @test K[4, 1] ≈ -k1                    # symmetry
+            @test K[4, 4] ≈ k1 + k2                # node 2x from both elements
+            @test K[4, 7] ≈ -k2                    # node 2x-3x coupling
+            @test K[7, 4] ≈ -k2                    # symmetry
+            @test K[7, 7] ≈ k2                     # node 3x from element 2
+
+            # y and z directions are uncoupled (only floating-point noise from cos(π/2))
+            @test maximum(abs.(K[2:3, :])) < 1e-12
+            @test maximum(abs.(K[5:6, :])) < 1e-12
+            @test maximum(abs.(K[8:9, :])) < 1e-12
+
+            # --- Apply BCs and solve ---
+            # Free DOF: node 2 x (DOF 4)
+            K_reduced = K[4:4, 4:4]  # 1×1
+            f_reduced = [10.0]
+            u2x = K_reduced \ f_reduced
+            u2x_exp = 10.0 / (k1 + k2)  # = 1/45 ≈ 0.022222...
+
+            @test u2x[1] ≈ u2x_exp  rtol=1e-10
+            @test u2x[1] ≈ 0.022222222222222223  rtol=1e-10
+
+            # Full displacement vector
+            U = zeros(9)
+            U[4] = u2x[1]
+
+            # Global force vector
+            F = K * U
+
+            # Reaction forces
+            r1x_exp = -k1 * u2x_exp  # -40/9 ≈ -4.444...
+            r3x_exp = -k2 * u2x_exp  # -50/9 ≈ -5.555...
+            @test F[1] ≈ r1x_exp  rtol=1e-10
+            @test F[2] ≈ 0.0  atol=1e-15
+            @test F[3] ≈ 0.0  atol=1e-15
+            @test F[4] ≈ 10.0
+            @test F[5] ≈ 0.0  atol=1e-15
+            @test F[6] ≈ 0.0  atol=1e-15
+            @test F[7] ≈ r3x_exp  rtol=1e-10
+            @test F[8] ≈ 0.0  atol=1e-15
+            @test F[9] ≈ 0.0  atol=1e-15
+
+            # --- Internal element forces (scalar, positive = tension) ---
+            u_elem1 = [U[1], U[2], U[3], U[4], U[5], U[6]]
+            u_elem2 = [U[4], U[5], U[6], U[7], U[8], U[9]]
+
+            f_elem1 = d3_spring_elementforce(k1, θx, θy, θz, u_elem1)  # 1-element vector
+            f_elem2 = d3_spring_elementforce(k2, θx, θy, θz, u_elem2)
+
+            @test length(f_elem1) == 1
+            @test length(f_elem2) == 1
+            @test f_elem1[1] ≈  k1 * u2x_exp  rtol=1e-10  # element 1 tension
+            @test f_elem2[1] ≈ -k2 * u2x_exp  rtol=1e-10  # element 2 compression
+
+            # --- Element nodal forces (k_elem * u_elem) ---
+            f_elem1_nodal = ke1 * u_elem1  # 6×1 vector
+            f_elem2_nodal = ke2 * u_elem2
+
+            # Element 1: node 1 reaction = -k1*u2x, node 2 force = k1*u2x
+            @test f_elem1_nodal[1] ≈ -k1 * u2x_exp  rtol=1e-10
+            @test f_elem1_nodal[4] ≈  k1 * u2x_exp  rtol=1e-10
+
+            # Element 2: node 2 force = k2*u2x, node 3 reaction = -k2*u2x
+            @test f_elem2_nodal[1] ≈  k2 * u2x_exp  rtol=1e-10
+            @test f_elem2_nodal[4] ≈ -k2 * u2x_exp  rtol=1e-10
+        end
     end
 
     # ═══════════════════════════════════════════════════
@@ -939,6 +1186,161 @@ end
             @test k_mat ≈ k_jl
             @test f_mat ≈ f_jl
             @test sigma_mat ≈ sigma_jl
+        end
+
+        # ─────────────────────────────────────────────
+        # Problem 3.1 — Three-element linear bar (1D truss)
+        #   (Kattan, Solutions Manual)
+        #   E=70e6, A=0.005, L=[1,2,1], Node 1 fixed
+        #   Forces: f₂=-10, f₃=0, f₄=15
+        # ─────────────────────────────────────────────
+        @testset "Problem 3.1" begin
+            E = 70e6
+            A = 0.005
+
+            # Element lengths
+            L1 = 1.0
+            L2 = 2.0
+            L3 = 1.0
+
+            # ══════════════════════
+            # MATLAB computation path
+            # ══════════════════════
+            k1_mat = LinearBarElementStiffness(E, A, L1)
+            k2_mat = LinearBarElementStiffness(E, A, L2)
+            k3_mat = LinearBarElementStiffness(E, A, L3)
+
+            K_mat = zeros(4, 4)
+            K_mat = LinearBarAssemble(K_mat, k1_mat, 1, 2)
+            K_mat = LinearBarAssemble(K_mat, k2_mat, 2, 3)
+            K_mat = LinearBarAssemble(K_mat, k3_mat, 3, 4)
+
+            # Reduced system (DOFs 2, 3, 4 — node 1 fixed)
+            K_reduced_mat = K_mat[2:4, 2:4]
+            f_reduced = [-10.0, 0.0, 15.0]
+            u_reduced_mat = K_reduced_mat \ f_reduced
+
+            # Full displacement vector
+            U_mat = zeros(4)
+            U_mat[2:4] = u_reduced_mat
+
+            # Nodal reactions
+            F_mat = K_mat * U_mat
+
+            # Element nodal displacements
+            u1_mat = [U_mat[1]; U_mat[2]]
+            u2_mat = [U_mat[2]; U_mat[3]]
+            u3_mat = [U_mat[3]; U_mat[4]]
+
+            # Element stresses
+            sigma1_mat = LinearBarElementStresses(k1_mat, u1_mat, A)
+            sigma2_mat = LinearBarElementStresses(k2_mat, u2_mat, A)
+            sigma3_mat = LinearBarElementStresses(k3_mat, u3_mat, A)
+
+            # Element forces
+            f1_mat = LinearBarElementForces(k1_mat, u1_mat)
+            f2_mat = LinearBarElementForces(k2_mat, u2_mat)
+            f3_mat = LinearBarElementForces(k3_mat, u3_mat)
+
+            # ══════════════════════
+            # Julia computation path
+            # ══════════════════════
+            k1_jl = d1_truss_elementstiffness(E, A, L1)
+            k2_jl = d1_truss_elementstiffness(E, A, L2)
+            k3_jl = d1_truss_elementstiffness(E, A, L3)
+
+            K_jl = zeros(4, 4)
+            K_jl = d1_truss_assemble(K_jl, k1_jl, 1, 2)
+            K_jl = d1_truss_assemble(K_jl, k2_jl, 2, 3)
+            K_jl = d1_truss_assemble(K_jl, k3_jl, 3, 4)
+
+            K_reduced_jl = K_jl[2:4, 2:4]
+            u_reduced_jl = K_reduced_jl \ f_reduced
+
+            U_jl = zeros(4)
+            U_jl[2:4] = u_reduced_jl
+
+            F_jl = K_jl * U_jl
+
+            u1_jl = [U_jl[1]; U_jl[2]]
+            u2_jl = [U_jl[2]; U_jl[3]]
+            u3_jl = [U_jl[3]; U_jl[4]]
+
+            sigma1_jl = d1_truss_elementstress(k1_jl, u1_jl, A)
+            sigma2_jl = d1_truss_elementstress(k2_jl, u2_jl, A)
+            sigma3_jl = d1_truss_elementstress(k3_jl, u3_jl, A)
+
+            f1_jl = d1_truss_elementforces(k1_jl, u1_jl)
+            f2_jl = d1_truss_elementforces(k2_jl, u2_jl)
+            f3_jl = d1_truss_elementforces(k3_jl, u3_jl)
+
+            # ══════════════════════
+            # Assertions: textbook values (exact)
+            # ══════════════════════
+            k1_expected = 350000.0 * [1 -1; -1 1]
+            k2_expected = 175000.0 * [1 -1; -1 1]
+            k3_expected = 350000.0 * [1 -1; -1 1]
+
+            @test k1_mat ≈ k1_expected
+            @test k2_mat ≈ k2_expected
+            @test k3_mat ≈ k3_expected
+
+            K_expected = [
+                 350000   -350000         0         0
+                -350000    525000   -175000         0
+                      0   -175000    525000   -350000
+                      0         0   -350000    350000
+            ]
+            @test K_mat ≈ K_expected
+
+            K_reduced_expected = [
+                525000   -175000         0
+               -175000    525000   -350000
+                     0   -350000    350000
+            ]
+            @test K_reduced_mat ≈ K_reduced_expected
+
+            # Displacement solution (exact rational values)
+            @test u_reduced_mat[1] ≈ 1/70000   rtol=1e-6
+            @test u_reduced_mat[2] ≈ 1/10000   rtol=1e-6
+            @test u_reduced_mat[3] ≈ 1/7000    rtol=1e-6
+
+            # Nodal reactions
+            @test F_mat[1] ≈ -5.0   rtol=1e-6
+            @test F_mat[2] ≈ -10.0  rtol=1e-6
+            @test F_mat[3] ≈ 0.0    atol=1e-10
+            @test F_mat[4] ≈ 15.0   rtol=1e-6
+
+            # Element stresses (MATLAB values from Solutions Manual)
+            @test sigma1_mat ≈ [-1000, 1000]  rtol=1e-6
+            @test sigma2_mat ≈ [-3000, 3000]  rtol=1e-6
+            @test sigma3_mat ≈ [-3000, 3000]  rtol=1e-6
+
+            # Element forces
+            @test f1_mat ≈ [-5.0, 5.0]    rtol=1e-6
+            @test f2_mat ≈ [-15.0, 15.0]  rtol=1e-6
+            @test f3_mat ≈ [-15.0, 15.0]  rtol=1e-6
+
+            # ══════════════════════
+            # MATLAB vs Julia: exact match
+            # ══════════════════════
+            @test k1_mat ≈ k1_jl
+            @test k2_mat ≈ k2_jl
+            @test k3_mat ≈ k3_jl
+
+            @test K_mat ≈ K_jl
+            @test K_reduced_mat ≈ K_reduced_jl
+            @test u_reduced_mat ≈ u_reduced_jl
+            @test U_mat ≈ U_jl
+            @test F_mat ≈ F_jl
+
+            @test sigma1_mat ≈ sigma1_jl
+            @test sigma2_mat ≈ sigma2_jl
+            @test sigma3_mat ≈ sigma3_jl
+
+            @test f1_mat ≈ f1_jl
+            @test f2_mat ≈ f2_jl
+            @test f3_mat ≈ f3_jl
         end
 
         # ─────────────────────────────────────────────
@@ -1208,6 +1610,265 @@ end
             stress = d3_truss_elementstress(E, L, 0, 0, 0, u)[1]
             strain = d3_truss_elementstrain(L, 0, 0, 0, u)[1]
             @test stress / E ≈ strain rtol=1e-10
+        end
+
+        # ─────────────────────────────────────────────
+        # Full Problem: Problem 6.1 (Space Truss)
+        # MATLAB reference from Kattan Solutions Manual
+        # 4 elements, 5 nodes, 3 DOF/node → 15 DOFs
+        # Nodes 1-4 fixed; Node 5 loaded: f=[15; 0; -20] N
+        # ─────────────────────────────────────────────
+        @testset "Problem 6.1" begin
+            E = 200e6
+            A = 0.003
+
+            # ═══════════════════════════════════════
+            # MATLAB computation path
+            # ═══════════════════════════════════════
+
+            # Element geometries: node coordinates
+            # Element 1: node1(0,0,-3) → node5(0,5,0)
+            # Element 2: node2(-3,0,0) → node5(0,5,0)
+            # Element 3: node3(0,0,3)  → node5(0,5,0)
+            # Element 4: node4(4,0,0)  → node5(0,5,0)
+            L1_mat = SpaceTrussElementLength(0, 0, -3, 0, 5, 0)
+            L2_mat = SpaceTrussElementLength(-3, 0, 0, 0, 5, 0)
+            L3_mat = SpaceTrussElementLength(0, 0, 3, 0, 5, 0)
+            L4_mat = SpaceTrussElementLength(4, 0, 0, 0, 5, 0)
+
+            # Direction angles (MATLAB: acosd(dx/L))
+            theta1x = rad2deg(acos(0.0 / L1_mat))
+            theta1y = rad2deg(acos(5.0 / L1_mat))
+            theta1z = rad2deg(acos(3.0 / L1_mat))
+
+            theta2x = rad2deg(acos(3.0 / L2_mat))
+            theta2y = rad2deg(acos(5.0 / L2_mat))
+            theta2z = rad2deg(acos(0.0 / L2_mat))
+
+            theta3x = rad2deg(acos(0.0 / L3_mat))
+            theta3y = rad2deg(acos(5.0 / L3_mat))
+            theta3z = rad2deg(acos(-3.0 / L3_mat))
+
+            theta4x = rad2deg(acos(-4.0 / L4_mat))
+            theta4y = rad2deg(acos(5.0 / L4_mat))
+            theta4z = rad2deg(acos(0.0 / L4_mat))
+
+            # Element stiffness matrices
+            k1_mat = SpaceTrussElementStiffness(E, A, L1_mat, theta1x, theta1y, theta1z)
+            k2_mat = SpaceTrussElementStiffness(E, A, L2_mat, theta2x, theta2y, theta2z)
+            k3_mat = SpaceTrussElementStiffness(E, A, L3_mat, theta3x, theta3y, theta3z)
+            k4_mat = SpaceTrussElementStiffness(E, A, L4_mat, theta4x, theta4y, theta4z)
+
+            # Assemble global stiffness matrix (15×15)
+            K_mat = zeros(15, 15)
+            K_mat = SpaceTrussAssemble(K_mat, k1_mat, 1, 5)
+            K_mat = SpaceTrussAssemble(K_mat, k2_mat, 2, 5)
+            K_mat = SpaceTrussAssemble(K_mat, k3_mat, 3, 5)
+            K_mat = SpaceTrussAssemble(K_mat, k4_mat, 4, 5)
+
+            # Reduced system (DOFs 13,14,15 → Node 5)
+            K_reduced_mat = K_mat[13:15, 13:15]
+            f_reduced = [15.0, 0.0, -20.0]
+            u_reduced_mat = K_reduced_mat \ f_reduced
+
+            # Full displacement vector (15 DOFs)
+            U_mat = zeros(15)
+            U_mat[13:15] = u_reduced_mat
+
+            # Element nodal displacements (each 6-element: node_i, node_j)
+            u1_mat = [U_mat[1]; U_mat[2]; U_mat[3]; U_mat[13]; U_mat[14]; U_mat[15]]
+            u2_mat = [U_mat[4]; U_mat[5]; U_mat[6]; U_mat[13]; U_mat[14]; U_mat[15]]
+            u3_mat = [U_mat[7]; U_mat[8]; U_mat[9]; U_mat[13]; U_mat[14]; U_mat[15]]
+            u4_mat = [U_mat[10]; U_mat[11]; U_mat[12]; U_mat[13]; U_mat[14]; U_mat[15]]
+
+            # Stresses
+            sigma1_mat = SpaceTrussElementStress(E, L1_mat, theta1x, theta1y, theta1z, u1_mat)
+            sigma2_mat = SpaceTrussElementStress(E, L2_mat, theta2x, theta2y, theta2z, u2_mat)
+            sigma3_mat = SpaceTrussElementStress(E, L3_mat, theta3x, theta3y, theta3z, u3_mat)
+            sigma4_mat = SpaceTrussElementStress(E, L4_mat, theta4x, theta4y, theta4z, u4_mat)
+
+            # Forces
+            f1_mat = SpaceTrussElementForce(E, A, L1_mat, theta1x, theta1y, theta1z, u1_mat)
+            f2_mat = SpaceTrussElementForce(E, A, L2_mat, theta2x, theta2y, theta2z, u2_mat)
+            f3_mat = SpaceTrussElementForce(E, A, L3_mat, theta3x, theta3y, theta3z, u3_mat)
+            f4_mat = SpaceTrussElementForce(E, A, L4_mat, theta4x, theta4y, theta4z, u4_mat)
+
+            # Strains (stress/E)
+            strain1_mat = sigma1_mat / E
+            strain2_mat = sigma2_mat / E
+            strain3_mat = sigma3_mat / E
+            strain4_mat = sigma4_mat / E
+
+            # ═══════════════════════════════════════
+            # Julia computation path
+            # ═══════════════════════════════════════
+
+            L1_jl = d3_truss_elementlength(0, 0, -3, 0, 5, 0)
+            L2_jl = d3_truss_elementlength(-3, 0, 0, 0, 5, 0)
+            L3_jl = d3_truss_elementlength(0, 0, 3, 0, 5, 0)
+            L4_jl = d3_truss_elementlength(4, 0, 0, 0, 5, 0)
+
+            k1_jl = d3_truss_elementstiffness(E, A, L1_jl, theta1x, theta1y, theta1z)
+            k2_jl = d3_truss_elementstiffness(E, A, L2_jl, theta2x, theta2y, theta2z)
+            k3_jl = d3_truss_elementstiffness(E, A, L3_jl, theta3x, theta3y, theta3z)
+            k4_jl = d3_truss_elementstiffness(E, A, L4_jl, theta4x, theta4y, theta4z)
+
+            K_jl = zeros(15, 15)
+            K_jl = d3_truss_assemble(K_jl, k1_jl, 1, 5)
+            K_jl = d3_truss_assemble(K_jl, k2_jl, 2, 5)
+            K_jl = d3_truss_assemble(K_jl, k3_jl, 3, 5)
+            K_jl = d3_truss_assemble(K_jl, k4_jl, 4, 5)
+
+            K_reduced_jl = K_jl[13:15, 13:15]
+            u_reduced_jl = K_reduced_jl \ f_reduced
+
+            U_jl = zeros(15)
+            U_jl[13:15] = u_reduced_jl
+
+            u1_jl = [U_jl[1]; U_jl[2]; U_jl[3]; U_jl[13]; U_jl[14]; U_jl[15]]
+            u2_jl = [U_jl[4]; U_jl[5]; U_jl[6]; U_jl[13]; U_jl[14]; U_jl[15]]
+            u3_jl = [U_jl[7]; U_jl[8]; U_jl[9]; U_jl[13]; U_jl[14]; U_jl[15]]
+            u4_jl = [U_jl[10]; U_jl[11]; U_jl[12]; U_jl[13]; U_jl[14]; U_jl[15]]
+
+            sigma1_jl = d3_truss_elementstress(E, L1_jl, theta1x, theta1y, theta1z, u1_jl)[1]
+            sigma2_jl = d3_truss_elementstress(E, L2_jl, theta2x, theta2y, theta2z, u2_jl)[1]
+            sigma3_jl = d3_truss_elementstress(E, L3_jl, theta3x, theta3y, theta3z, u3_jl)[1]
+            sigma4_jl = d3_truss_elementstress(E, L4_jl, theta4x, theta4y, theta4z, u4_jl)[1]
+
+            f1_jl = d3_truss_elementforces(E, A, L1_jl, theta1x, theta1y, theta1z, u1_jl)[1]
+            f2_jl = d3_truss_elementforces(E, A, L2_jl, theta2x, theta2y, theta2z, u2_jl)[1]
+            f3_jl = d3_truss_elementforces(E, A, L3_jl, theta3x, theta3y, theta3z, u3_jl)[1]
+            f4_jl = d3_truss_elementforces(E, A, L4_jl, theta4x, theta4y, theta4z, u4_jl)[1]
+
+            strain1_jl = d3_truss_elementstrain(L1_jl, theta1x, theta1y, theta1z, u1_jl)[1]
+            strain2_jl = d3_truss_elementstrain(L2_jl, theta2x, theta2y, theta2z, u2_jl)[1]
+            strain3_jl = d3_truss_elementstrain(L3_jl, theta3x, theta3y, theta3z, u3_jl)[1]
+            strain4_jl = d3_truss_elementstrain(L4_jl, theta4x, theta4y, theta4z, u4_jl)[1]
+
+            # ═══════════════════════════════════════
+            # Assertions — MATLAB vs reference values
+            # ═══════════════════════════════════════
+
+            # --- Element lengths (textbook values) ---
+            @test L1_mat ≈ 5.8310  rtol=1e-4
+            @test L2_mat ≈ 5.8310  rtol=1e-4
+            @test L3_mat ≈ 5.8310  rtol=1e-4
+            @test L4_mat ≈ 6.4031  rtol=1e-4
+
+            # --- Element stiffness matrices (MATLAB reference) ---
+            # Element 1: thetax=90, thetay=30.9638, thetaz=59.0362
+            k1_expected = 1e4 * [
+                0.0     0.0     0.0     0.0     0.0     0.0
+                0.0     7.5661  4.5397  0.0    -7.5661 -4.5397
+                0.0     4.5397  2.7238  0.0    -4.5397 -2.7238
+                0.0     0.0     0.0     0.0     0.0     0.0
+                0.0    -7.5661 -4.5397  0.0     7.5661  4.5397
+                0.0    -4.5397 -2.7238  0.0     4.5397  2.7238
+            ]
+            @test k1_mat ≈ k1_expected  rtol=1e-4
+
+            # Element 2: theta2x=59.0362, theta2y=30.9638, theta2z=90
+            k2_expected = 1e4 * [
+                2.7238  4.5397  0.0    -2.7238 -4.5397  0.0
+                4.5397  7.5661  0.0    -4.5397 -7.5661  0.0
+                0.0     0.0     0.0     0.0     0.0     0.0
+               -2.7238 -4.5397  0.0     2.7238  4.5397  0.0
+               -4.5397 -7.5661  0.0     4.5397  7.5661  0.0
+                0.0     0.0     0.0     0.0     0.0     0.0
+            ]
+            @test k2_mat ≈ k2_expected  rtol=1e-4
+
+            # Element 3: theta3x=90, theta3y=30.9638, theta3z=120.9638
+            k3_expected = 1e4 * [
+                0.0     0.0     0.0     0.0     0.0     0.0
+                0.0     7.5661 -4.5397  0.0    -7.5661  4.5397
+                0.0    -4.5397  2.7238  0.0     4.5397 -2.7238
+                0.0     0.0     0.0     0.0     0.0     0.0
+                0.0    -7.5661  4.5397  0.0     7.5661 -4.5397
+                0.0     4.5397 -2.7238  0.0    -4.5397  2.7238
+            ]
+            @test k3_mat ≈ k3_expected  rtol=1e-4
+
+            # Element 4: theta4x=128.6598, theta4y=38.6598, theta4z=90
+            k4_expected = 1e4 * [
+                3.6568 -4.5709  0.0    -3.6568  4.5709  0.0
+               -4.5709  5.7137  0.0     4.5709 -5.7137  0.0
+                0.0     0.0     0.0     0.0     0.0     0.0
+               -3.6568  4.5709  0.0     3.6568 -4.5709  0.0
+                4.5709 -5.7137  0.0    -4.5709  5.7137  0.0
+                0.0     0.0     0.0     0.0     0.0     0.0
+            ]
+            @test k4_mat ≈ k4_expected  rtol=1e-4
+
+            # --- Reduced stiffness matrix (MATLAB reference) ---
+            K_reduced_expected = 1e5 * [
+                0.6381  -0.0031   0.0
+               -0.0031   2.8412   0.0
+                0.0      0.0      0.5448
+            ]
+            @test K_reduced_mat ≈ K_reduced_expected  rtol=1e-4
+
+            # --- Displacement solution (MATLAB reference) ---
+            @test u_reduced_mat[1] ≈  0.2351e-3  rtol=1e-4
+            @test u_reduced_mat[2] ≈  0.0003e-3  rtol=2e-1  # near-zero; loose tolerance
+            @test u_reduced_mat[3] ≈ -0.3671e-3  rtol=1e-4
+
+            # --- Global reaction forces (MATLAB reference) ---
+            F_mat = K_mat * U_mat
+            @test F_mat[13] ≈  15.0  rtol=1e-4
+            @test F_mat[14] ≈   0.0  atol=1e-3
+            @test F_mat[15] ≈ -20.0  rtol=1e-4
+
+            # --- Element stresses (MATLAB reference) ---
+            @test sigma1_mat ≈ -6.4712e3  rtol=1e-4
+            @test sigma2_mat ≈  4.1563e3  rtol=1e-4
+            @test sigma3_mat ≈  6.4864e3  rtol=1e-4
+            @test sigma4_mat ≈ -4.5808e3  rtol=1e-4
+
+            # --- Element forces (stress × area) ---
+            @test f1_mat ≈ -6.4712e3 * A  rtol=1e-4
+            @test f2_mat ≈  4.1563e3 * A  rtol=1e-4
+            @test f3_mat ≈  6.4864e3 * A  rtol=1e-4
+            @test f4_mat ≈ -4.5808e3 * A  rtol=1e-4
+
+            # --- Element strains (stress / E) ---
+            @test strain1_mat ≈ -6.4712e3 / E  rtol=1e-4
+            @test strain2_mat ≈  4.1563e3 / E  rtol=1e-4
+            @test strain3_mat ≈  6.4864e3 / E  rtol=1e-4
+            @test strain4_mat ≈ -4.5808e3 / E  rtol=1e-4
+
+            # ═══════════════════════════════════════
+            # MATLAB vs Julia: exact match
+            # ═══════════════════════════════════════
+            @test L1_mat ≈ L1_jl
+            @test L2_mat ≈ L2_jl
+            @test L3_mat ≈ L3_jl
+            @test L4_mat ≈ L4_jl
+
+            @test k1_mat ≈ k1_jl
+            @test k2_mat ≈ k2_jl
+            @test k3_mat ≈ k3_jl
+            @test k4_mat ≈ k4_jl
+
+            @test K_mat ≈ K_jl
+            @test K_reduced_mat ≈ K_reduced_jl
+            @test u_reduced_mat ≈ u_reduced_jl
+            @test U_mat ≈ U_jl
+
+            @test sigma1_mat ≈ sigma1_jl
+            @test sigma2_mat ≈ sigma2_jl
+            @test sigma3_mat ≈ sigma3_jl
+            @test sigma4_mat ≈ sigma4_jl
+
+            @test f1_mat ≈ f1_jl
+            @test f2_mat ≈ f2_jl
+            @test f3_mat ≈ f3_jl
+            @test f4_mat ≈ f4_jl
+
+            @test strain1_mat ≈ strain1_jl
+            @test strain2_mat ≈ strain2_jl
+            @test strain3_mat ≈ strain3_jl
+            @test strain4_mat ≈ strain4_jl
         end
     end
 
@@ -1501,6 +2162,45 @@ end
             @test F_mat[12] ≈ -17.6937 rtol=1e-3
             @test F_mat[13] ≈ 6.3481  rtol=1e-3
             @test F_mat[37] ≈ -15.0   rtol=1e-3
+        end
+
+        @testset "SpaceFrame diagram functions" begin
+            f = [1000.0, 500.0, 300.0, 200.0, 150.0, 100.0,
+                 -1000.0, -500.0, -300.0, -200.0, -150.0, -100.0]
+            L = 5.0
+
+            # Axial: z = [-f₁, f₇]
+            @test SpaceFrameElementAxialDiagram(f, L) ≈ [-1000.0, -1000.0]
+            @test SpaceFrameElementAxialDiagram(f, L) == [-f[1], f[7]]
+
+            # Shear-Y: z = [f₂, -f₈]
+            @test SpaceFrameElementShearYDiagram(f, L) ≈ [500.0, 500.0]
+            @test SpaceFrameElementShearYDiagram(f, L) == [f[2], -f[8]]
+
+            # Shear-Z: z = [f₃, -f₉]
+            @test SpaceFrameElementShearZDiagram(f, L) ≈ [300.0, 300.0]
+            @test SpaceFrameElementShearZDiagram(f, L) == [f[3], -f[9]]
+
+            # Moment-Y: z = [f₅, -f₁₁]
+            @test SpaceFrameElementMomentYDiagram(f, L) ≈ [150.0, 150.0]
+            @test SpaceFrameElementMomentYDiagram(f, L) == [f[5], -f[11]]
+
+            # Moment-Z: z = [f₆, -f₁₂]
+            @test SpaceFrameElementMomentZDiagram(f, L) ≈ [100.0, 100.0]
+            @test SpaceFrameElementMomentZDiagram(f, L) == [f[6], -f[12]]
+
+            # Torsion: z = [f₄, -f₁₀]
+            @test SpaceFrameElementTorsionDiagram(f, L) ≈ [200.0, 200.0]
+            @test SpaceFrameElementTorsionDiagram(f, L) == [f[4], -f[10]]
+
+            # Zero force → zero diagram
+            f0 = zeros(12)
+            @test SpaceFrameElementAxialDiagram(f0, L) == [0.0, 0.0]
+            @test SpaceFrameElementShearYDiagram(f0, L) == [0.0, 0.0]
+            @test SpaceFrameElementShearZDiagram(f0, L) == [0.0, 0.0]
+            @test SpaceFrameElementMomentYDiagram(f0, L) == [0.0, 0.0]
+            @test SpaceFrameElementMomentZDiagram(f0, L) == [0.0, 0.0]
+            @test SpaceFrameElementTorsionDiagram(f0, L) == [0.0, 0.0]
         end
     end
 

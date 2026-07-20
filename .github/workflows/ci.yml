@@ -6,72 +6,64 @@ on:
   pull_request:
     branches: [master]
 
+permissions:
+  contents: read
+
 jobs:
   test:
-    name: Test (Julia ${{ matrix.julia }})
+    name: Julia ${{ matrix.version }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        julia:
+        version:
           - '1.10'
           - '1.11'
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Julia
-        uses: julia-actions/setup-julia@v2
+      - uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.julia }}
-          
-      - name: Cache Julia packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.julia
-            ~/.julia/registries
-            ~/.julia/artifacts
-          key: ${{ runner.os }}-julia-${{ matrix.julia }}-${{ hashFiles('Project.toml', 'Manifest.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-julia-${{ matrix.julia }}-
-            
-      - name: Install dependencies
-        run: |
-          julia --project=. -e 'using Pkg; Pkg.instantiate()'
-          
-      - name: Run tests
-        run: |
-          julia --project=. test/runtests.jl
+          version: ${{ matrix.version }}
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Julia
-        uses: julia-actions/setup-julia@v2
+      - uses: julia-actions/setup-julia@v2
         with:
           version: '1.11'
-          
-      - name: Cache Julia packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.julia
-            ~/.julia/registries
-            ~/.julia/artifacts
-          key: ${{ runner.os }}-julia-lint-${{ hashFiles('Project.toml', 'Manifest.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-julia-lint-
-            
-      - name: Install lint dependencies
+      - uses: julia-actions/cache@v2
+
+      - name: Install project deps
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
+
+      - name: Install lint tools
         run: |
-          julia --project=. -e 'using Pkg; Pkg.add(["JuliaFormatter", "Aqua"])'
-          
-      - name: Run JuliaFormatter
+          julia --project=. -e '
+            using Pkg
+            Pkg.add([
+              Pkg.PackageSpec(name="JuliaFormatter", version="2"),
+              Pkg.PackageSpec(name="Aqua", version="0.8"),
+            ])
+          '
+
+      - name: Check formatting
         run: |
-          julia --project=. -e 'using JuliaFormatter; format("."; verbose=true)'
-          
-      - name: Run Aqua (code quality checks)
+          julia --project=. -e '
+            using JuliaFormatter
+            ok = format("."; verbose=true)
+            if !ok
+              error("Formatting issues found — run JuliaFormatter.format(\".\") locally")
+            end
+          '
+
+      - name: Run Aqua
         run: |
-          julia --project=. -e 'using Aqua; Aqua.test_all(LibFEM; ambiguities=false, stale_deps=false)'
+          julia --project=. -e '
+            using Aqua, LibFEM
+            Aqua.test_all(LibFEM; ambiguities=false, stale_deps=false)
+          '

@@ -317,6 +317,96 @@ See `CONTEXT.md` and `openwiki/reference/kattan-mapping.md` for the complete map
 
 ---
 
+## MATLAB Reference Validation
+
+In addition to the in-Julia MATLAB reference comparisons in `test/comparison.jl`, LibFEM provides a standalone validation pipeline that runs the original Kattan textbook `.m` files through **GNU Octave** and compares results against Julia implementations. This exercises the actual MATLAB reference code, not hand-transcribed Julia translations.
+
+### Purpose
+
+Validate every in-scope element function against its original Kattan textbook MATLAB implementation by executing `.m` files directly through Octave. This catches discrepancies that hand-transcribed translations might miss and provides an independent verification layer.
+
+### Prerequisites
+
+- **GNU Octave >= 8.0** -- required for `jsonencode`/`jsondecode` support. Install via your system package manager:
+  - Ubuntu/Debian: `sudo apt-get install octave`
+  - macOS: `brew install octave`
+  - Windows: See [octave.org/download](https://octave.org/download)
+
+### Quick Start
+
+Run the full validation suite (all 6 element families, 20+ comparisons):
+
+```bash
+julia --project=. scripts/validate_matlab.jl all
+```
+
+### CLI Reference
+
+| Argument | Description |
+| -------- | ----------- |
+| `spring` | Validate 1D spring stiffness and forces (2 comparisons) |
+| `truss`  | Validate 1D/2D/3D truss length, stiffness, forces, stress (11 comparisons) |
+| `beam`   | Validate 2D/3D beam length, stiffness, forces (7 comparisons) |
+| `all`    | Run every validation comparison across all families (default) |
+
+**Exit codes:**
+
+| Code | Meaning |
+| ---- | ------- |
+| `0`  | All comparisons pass within tolerance |
+| `1`  | One or more comparisons exceed tolerance |
+| `2`  | Octave not found or version < 8.0 |
+
+### Tolerances
+
+Both stiffness matrix and force/stress comparisons use uniform tolerances:
+
+- `rtol=1e-8` (relative tolerance)
+- `atol=1e-10` (absolute tolerance)
+
+Comparisons use Julia's `isapprox(actual, expected; rtol=1e-8, atol=1e-10)`.
+
+### CI Behavior
+
+The Octave validation pipeline runs automatically in CI as the `octave-validation` job (`.github/workflows/ci.yml`):
+
+- **Octave is installed** via `sudo apt-get install -y octave` at the start of the job.
+- **The build fails** if any comparison exceeds tolerance (exit code 1) or if Octave cannot be found (exit code 2). There is no `continue-on-error` flag.
+
+This is a required check; discrepancies between Julia and MATLAB reference implementations are treated as regressions.
+
+### Test Suite Integration
+
+The Octave validation is also wired into `Pkg.test()` as the **"Octave validation"** testset in `test/comparison.jl`. It runs 24 comparisons across all 6 element families. If Octave is unavailable, it warns and skips gracefully rather than failing the test suite.
+
+### Troubleshooting
+
+**Octave not found**
+
+```
+ERROR: Octave not found at /usr/bin/octave
+```
+
+Ensure GNU Octave >= 8.0 is installed and the `octave` binary is at `/usr/bin/octave`. On Ubuntu/Debian: `sudo apt-get install octave`.
+
+**Octave version < 8**
+
+```
+ERROR: Octave 8.0 or later is required (detected: 7.x)
+```
+
+Upgrade Octave to version 8 or later. The `jsonencode`/`jsondecode` functions are only available in Octave 8+.
+
+**Unexpected numerical discrepancies**
+
+If a comparison fails with a non-zero error:
+
+1. Run the validation for the specific family: `julia --project=. scripts/validate_matlab.jl spring` (or `truss`/`beam`)
+2. Check that your Julia code changes match the expected MATLAB output from the textbook
+3. Verify the tolerance values in `scripts/validate_matlab.jl` (lines 34-35: `RTOL = 1e-8`, `ATOL = 1e-10`)
+
+---
+
 ## Extending the Library
 
 To add a new element type:

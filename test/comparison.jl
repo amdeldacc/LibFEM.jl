@@ -2372,3 +2372,314 @@ end
     end
 
 end  # @testset "MATLAB comparison"
+
+# ════════════════════════════════════════════════════════════════
+# Octave Validation — Live MATLAB .m execution via OctaveRunner
+# ════════════════════════════════════════════════════════════════
+# Runs each element family's core functions through Octave (GNU
+# Octave, an open-source MATLAB-compatible interpreter) and
+# compares results against the native LibFEM Julia implementations.
+#
+# This validates that:
+#   1) LibFEM functions match the reference MATLAB .m files
+#   2) The OctaveRunner bridge correctly serializes/deserializes
+#      inputs and outputs of all shapes (scalars, vectors, matrices)
+#   3) The adapter layer (matlab_adapters.jl) correctly maps between
+#      Julia and MATLAB calling conventions
+#
+# When Octave with JSON support is not installed, the tests are
+# silently skipped (warns and @test true).
+# ════════════════════════════════════════════════════════════════
+
+@testset "Octave validation" begin
+
+    # ── include helpers ──
+    include("octave_runner.jl")
+    using .OctaveRunner
+    include("matlab_adapters.jl")
+
+    mfile_dir = joinpath(@__DIR__, "..", "Doc", "Kattan", "M-Files")
+
+    # ── diagnostic helper ──
+    function check_octave(oct_val, jl_val, name; rtol=1e-8, atol=1e-10)
+        if isapprox(oct_val, jl_val; rtol=rtol, atol=atol)
+            return true
+        else
+            rel_err = norm(vec(oct_val) .- vec(jl_val)) / max(norm(vec(jl_val)), eps())
+            println("    ❌ MISMATCH: ", name)
+            println("      Octave: ", oct_val)
+            println("      Julia:  ", jl_val)
+            println("      Rel err: ", rel_err)
+            return false
+        end
+    end
+
+    # ── detect Octave ──
+    oct_info = OctaveRunner.detect_octave()
+    if !oct_info.has_json
+        @warn "Octave not available or missing JSON support — skipping Octave validation"
+        @test true
+    else
+        @info "Octave $(oct_info.version) detected at $(oct_info.path)"
+
+        # ────────────────────────────────────────────────────
+        # 1D Spring (d1_spring)
+        # ────────────────────────────────────────────────────
+        @testset "Spring (1D)" begin
+            k = 200.0
+
+            # SpringElementStiffness
+            path = joinpath(mfile_dir, "SpringElementStiffness.m")
+            args = adapt_spring_args(k)
+            oct_val = OctaveRunner.load_and_call(path, "SpringElementStiffness", args...)
+            oct_k = adapt_spring_result(oct_val, 2)
+            jl_k = d1_spring_elementstiffness(k)
+            @test check_octave(oct_k, jl_k, "SpringElementStiffness")
+
+            # SpringElementForces with zero displacement
+            u0 = [0.0, 0.0]
+            path = joinpath(mfile_dir, "SpringElementForces.m")
+            args = adapt_spring_args(oct_k, u0)
+            oct_val = OctaveRunner.load_and_call(path, "SpringElementForces", args...)
+            oct_f = adapt_spring_result(oct_val, 2)
+            jl_f = d1_spring_elementforce(oct_k, u0)
+            @test check_octave(oct_f, jl_f, "SpringElementForces")
+
+            # SpringAssemble into 2-element system
+            path = joinpath(mfile_dir, "SpringAssemble.m")
+            K0 = zeros(2, 2)
+            args = adapt_spring_args(K0, oct_k, 1, 2)
+            oct_K = OctaveRunner.load_and_call(path, "SpringAssemble", args...)
+            jl_K = d1_spring_assemble(zeros(2, 2), oct_k, 1, 2)
+            @test check_octave(oct_K, jl_K, "SpringAssemble")
+        end
+
+        # ────────────────────────────────────────────────────
+        # 1D Truss (LinearBar / d1_truss)
+        # ────────────────────────────────────────────────────
+        @testset "LinearBar (1D Truss)" begin
+            E, A, L = 70e6, 0.005, 1.0
+
+            # LinearBarElementStiffness
+            path = joinpath(mfile_dir, "LinearBarElementStiffness.m")
+            args = adapt_truss_args(E, A, L)
+            oct_val = OctaveRunner.load_and_call(path, "LinearBarElementStiffness", args...)
+            oct_k = adapt_truss_result(oct_val, 2)
+            jl_k = d1_truss_elementstiffness(E, A, L)
+            @test check_octave(oct_k, jl_k, "LinearBarElementStiffness")
+
+            # LinearBarElementForces (zero displacement)
+            path = joinpath(mfile_dir, "LinearBarElementForces.m")
+            args = adapt_truss_args(oct_k, [0.0, 0.0])
+            oct_val = OctaveRunner.load_and_call(path, "LinearBarElementForces", args...)
+            oct_f = adapt_truss_result(oct_val, 2)
+            jl_f = d1_truss_elementforces(oct_k, [0.0, 0.0])
+            @test check_octave(oct_f, jl_f, "LinearBarElementForces")
+
+            # LinearBarElementStresses (zero displacement)
+            path = joinpath(mfile_dir, "LinearBarElementStresses.m")
+            args = adapt_truss_args(oct_k, [0.0, 0.0], A)
+            oct_val = OctaveRunner.load_and_call(path, "LinearBarElementStresses", args...)
+            oct_s = adapt_truss_result(oct_val, 2)
+            jl_s = d1_truss_elementstress(oct_k, [0.0, 0.0], A)
+            @test check_octave(oct_s, jl_s, "LinearBarElementStresses")
+
+            # LinearBarAssemble
+            path = joinpath(mfile_dir, "LinearBarAssemble.m")
+            K0 = zeros(2, 2)
+            args = adapt_truss_args(K0, oct_k, 1, 2)
+            oct_K = OctaveRunner.load_and_call(path, "LinearBarAssemble", args...)
+            jl_K = d1_truss_assemble(zeros(2, 2), oct_k, 1, 2)
+            @test check_octave(oct_K, jl_K, "LinearBarAssemble")
+        end
+
+        # ────────────────────────────────────────────────────
+        # 2D Truss (PlaneTruss / d2_truss)
+        # ────────────────────────────────────────────────────
+        @testset "PlaneTruss (2D Truss)" begin
+            # Problem 5.2: E=210e9, A=0.003, element 1→2 at (0,0)→(4,3)
+            E, A_truss = 210e9, 0.003
+            x1, y1, x2, y2 = 0.0, 0.0, 4.0, 3.0
+            L = d2_truss_elementlength(x1, y1, x2, y2)   # 5.0
+            theta = rad2deg(atan(y2 - y1, x2 - x1))       # ~36.87°
+
+            # PlaneTrussElementLength
+            path = joinpath(mfile_dir, "PlaneTrussElementLength.m")
+            args = adapt_truss_length_args(x1, y1, x2, y2)
+            oct_val = OctaveRunner.load_and_call(path, "PlaneTrussElementLength", args...)
+            oct_L = adapt_truss_result(oct_val, 4)
+            jl_L = d2_truss_elementlength(x1, y1, x2, y2)
+            @test check_octave(oct_L[1], jl_L, "PlaneTrussElementLength")
+
+            # PlaneTrussElementStiffness
+            path = joinpath(mfile_dir, "PlaneTrussElementStiffness.m")
+            args = adapt_truss_args(E, A_truss, L, theta)
+            oct_val = OctaveRunner.load_and_call(path, "PlaneTrussElementStiffness", args...)
+            oct_k = adapt_truss_result(oct_val, 4)
+            jl_k = d2_truss_elementstiffness(E, A_truss, L, theta)
+            @test check_octave(oct_k, jl_k, "PlaneTrussElementStiffness")
+
+            # PlaneTrussElementForce (zero displacement)
+            u0_4 = zeros(4)
+            path = joinpath(mfile_dir, "PlaneTrussElementForce.m")
+            args = adapt_truss_args(E, A_truss, L, theta, u0_4)
+            oct_val = OctaveRunner.load_and_call(path, "PlaneTrussElementForce", args...)
+            oct_f = adapt_truss_result(oct_val, 4)
+            jl_f = d2_truss_elementforces(E, A_truss, L, theta, u0_4)
+            @test check_octave(oct_f, jl_f, "PlaneTrussElementForce")
+
+            # PlaneTrussElementStress (zero displacement)
+            path = joinpath(mfile_dir, "PlaneTrussElementStress.m")
+            args = adapt_truss_args(E, L, theta, u0_4)
+            oct_val = OctaveRunner.load_and_call(path, "PlaneTrussElementStress", args...)
+            oct_s = adapt_truss_result(oct_val, 4)
+            jl_s = d2_truss_elementstress(E, L, theta, u0_4)
+            @test check_octave(oct_s, jl_s, "PlaneTrussElementStress")
+
+            # PlaneTrussAssemble
+            path = joinpath(mfile_dir, "PlaneTrussAssemble.m")
+            K0 = zeros(8, 8)
+            args = adapt_truss_args(K0, oct_k, 1, 2)
+            oct_K = OctaveRunner.load_and_call(path, "PlaneTrussAssemble", args...)
+            jl_K = d2_truss_assemble(zeros(8, 8), oct_k, 1, 2)
+            @test check_octave(oct_K, jl_K, "PlaneTrussAssemble")
+        end
+
+        # ────────────────────────────────────────────────────
+        # 3D Truss (SpaceTruss / d3_truss)
+        # ────────────────────────────────────────────────────
+        @testset "SpaceTruss (3D Truss)" begin
+            # Problem 6.1: E=210e9, A=0.002, element along x-axis
+            E, A_truss = 210e9, 0.002
+            x1, y1, z1, x2, y2, z2 = 0.0, 0.0, 0.0, 5.0, 0.0, 0.0
+            L = d3_truss_elementlength(x1, y1, z1, x2, y2, z2)   # 5.0
+            θx, θy, θz = 0.0, 90.0, 90.0
+
+            # SpaceTrussElementLength
+            path = joinpath(mfile_dir, "SpaceTrussElementLength.m")
+            args = adapt_truss_length_args(x1, y1, z1, x2, y2, z2)
+            oct_val = OctaveRunner.load_and_call(path, "SpaceTrussElementLength", args...)
+            oct_L = adapt_truss_result(oct_val, 6)
+            jl_L = d3_truss_elementlength(x1, y1, z1, x2, y2, z2)
+            @test check_octave(oct_L[1], jl_L, "SpaceTrussElementLength")
+
+            # SpaceTrussElementStiffness
+            path = joinpath(mfile_dir, "SpaceTrussElementStiffness.m")
+            args = adapt_truss_args(E, A_truss, L, θx, θy, θz)
+            oct_val = OctaveRunner.load_and_call(path, "SpaceTrussElementStiffness", args...)
+            oct_k = adapt_truss_result(oct_val, 6)
+            jl_k = d3_truss_elementstiffness(E, A_truss, L, θx, θy, θz)
+            @test check_octave(oct_k, jl_k, "SpaceTrussElementStiffness")
+
+            # SpaceTrussElementForce (zero displacement)
+            u0_6 = zeros(6)
+            path = joinpath(mfile_dir, "SpaceTrussElementForce.m")
+            args = adapt_truss_args(E, A_truss, L, θx, θy, θz, u0_6)
+            oct_val = OctaveRunner.load_and_call(path, "SpaceTrussElementForce", args...)
+            oct_f = adapt_truss_result(oct_val, 6)
+            jl_f = d3_truss_elementforces(E, A_truss, L, θx, θy, θz, u0_6)
+            @test check_octave(oct_f, jl_f, "SpaceTrussElementForce")
+
+            # SpaceTrussElementStress (zero displacement)
+            path = joinpath(mfile_dir, "SpaceTrussElementStress.m")
+            args = adapt_truss_args(E, L, θx, θy, θz, u0_6)
+            oct_val = OctaveRunner.load_and_call(path, "SpaceTrussElementStress", args...)
+            oct_s = adapt_truss_result(oct_val, 6)
+            jl_s = d3_truss_elementstress(E, L, θx, θy, θz, u0_6)
+            @test check_octave(oct_s, jl_s, "SpaceTrussElementStress")
+
+            # SpaceTrussAssemble
+            path = joinpath(mfile_dir, "SpaceTrussAssemble.m")
+            K0 = zeros(12, 12)
+            args = adapt_truss_args(K0, oct_k, 1, 2)
+            oct_K = OctaveRunner.load_and_call(path, "SpaceTrussAssemble", args...)
+            jl_K = d3_truss_assemble(zeros(12, 12), oct_k, 1, 2)
+            @test check_octave(oct_K, jl_K, "SpaceTrussAssemble")
+        end
+
+        # ────────────────────────────────────────────────────
+        # 2D Beam (PlaneFrame / d2_beam)
+        # ────────────────────────────────────────────────────
+        @testset "PlaneFrame (2D Beam)" begin
+            # Problem 8.1: cantilever, E=210e6, A=4e-2, I=4e-6, L=4, θ=0°
+            E, A_beam, I_val, L_beam = 210e6, 4e-2, 4e-6, 4.0
+            theta = 0.0
+
+            # PlaneFrameElementLength
+            path = joinpath(mfile_dir, "PlaneFrameElementLength.m")
+            args = adapt_beam_args(0.0, 0.0, 4.0, 0.0)
+            oct_val = OctaveRunner.load_and_call(path, "PlaneFrameElementLength", args...)
+            oct_Lval = adapt_beam_result(oct_val, 6)
+            jl_Lval = d2_beam_elementlength(0.0, 0.0, 4.0, 0.0)
+            @test check_octave(oct_Lval[1], jl_Lval, "PlaneFrameElementLength")
+
+            # PlaneFrameElementStiffness
+            path = joinpath(mfile_dir, "PlaneFrameElementStiffness.m")
+            args = adapt_beam_args(E, A_beam, I_val, L_beam, theta)
+            oct_val = OctaveRunner.load_and_call(path, "PlaneFrameElementStiffness", args...)
+            oct_k = adapt_beam_result(oct_val, 6)
+            jl_k = d2_beam_elementstiffness(E, A_beam, I_val, L_beam, theta)
+            @test check_octave(oct_k, jl_k, "PlaneFrameElementStiffness")
+
+            # PlaneFrameElementForces (zero displacement)
+            u0_6 = zeros(6)
+            path = joinpath(mfile_dir, "PlaneFrameElementForces.m")
+            args = adapt_beam_args(E, A_beam, I_val, L_beam, theta, u0_6)
+            oct_val = OctaveRunner.load_and_call(path, "PlaneFrameElementForces", args...)
+            oct_f = adapt_beam_result(oct_val, 6)
+            jl_f = d2_beam_elementforces(E, A_beam, I_val, L_beam, theta, u0_6)
+            @test check_octave(oct_f, jl_f, "PlaneFrameElementForces")
+
+            # PlaneFrameAssemble
+            path = joinpath(mfile_dir, "PlaneFrameAssemble.m")
+            K0 = zeros(12, 12)
+            args = adapt_beam_args(K0, oct_k, 1, 2)
+            oct_K = OctaveRunner.load_and_call(path, "PlaneFrameAssemble", args...)
+            jl_K = d2_beam_assemble(zeros(12, 12), oct_k, 1, 2)
+            @test check_octave(oct_K, jl_K, "PlaneFrameAssemble")
+        end
+
+        # ────────────────────────────────────────────────────
+        # 3D Beam (SpaceFrame / d3_beam)
+        # ────────────────────────────────────────────────────
+        @testset "SpaceFrame (3D Beam)" begin
+            # Problem 10.1 element: E=210e6, G=84e6, A=2e-2, Iy=10e-5,
+            #   Iz=20e-5, J=5e-5, nodes (0,0,0)→(0,5,0)
+            E_sf, G_sf = 210e6, 84e6
+            A_sf, Iy_sf, Iz_sf, J_sf = 2e-2, 10e-5, 20e-5, 5e-5
+            x1, y1, z1 = 0.0, 0.0, 0.0
+            x2, y2, z2 = 0.0, 5.0, 0.0
+
+            # SpaceFrameElementLength
+            path = joinpath(mfile_dir, "SpaceFrameElementLength.m")
+            args = adapt_space_frame_args(x1, y1, z1, x2, y2, z2)
+            oct_val = OctaveRunner.load_and_call(path, "SpaceFrameElementLength", args...)
+            oct_Lval = adapt_space_frame_result(oct_val, 12)
+            jl_Lval = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)
+            @test check_octave(oct_Lval[1], jl_Lval, "SpaceFrameElementLength")
+
+            # SpaceFrameElementStiffness
+            path = joinpath(mfile_dir, "SpaceFrameElementStiffness.m")
+            args = adapt_space_frame_args(E_sf, G_sf, A_sf, Iy_sf, Iz_sf, J_sf,
+                                          x1, y1, z1, x2, y2, z2)
+            oct_val = OctaveRunner.load_and_call(path, "SpaceFrameElementStiffness", args...)
+            oct_k = adapt_space_frame_result(oct_val, 12)
+            jl_k = d3_beam_elementstiffness(E_sf, G_sf, A_sf, Iy_sf, Iz_sf, J_sf,
+                                             x1, y1, z1, x2, y2, z2)
+            @test check_octave(oct_k, jl_k, "SpaceFrameElementStiffness")
+
+            # SpaceFrameElementForces (zero displacement)
+            u0_12 = zeros(12)
+            path = joinpath(mfile_dir, "SpaceFrameElementForces.m")
+            args = adapt_space_frame_args(E_sf, G_sf, A_sf, Iy_sf, Iz_sf, J_sf,
+                                          x1, y1, z1, x2, y2, z2, u0_12)
+            oct_val = OctaveRunner.load_and_call(path, "SpaceFrameElementForces", args...)
+            oct_f = adapt_space_frame_result(oct_val, 12)
+            jl_f = d3_beam_elementforces(E_sf, G_sf, A_sf, Iy_sf, Iz_sf, J_sf,
+                                          x1, y1, z1, x2, y2, z2, u0_12)
+            @test check_octave(oct_f, jl_f, "SpaceFrameElementForces")
+        end
+
+    end  # has_json
+
+end  # @testset "Octave validation"

@@ -55,11 +55,10 @@ You are committed to truth and accuracy above everything else, including being h
 For any **new content in repo to be committed and pushed to remote**, follow the secured process below
 
 git checkout -b newfeature
-
-# work
-
+git add .
+git commit -m "TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT"
 git push origin newfeature
-gh pr create --title "TO BE REPLACED BY RELEVANT CONTENT" --body "TO BE REPLACED BY RELEVANT CONTENT"
+gh pr create --title "TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT" --body "TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT"
 gh pr merge --merge --delete-branch --admin
 
 <!-- OPENWIKI:START -->

@@ -153,7 +153,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 ## Conventions
 
 - **Angle units**: All angle parameters are in **degrees** (converted internally via `deg2rad`).
-- **Dimension prefixes**: 
+- **Dimension prefixes**:
   - `d1_` — 1 DOF/node (1D spring, linear bar)
   - `d2_` — 2 DOF/node (2D spring, plane truss); 3 DOF/node for 2D beam
   - `d3_` — 3 DOF/node (3D spring, space truss); **6 DOF/node** for 3D beam (space frame)
@@ -166,7 +166,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 
 ## Project Structure
 
-```
+```text
 LibFEM.jl/
 ├── src/
 │   ├── LibFEM.jl          # Module declaration, includes, exports
@@ -300,7 +300,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 The `Doc/Kattan/M-Files/` directory contains 80 read-only MATLAB `.m` files from the Kattan textbook. LibFEM functions are numerically validated against these references in `test/comparison.jl` and `test/runtests.jl`.
 
 Mapping convention:
-```
+```text
 MATLAB {Domain}{Operation}.m → Julia d{N}_{domain}_{operation}
 ```
 

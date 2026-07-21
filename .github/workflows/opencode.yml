@@ -27,57 +27,16 @@ jobs:
       issues: write        # comment on issues
       pull-requests: write # create/merge PRs
       # omitted: id-token  -- no OIDC cloud access needed
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 1
 
       - name: Configure OpenCode for NVIDIA NIM
-        run: |
-          mkdir -p ~/.config/opencode
-          python3 - <<'PY'
-          import json
-          import os
-
-          config = {
-            "$schema": "https://opencode.ai/config.json",
-            "provider": {
-              "nvidia": {
-                "npm": "@ai-sdk/openai-compatible",
-                "name": "NVIDIA_NIM",
-                "options": {
-                  "baseURL": "https://integrate.api.nvidia.com/v1",
-                  "apiKey": "{env:NVIDIA_API_KEY}",
-                  "reasoningEffort": "high",
-                  "textVerbosity": "low"
-                },
-                "models": {
-                  "nvidia/nemotron-3-super-120b-a12b": {
-                    "tools": True
-                  },
-                  "nvidia/nemotron-3-ultra-550b-a55b": {
-                    "tools": True
-                  },
-                  "deepseek-ai/deepseek-v4-flash": {
-                    "tools": True
-                  },
-                  "deepseek-ai/deepseek-v4-pro": {
-                    "tools": True
-                  },
-                  "thinkingmachines/inkling": {
-                    "tools": True
-                  }
-                }
-              }
-            }
-          }
-
-          with open(os.path.expanduser("~/.config/opencode/opencode.json"), "w", encoding="utf-8") as handle:
-              json.dump(config, handle, indent=2)
-              handle.write("\n")
-          PY
+        run: python3 .github/scripts/configure-opencode.py
 
       - name: Install OpenCode CLI
         run: curl -fsSL https://opencode.ai/install | bash
@@ -96,4 +55,4 @@ jobs:
           MODEL: nvidia/deepseek-ai/deepseek-v4-flash
           USE_GITHUB_TOKEN: "true"
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_PAT }}

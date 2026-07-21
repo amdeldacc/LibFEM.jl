@@ -5,6 +5,8 @@
 Manifest.toml
 /docs/build/
 .env
+.markdownlint.json
+.jscpd.json
 
 # Operational / generated directories
 .omo/

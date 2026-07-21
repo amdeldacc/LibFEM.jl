@@ -710,6 +710,24 @@ using Test
             @test d3_beam_elementtorsiondiagram(f3, L) isa Plots.Plot
         end
 
+        include("comparison.jl")
+
+        @testset "diagram z-vector values" begin
+            f2 = [1000, 500, 200, -1000, 500, -200]
+            f3 = [1000, 500, 300, 200, 150, 100, -1000, -500, -300, -200, -150, -100]
+            L = 5.0
+            # Verify via MATLAB reference data functions from comparison.jl
+            @test PlaneFrameElementAxialDiagram(f2, L) == [-1000, -1000]
+            @test PlaneFrameElementShearDiagram(f2, L) == [500, -500]
+            @test PlaneFrameElementMomentDiagram(f2, L) == [-200, -200]
+            @test SpaceFrameElementAxialDiagram(f3, L) == [-1000, -1000]
+            @test SpaceFrameElementShearYDiagram(f3, L) == [500, 500]
+            @test SpaceFrameElementShearZDiagram(f3, L) == [300, 300]
+            @test SpaceFrameElementMomentYDiagram(f3, L) == [150, 150]
+            @test SpaceFrameElementMomentZDiagram(f3, L) == [100, 100]
+            @test SpaceFrameElementTorsionDiagram(f3, L) == [200, 200]
+        end
+
         @testset "assembly edge cases" begin
             K6 = zeros(6, 6)
             k = d2_truss_elementstiffness(1, 1, 1, 0)
@@ -755,5 +773,3 @@ end  # @testset "LibFEM"
         @test isdefined(LibFEM, sym) || error("$sym not exported")
     end
 end
-
-include("comparison.jl")

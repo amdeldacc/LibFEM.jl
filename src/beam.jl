@@ -37,12 +37,13 @@ Return the 6×6 element stiffness matrix for a 2-D beam (plane frame) element.
 
 # Returns
 A 6×6 element stiffness matrix.
+
+# Frame
+Stiffness in **global** coordinates via rotation transform.
 """
 function d2_beam_elementstiffness(E::Real, A::Real, I::Real, L::Real, theta::Real)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    x = deg2rad(theta)
-    C = cos(x)
-    S = sin(x)
+    validate_positive(L, "L")
+    (C, S) = _direction_cosines(theta)
     # Expanded formula matching MATLAB Kattan reference (PlaneFrameElementStiffness)
     w1 = A * C * C + 12 * I * S * S / (L * L)
     w2 = A * S * S + 12 * I * C * C / (L * L)
@@ -73,13 +74,11 @@ Return the element force vector for a 2-D beam element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-A 6-element force vector.
+A 6-element force vector (positive = tension).
 """
 function d2_beam_elementforces(E::Real, A::Real, I::Real, L::Real, theta::Real, u::AbstractVector)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    x = deg2rad(theta)
-    C = cos(x)
-    S = sin(x)
+    validate_positive(L, "L")
+    (C, S) = _direction_cosines(theta)
     w1 = E * A / L
     w2 = 12 * E * I / (L^3)
     w3 = 6 * E * I / (L^2)
@@ -104,6 +103,9 @@ function d2_beam_elementforces(E::Real, A::Real, I::Real, L::Real, theta::Real, 
     ]
     return kprime * T * u
 end
+
+# Frame
+# Forces in **local** coordinate system (kprime * T * u).
 
 """
     d2_beam_assemble(K, k, i, j)
@@ -178,6 +180,9 @@ Return the 12×12 element stiffness matrix for a 3-D beam (space frame) element.
 
 # Returns
 A 12×12 element stiffness matrix.
+
+# Frame
+Stiffness in **global** coordinates via R' * kprime * R.
 """
 function d3_beam_elementstiffness(
     E::Real,
@@ -194,7 +199,7 @@ function d3_beam_elementstiffness(
     z2::Real,
 )
     L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
+    validate_positive(L, "L")
     kprime = _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
 
     Cx = (x2 - x1) / L
@@ -273,7 +278,7 @@ Return the element force vector for a 3-D beam element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-A 12-element force vector.
+A 12-element force vector (positive = tension).
 """
 function d3_beam_elementforces(
     E::Real,
@@ -291,7 +296,7 @@ function d3_beam_elementforces(
     u::AbstractVector,
 )
     L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
+    validate_positive(L, "L")
     kprime = _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
 
     Cx = (x2 - x1) / L
@@ -323,5 +328,8 @@ function d3_beam_elementforces(
 
     return kprime * R * u
 end
+
+# Frame
+# Forces in **local** coordinate system (kprime * R * u).
 
 

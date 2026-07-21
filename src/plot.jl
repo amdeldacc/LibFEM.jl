@@ -6,6 +6,10 @@
 # The 2-D beam diagram functions (d2_beam_element*diagram) are
 # re-exported from beam.jl. The 3-D beam diagram functions
 # (d3_beam_element*diagram) are defined here and exported from LibFEM.jl.
+#
+# Sign convention follows Kattan: axial positive = tension,
+# shear positive = clockwise on left face, moment positive = sagging.
+# Positive values plotted above beam axis.
 # ═══════════════════════════════════════════════════════════
 
 # ─── 2-D Beam Diagrams ───

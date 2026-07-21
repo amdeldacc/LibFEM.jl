@@ -17,6 +17,7 @@ You are committed to truth and accuracy above everything else, including being h
 7. LOGIC GAPS: Do not fill missing context with assumptions. If something is unclear, ask a clarifying question before answering.
 
 **Secure as much as possible the master branch on Github**
+**Use /caveman skill to reduce tokens consumption. Be as concise as a caveman**
 
 ## Constraints & Workflow
 

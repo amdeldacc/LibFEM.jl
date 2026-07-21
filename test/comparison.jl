@@ -2526,7 +2526,7 @@ end  # @testset "MATLAB comparison"
             oct_val = OctaveRunner.load_and_call(path, "PlaneTrussElementForce", args...)
             oct_f = adapt_truss_result(oct_val, 4)
             jl_f = d2_truss_elementforces(E, A_truss, L, theta, u0_4)
-            @test check_octave(oct_f, jl_f, "PlaneTrussElementForce")
+            @test check_octave(oct_f, [jl_f], "PlaneTrussElementForce")
 
             # PlaneTrussElementStress (zero displacement)
             path = joinpath(mfile_dir, "PlaneTrussElementStress.m")
@@ -2534,7 +2534,7 @@ end  # @testset "MATLAB comparison"
             oct_val = OctaveRunner.load_and_call(path, "PlaneTrussElementStress", args...)
             oct_s = adapt_truss_result(oct_val, 4)
             jl_s = d2_truss_elementstress(E, L, theta, u0_4)
-            @test check_octave(oct_s, jl_s, "PlaneTrussElementStress")
+            @test check_octave(oct_s, [jl_s], "PlaneTrussElementStress")
 
             # PlaneTrussAssemble
             path = joinpath(mfile_dir, "PlaneTrussAssemble.m")
@@ -2578,7 +2578,7 @@ end  # @testset "MATLAB comparison"
             oct_val = OctaveRunner.load_and_call(path, "SpaceTrussElementForce", args...)
             oct_f = adapt_truss_result(oct_val, 6)
             jl_f = d3_truss_elementforces(E, A_truss, L, θx, θy, θz, u0_6)
-            @test check_octave(oct_f, jl_f, "SpaceTrussElementForce")
+            @test check_octave(oct_f, [jl_f], "SpaceTrussElementForce")
 
             # SpaceTrussElementStress (zero displacement)
             path = joinpath(mfile_dir, "SpaceTrussElementStress.m")
@@ -2586,7 +2586,7 @@ end  # @testset "MATLAB comparison"
             oct_val = OctaveRunner.load_and_call(path, "SpaceTrussElementStress", args...)
             oct_s = adapt_truss_result(oct_val, 6)
             jl_s = d3_truss_elementstress(E, L, θx, θy, θz, u0_6)
-            @test check_octave(oct_s, jl_s, "SpaceTrussElementStress")
+            @test check_octave(oct_s, [jl_s], "SpaceTrussElementStress")
 
             # SpaceTrussAssemble
             path = joinpath(mfile_dir, "SpaceTrussAssemble.m")

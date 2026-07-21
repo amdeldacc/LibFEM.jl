@@ -16,7 +16,7 @@ env:
 jobs:
   benchmark:
     name: Julia ${{ matrix.version }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:

@@ -23,8 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: julia-codebase
     permissions:
-      contents: write      # push agent branches
-      issues: write        # comment on issues
+      contents: write # push agent branches
+      issues: write # comment on issues
       pull-requests: write # create/merge PRs
       # omitted: id-token  -- no OIDC cloud access needed
     timeout-minutes: 60

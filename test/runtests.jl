@@ -109,9 +109,9 @@ using Test
             L = 4.0
             u = [0.001; 0.0]
             eps = d1_truss_elementstrain(L, u)
-            @test eps ≈ [2.5e-4; -2.5e-4]
+            @test eps ≈ -2.5e-4
             # zero displacement
-            @test d1_truss_elementstrain(L, [0.0; 0.0]) ≈ [0.0; 0.0]
+            @test d1_truss_elementstrain(L, [0.0; 0.0]) ≈ 0.0
         end
 
         @testset "assemble" begin
@@ -127,6 +127,20 @@ using Test
             @test_throws ElementParameterError d1_truss_elementstiffness(1.0, 1.0, -1.0)
             @test_throws ElementParameterError d1_truss_elementstrain(0.0, [1.0; 0.0])
             @test_throws ElementParameterError d1_truss_elementstrain(-1.0, [1.0; 0.0])
+        end
+
+        @testset "assembly error paths" begin
+            K = zeros(2, 2)
+            k = d1_truss_elementstiffness(1, 1, 1)
+            @test_throws AssemblyError d1_truss_assemble(K, k, 1, 1)
+
+            K4 = zeros(4, 4)
+            k4 = d2_truss_elementstiffness(1, 1, 1, 0)
+            @test_throws AssemblyError d2_truss_assemble(K4, k4, 1, 1)
+
+            K6 = zeros(6, 6)
+            k6 = d2_beam_elementstiffness(1, 1, 1, 1, 0)
+            @test_throws AssemblyError d2_beam_assemble(K6, k6, 1, 1)
         end
 
         @testset "negative/zero parameter behavior" begin
@@ -594,6 +608,18 @@ using Test
             @test d3_beam_elementmomentydiagram(f, L) isa Plots.Plot
             @test d3_beam_elementmomentzdiagram(f, L) isa Plots.Plot
             @test d3_beam_elementtorsiondiagram(f, L) isa Plots.Plot
+        end
+
+        @testset "near-vertical beam" begin
+            E, G, A, Iy, Iz, J = 3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5
+            Ke = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 1e-10,1e-10,4)
+            @test size(Ke) == (12, 12)
+            @test all(!isnan, Ke)
+            @test Ke ≈ Ke'
+            u = zeros(12); u[7] = 0.001
+            f = d3_beam_elementforces(E, G, A, Iy, Iz, J, 0,0,0, 1e-10,1e-10,4, u)
+            @test all(!isnan, f)
+            @test length(f) == 12
         end
 
         @testset "vertical beam" begin

@@ -2216,16 +2216,16 @@ end
             L, E, A = 1.0, 1.0, 1.0
             u = [1.0, 0.0]
             strain = d1_truss_elementstrain(L, u)
-            @test strain ≈ [1.0, -1.0]
+            @test strain ≈ -1.0
             # Cross-check with stress/E identity
             k = d1_truss_elementstiffness(E, A, L)
             stress = d1_truss_elementstress(k, u, A)
             stress_div_E = stress / E
             @test stress_div_E ≈ [1.0, -1.0]
-            # strain (simplified formula) equals stress/E for this case
-            @test strain ≈ stress_div_E
+            # strain (scalar) = -stress_div_E[1] for this case
+            @test strain ≈ -stress_div_E[1]
             # zero displacement
-            @test d1_truss_elementstrain(L, [0.0, 0.0]) ≈ [0.0, 0.0]
+            @test d1_truss_elementstrain(L, [0.0, 0.0]) ≈ 0.0
         end
 
         # ─────────────────────────────────────────────
@@ -2365,7 +2365,7 @@ end
             @test d2_spring_elementforce(1.0, 45.0, u0_4)[1] ≈ 0.0
             @test d2_truss_elementforces(1.0, 1.0, 1.0, 45.0, u0_4)[1] ≈ 0.0
             # strain/stress with zero displacement
-            @test d1_truss_elementstrain(1.0, u0) ≈ [0.0, 0.0]
+            @test d1_truss_elementstrain(1.0, u0) ≈ 0.0
             @test d2_truss_elementstrain(1.0, 0.0, u0_4)[1] ≈ 0.0
         end
 

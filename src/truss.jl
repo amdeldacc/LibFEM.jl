@@ -72,7 +72,7 @@ A 2-element strain vector.
 """
 function d1_truss_elementstrain(L::Real, u::AbstractVector)
     L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    return 1 / L * [1 -1; -1 1] * u
+    return (u[2] - u[1]) / L
 end
 
 """

@@ -201,7 +201,7 @@ function d3_beam_elementstiffness(
     Cy = (y2 - y1) / L
     Cz = (z2 - z1) / L
 
-    if x1 == x2 && y1 == y2
+    if hypot(Cx, Cy) < 1e-12
         # Vertical element — standard formula breaks (D = 0)
         if z2 > z1
             Lambda = [0 0 1; 0 1 0; -1 0 0]
@@ -298,7 +298,7 @@ function d3_beam_elementforces(
     Cy = (y2 - y1) / L
     Cz = (z2 - z1) / L
 
-    if x1 == x2 && y1 == y2
+    if hypot(Cx, Cy) < 1e-12
         if z2 > z1
             Lambda = [0 0 1; 0 1 0; -1 0 0]
         else

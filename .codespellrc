@@ -1,0 +1,4 @@
+[codespell]
+# Ignore Julia package names that codespell flags as misspellings
+ignore-words-list = Missings
+skip = Manifest.toml

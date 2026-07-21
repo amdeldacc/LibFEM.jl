@@ -21,7 +21,7 @@ A 2×2 element stiffness matrix.
   meaning in some contexts (e.g., tension-only members with slack).
 """
 function d1_truss_elementstiffness(E::Real, A::Real, L::Real)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
+    validate_positive(L, "L")
     return E * A / L * [1 -1; -1 1]
 end
 
@@ -35,7 +35,7 @@ Return the element force vector for a 1-D truss element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-A 2-element force vector.
+A 2-element force vector (positive = tension).
 """
 function d1_truss_elementforces(Ke::AbstractMatrix, u::AbstractVector)
     return Ke * u
@@ -52,7 +52,7 @@ Return the element stress for a 1-D truss element.
 - `A::Real`: Cross-sectional area.
 
 # Returns
-A 2-element stress vector.
+A 2-element stress vector (positive = tension).
 """
 function d1_truss_elementstress(Ke::AbstractMatrix, u::AbstractVector, A::Real)
     return Ke * u / A
@@ -68,11 +68,11 @@ Return the element strain for a 1-D truss element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-A 2-element strain vector.
+A 2-element strain vector (positive = tension).
 """
 function d1_truss_elementstrain(L::Real, u::AbstractVector)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    return 1 / L * [1 -1; -1 1] * u
+    validate_positive(L, "L")
+    return (u[2] - u[1]) / L
 end
 
 """
@@ -135,10 +135,8 @@ A 4×4 element stiffness matrix.
   to support parametric studies and sensitivity analysis.
 """
 function d2_truss_elementstiffness(E::Real, A::Real, L::Real, theta::Real)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    x = deg2rad(theta)
-    C = cos(x)
-    S = sin(x)
+    validate_positive(L, "L")
+    (C, S) = _direction_cosines(theta)
     w = [C * C C * S; C * S S * S]
     return E * A / L * [w -w; -w w]
 end
@@ -156,15 +154,12 @@ Return the element force for a 2-D truss element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-The element force (scalar).
+The element force (scalar, positive = tension).
 """
 function d2_truss_elementforces(E::Real, A::Real, L::Real, theta::Real, u::AbstractVector)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    x = deg2rad(theta)
-    C = cos(x)
-    S = sin(x)
-    T = [-C -S C S]
-    return E * A / L * (T * u)
+    validate_positive(L, "L")
+    (C, S) = _direction_cosines(theta)
+    return E * A / L * _truss_force_component(C, S, u)
 end
 
 """
@@ -178,15 +173,12 @@ Return the element strain for a 2-D truss element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-The element strain (scalar).
+The element strain (scalar, positive = tension).
 """
 function d2_truss_elementstrain(L::Real, theta::Real, u::AbstractVector)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    x = deg2rad(theta)
-    C = cos(x)
-    S = sin(x)
-    T = [-C -S C S]
-    return 1 / L * (T * u)
+    validate_positive(L, "L")
+    (C, S) = _direction_cosines(theta)
+    return _truss_force_component(C, S, u) / L
 end
 
 """
@@ -201,15 +193,12 @@ Return the element stress for a 2-D truss element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-The element stress (scalar).
+The element stress (scalar, positive = tension).
 """
 function d2_truss_elementstress(E::Real, L::Real, theta::Real, u::AbstractVector)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    x = deg2rad(theta)
-    C = cos(x)
-    S = sin(x)
-    T = [-C -S C S]
-    return E / L * (T * u)
+    validate_positive(L, "L")
+    (C, S) = _direction_cosines(theta)
+    return E / L * _truss_force_component(C, S, u)
 end
 
 """
@@ -278,13 +267,8 @@ A 6×6 element stiffness matrix.
   to support parametric studies and sensitivity analysis.
 """
 function d3_truss_elementstiffness(E::Real, A::Real, L::Real, thetax::Real, thetay::Real, thetaz::Real)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    x = deg2rad(thetax)
-    u = deg2rad(thetay)
-    v = deg2rad(thetaz)
-    Cx = cos(x)
-    Cy = cos(u)
-    Cz = cos(v)
+    validate_positive(L, "L")
+    (Cx, Cy, Cz) = _direction_cosines(thetax, thetay, thetaz)
     w = [
         Cx * Cx Cx * Cy Cx * Cz
         Cy * Cx Cy * Cy Cy * Cz
@@ -308,17 +292,12 @@ Return the element force for a 3-D truss element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-The element force (scalar).
+The element force (scalar, positive = tension).
 """
 function d3_truss_elementforces(E::Real, A::Real, L::Real, thetax::Real, thetay::Real, thetaz::Real, u::AbstractVector)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    x = deg2rad(thetax)
-    w = deg2rad(thetay)
-    v = deg2rad(thetaz)
-    Cx = cos(x)
-    Cy = cos(w)
-    Cz = cos(v)
-    return E * A / L * [-Cx -Cy -Cz Cx Cy Cz] * u
+    validate_positive(L, "L")
+    (Cx, Cy, Cz) = _direction_cosines(thetax, thetay, thetaz)
+    return E * A / L * _truss_force_component(Cx, Cy, Cz, u)
 end
 
 """
@@ -334,17 +313,12 @@ Return the element strain for a 3-D truss element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-The element strain (scalar).
+The element strain (scalar, positive = tension).
 """
 function d3_truss_elementstrain(L::Real, thetax::Real, thetay::Real, thetaz::Real, u::AbstractVector)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    x = deg2rad(thetax)
-    w = deg2rad(thetay)
-    v = deg2rad(thetaz)
-    Cx = cos(x)
-    Cy = cos(w)
-    Cz = cos(v)
-    return 1 / L * [-Cx -Cy -Cz Cx Cy Cz] * u
+    validate_positive(L, "L")
+    (Cx, Cy, Cz) = _direction_cosines(thetax, thetay, thetaz)
+    return _truss_force_component(Cx, Cy, Cz, u) / L
 end
 
 """
@@ -361,17 +335,12 @@ Return the element stress for a 3-D truss element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-The element stress (scalar).
+The element stress (scalar, positive = tension).
 """
 function d3_truss_elementstress(E::Real, L::Real, thetax::Real, thetay::Real, thetaz::Real, u::AbstractVector)
-    L > 0 || throw(ElementParameterError("L", "Length L must be positive, got $L"))
-    x = deg2rad(thetax)
-    w = deg2rad(thetay)
-    v = deg2rad(thetaz)
-    Cx = cos(x)
-    Cy = cos(w)
-    Cz = cos(v)
-    return E / L * [-Cx -Cy -Cz Cx Cy Cz] * u
+    validate_positive(L, "L")
+    (Cx, Cy, Cz) = _direction_cosines(thetax, thetay, thetaz)
+    return E / L * _truss_force_component(Cx, Cy, Cz, u)
 end
 
 """

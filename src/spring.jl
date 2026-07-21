@@ -27,7 +27,7 @@ Return the element force vector for a 1-D spring element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-A 2-element force vector.
+A 2-element force vector (positive = tension).
 """
 function d1_spring_elementforce(Ke::AbstractMatrix, u::AbstractVector)
     return Ke * u
@@ -69,9 +69,7 @@ Return the 4×4 element stiffness matrix for a 2-D spring element.
 A 4×4 element stiffness matrix.
 """
 function d2_spring_elementstiffness(k::Real, theta::Real)
-    x = deg2rad(theta)
-    C = cos(x)
-    S = sin(x)
+    (C, S) = _direction_cosines(theta)
     return k * [
         C * C C * S -C * C -C * S
         C * S S * S -C * S -S * S
@@ -91,13 +89,11 @@ Return the element force for a 2-D spring element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-The element force (scalar).
+The element force (scalar, positive = tension).
 """
 function d2_spring_elementforce(k::Real, theta::Real, u::AbstractVector)
-    C = cos(deg2rad(theta))
-    S = sin(deg2rad(theta))
-    T = [-C -S C S]
-    return k * (T * u)
+    (C, S) = _direction_cosines(theta)
+    return k * _truss_force_component(C, S, u)
 end
 
 """
@@ -138,12 +134,7 @@ Return the 6×6 element stiffness matrix for a 3-D spring element.
 A 6×6 element stiffness matrix.
 """
 function d3_spring_elementstiffness(k::Real, thetax::Real, thetay::Real, thetaz::Real)
-    x = deg2rad(thetax)
-    u = deg2rad(thetay)
-    v = deg2rad(thetaz)
-    Cx = cos(x)
-    Cy = cos(u)
-    Cz = cos(v)
+    (Cx, Cy, Cz) = _direction_cosines(thetax, thetay, thetaz)
     w = [
         Cx * Cx Cx * Cy Cx * Cz
         Cy * Cx Cy * Cy Cy * Cz
@@ -165,17 +156,11 @@ Return the element force for a 3-D spring element.
 - `u::AbstractVector`: Element nodal displacement vector.
 
 # Returns
-The element force (scalar).
+The element force (scalar, positive = tension).
 """
 function d3_spring_elementforce(k::Real, thetax::Real, thetay::Real, thetaz::Real, u::AbstractVector)
-    x = deg2rad(thetax)
-    uy = deg2rad(thetay)
-    vz = deg2rad(thetaz)
-    Cx = cos(x)
-    Cy = cos(uy)
-    Cz = cos(vz)
-    T = [-Cx -Cy -Cz Cx Cy Cz]
-    return k * (T * u)
+    (Cx, Cy, Cz) = _direction_cosines(thetax, thetay, thetaz)
+    return k * _truss_force_component(Cx, Cy, Cz, u)
 end
 
 """

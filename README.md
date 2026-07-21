@@ -159,7 +159,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
   - `d3_` — 3 DOF/node (3D spring, space truss); **6 DOF/node** for 3D beam (space frame)
 - **Multi-file module**: Source organized into `src/LibFEM.jl` + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/plot.jl`.
 - **Assembly refactored**: All 7 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
-- **Validation**: Most stiffness/length functions validate positive inputs (`L > 0`, `A > 0`) and throw `ArgumentError` with descriptive messages.
+- **Validation**: Most stiffness/length functions validate positive inputs (`L > 0`). Note: `A ≤ 0` is intentionally allowed for parametric studies (negative area produces negated matrices).
 - **Type hierarchy**: Abstract types `AbstractElement{NDIM}`, `AbstractSpring{NDIM}`, `AbstractTruss{NDIM}`, `AbstractBeam{NDIM}` with concrete `@kwdef` structs `Spring{NDIM}`, `Truss{NDIM}`, `Beam{NDIM}`.
 
 ---

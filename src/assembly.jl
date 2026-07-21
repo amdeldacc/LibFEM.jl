@@ -19,6 +19,7 @@ This is the internal assembly workhorse used by all element types.
 Uses `@views` for slice operations.
 """
 function _assemble!(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer, ndofs::Integer)
+    i == j && throw(AssemblyError("Assembly requires i ≠ j, got i=j=$i"))
     @views begin
         K[(i - 1) * ndofs + 1:i * ndofs, (i - 1) * ndofs + 1:i * ndofs] += k[1:ndofs, 1:ndofs]
         K[(i - 1) * ndofs + 1:i * ndofs, (j - 1) * ndofs + 1:j * ndofs] += k[1:ndofs, ndofs + 1:2 * ndofs]

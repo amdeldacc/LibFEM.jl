@@ -109,9 +109,9 @@ using Test
             L = 4.0
             u = [0.001; 0.0]
             eps = d1_truss_elementstrain(L, u)
-            @test eps ≈ [2.5e-4; -2.5e-4]
+            @test eps ≈ -2.5e-4
             # zero displacement
-            @test d1_truss_elementstrain(L, [0.0; 0.0]) ≈ [0.0; 0.0]
+            @test d1_truss_elementstrain(L, [0.0; 0.0]) ≈ 0.0
         end
 
         @testset "assemble" begin
@@ -127,6 +127,20 @@ using Test
             @test_throws ElementParameterError d1_truss_elementstiffness(1.0, 1.0, -1.0)
             @test_throws ElementParameterError d1_truss_elementstrain(0.0, [1.0; 0.0])
             @test_throws ElementParameterError d1_truss_elementstrain(-1.0, [1.0; 0.0])
+        end
+
+        @testset "assembly error paths" begin
+            K = zeros(2, 2)
+            k = d1_truss_elementstiffness(1, 1, 1)
+            @test_throws AssemblyError d1_truss_assemble(K, k, 1, 1)
+
+            K4 = zeros(4, 4)
+            k4 = d2_truss_elementstiffness(1, 1, 1, 0)
+            @test_throws AssemblyError d2_truss_assemble(K4, k4, 1, 1)
+
+            K6 = zeros(6, 6)
+            k6 = d2_beam_elementstiffness(1, 1, 1, 1, 0)
+            @test_throws AssemblyError d2_beam_assemble(K6, k6, 1, 1)
         end
 
         @testset "negative/zero parameter behavior" begin
@@ -596,6 +610,18 @@ using Test
             @test d3_beam_elementtorsiondiagram(f, L) isa Plots.Plot
         end
 
+        @testset "near-vertical beam" begin
+            E, G, A, Iy, Iz, J = 3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5
+            Ke = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 1e-10,1e-10,4)
+            @test size(Ke) == (12, 12)
+            @test all(!isnan, Ke)
+            @test Ke ≈ Ke'
+            u = zeros(12); u[7] = 0.001
+            f = d3_beam_elementforces(E, G, A, Iy, Iz, J, 0,0,0, 1e-10,1e-10,4, u)
+            @test all(!isnan, f)
+            @test length(f) == 12
+        end
+
         @testset "vertical beam" begin
             E, G, A, Iy, Iz, J = 3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5
             # Vertical beam along Z: (0,0,0)→(0,0,4)
@@ -623,6 +649,82 @@ using Test
             Ke_neg = d3_beam_elementstiffness(1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0)
             @test Ke_neg[1, 1] == -1.0
             @test Ke_neg[1, 7] == 1.0
+        end
+
+        # ═══════════════════════════════════════════════════
+        # Sprint 3 — Wave 5: Test Hardening
+        # ═══════════════════════════════════════════════════
+
+        @testset "element property tests" begin
+            k1 = d1_truss_elementstiffness(1, 1, 1)
+            @test k1 == k1'
+            @test all(x -> isapprox(x, 0.0, atol=1e-15), k1 * ones(2))
+
+            k2 = d2_truss_elementstiffness(1, 1, 1, 30)
+            @test k2 == k2'
+            @test all(x -> isapprox(x, 0.0, atol=1e-14), k2 * ones(4))
+
+            k3 = d3_truss_elementstiffness(1, 1, 1, 30, 45, 60)
+            @test k3 == k3'
+            @test all(x -> isapprox(x, 0.0, atol=1e-14), k3 * ones(6))
+
+            k2s = d2_spring_elementstiffness(100, 30)
+            @test k2s == k2s'
+            @test all(x -> isapprox(x, 0.0, atol=1e-14), k2s * ones(4))
+
+            k3s = d3_spring_elementstiffness(100, 30, 45, 60)
+            @test k3s == k3s'
+            @test all(x -> isapprox(x, 0.0, atol=1e-14), k3s * ones(6))
+
+            k2b = d2_beam_elementstiffness(1, 1, 1, 1, 30)
+            @test k2b == k2b'
+
+            k3b = d3_beam_elementstiffness(1, 1, 1, 1, 1, 1, 0,0,0, 4,0,0)
+            @test k3b == k3b'
+        end
+
+        @testset "negative path tests" begin
+            @test_throws ElementParameterError d1_truss_elementstiffness(1, 1, 0)
+            @test_throws ElementParameterError d2_truss_elementstiffness(1, 1, 0, 0)
+            @test_throws ElementParameterError d3_truss_elementstiffness(1, 1, 0, 0, 0, 0)
+            @test_throws ElementParameterError d2_beam_elementstiffness(1, 1, 1, 0, 0)
+            @test_throws ElementParameterError d1_truss_elementstiffness(1, 1, -1)
+            # C2: impossible 3D direction cosines → warning, not error
+            @test_logs (:warn, r"Direction cosines do not form a unit vector") d3_truss_elementstiffness(1, 1, 1, 90, 90, 90)
+            @test_logs (:warn, r"Direction cosines do not form a unit vector") d3_spring_elementstiffness(100, 90, 90, 90)
+        end
+
+        @testset "diagram functions" begin
+            f2 = [1000, 500, 200, -1000, 500, -200]
+            f3 = [1000, 500, 300, 200, 150, 100, -1000, -500, -300, -200, -150, -100]
+            L = 5.0
+            # Returns Plots.Plot objects (not raw data vectors)
+            @test d2_beam_elementaxialdiagram(f2, L) isa Plots.Plot
+            @test d2_beam_elementsheardiagram(f2, L) isa Plots.Plot
+            @test d2_beam_elementmomentdiagram(f2, L) isa Plots.Plot
+            @test d3_beam_elementaxialdiagram(f3, L) isa Plots.Plot
+            @test d3_beam_elementshearydiagram(f3, L) isa Plots.Plot
+            @test d3_beam_elementshearzdiagram(f3, L) isa Plots.Plot
+            @test d3_beam_elementmomentydiagram(f3, L) isa Plots.Plot
+            @test d3_beam_elementmomentzdiagram(f3, L) isa Plots.Plot
+            @test d3_beam_elementtorsiondiagram(f3, L) isa Plots.Plot
+        end
+
+        @testset "assembly edge cases" begin
+            K6 = zeros(6, 6)
+            k = d2_truss_elementstiffness(1, 1, 1, 0)
+            K6 = d2_truss_assemble(K6, k, 1, 3)
+            @test K6[1:2, 1:2] == k[1:2, 1:2]
+            @test K6[1:2, 5:6] == k[1:2, 3:4]
+            @test K6[5:6, 1:2] == k[3:4, 1:2]
+            @test K6[5:6, 5:6] == k[3:4, 3:4]
+
+            # d1_spring/d1_truss identity
+            @test d1_spring_elementstiffness(500) == d1_truss_elementstiffness(500, 1, 1)
+            # 2D identity: spring(k=EA/L) = truss(E, A, L)
+            @test d2_spring_elementstiffness(100, 30) ≈ d2_truss_elementstiffness(100, 1, 1, 30)
+            # 3D identity
+            @test d3_spring_elementstiffness(100, 30, 45, 60) ≈ d3_truss_elementstiffness(100, 1, 1, 30, 45, 60)
         end
     end
 

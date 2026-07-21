@@ -164,3 +164,12 @@ function Base.show(io::IO, ::MIME"text/plain", b::Beam{NDIM}) where {NDIM}
         println(io, "  G  = $(b.G)")
     end
 end
+
+# ═══════════════════════════════════════════════════════════
+# Deprecation Notice (2026-07)
+# ═══════════════════════════════════════════════════════════
+# The abstract type hierarchy and @kwdef structs in this file
+# are retained for backward compatibility but are NOT used by
+# any element function. All functions operate on plain
+# Real/AbstractMatrix/AbstractVector parameters.
+# These types may be removed in LibFEM 2.0.

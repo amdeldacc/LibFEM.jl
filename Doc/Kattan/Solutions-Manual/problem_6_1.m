@@ -31,10 +31,10 @@
 % ===============================================================================
 % Origin (0,0,0) is located on the ground plane, directly below Node 5.
 %
-%   Node 1 : (-3,  0, -3)    -> Fixed Support
-%   Node 2 : (-3,  0,  3)    -> Fixed Support
-%   Node 3 : ( 4,  0,  3)    -> Fixed Support
-%   Node 4 : ( 4,  0, -3)    -> Fixed Support
+%   Node 1 : ( 0,  0, -3)    -> Fixed Support
+%   Node 2 : (-3,  0,  0)    -> Fixed Support
+%   Node 3 : ( 0,  0,  3)    -> Fixed Support
+%   Node 4 : ( 4,  0,  0)    -> Fixed Support
 %   Node 5 : ( 0,  5,  0)    -> Free Node (Forces P1 and P2 applied here)
 %
 % ===============================================================================

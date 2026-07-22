@@ -77,7 +77,8 @@ jobs:
     # issue_comment triggers are further gated on author_association so only
     # MEMBER/OWNER/COLLABORATOR users can spend LLM quota via re-review.
     if: |
-      github.event_name == 'pull_request_target'
+      github.event_name == 'workflow_dispatch'
+      || github.event_name == 'pull_request'
       || (
         github.event_name == 'issue_comment'
         && github.event.issue.pull_request

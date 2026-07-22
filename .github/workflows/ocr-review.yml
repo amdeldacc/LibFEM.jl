@@ -119,6 +119,10 @@ jobs:
           llm_auth_token: ${{ secrets.OCR_LLM_AUTH_TOKEN }}
           llm_model: ${{ vars.OCR_LLM_MODEL }}
           llm_use_anthropic: ${{ vars.OCR_LLM_USE_ANTHROPIC }}
+          # Override default '{"thinking": {"type": "disabled"}}' (Anthropic
+          # format) which would be sent to an OpenAI-compatible provider and
+          # cause LLM API rejection. Keep empty for OpenAI-compatible endpoints.
+          llm_extra_body: '{}'
           rule: .opencodereview/rule.json
           # For issue_comment triggers, pass the resolved refs; for
           # pull_request_target the action resolves them from the event.

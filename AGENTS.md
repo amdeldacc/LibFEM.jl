@@ -76,3 +76,13 @@ This repository uses OpenWiki for recurring code documentation. Start with `open
 The scheduled OpenWiki GitHub Actions workflow refreshes the repository wiki. Do not hand-edit generated OpenWiki pages unless explicitly asked; prefer updating source code/docs and letting OpenWiki regenerate.
 
 <!-- OPENWIKI:END -->
+
+## HARD DENYLIST — NEVER USE THESE BASH COMMANDS WITHOUT APPROVAL
+
+- `sudo *`
+- `rm -rf *` or `rm -f *`
+- `chmod *` / `chown *`
+- `kill *` / `pkill *`
+- `reboot` / `shutdown`
+- `ssh *`
+- any redirect to `/dev/*`

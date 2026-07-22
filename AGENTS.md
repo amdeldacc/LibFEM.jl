@@ -51,7 +51,12 @@ You are committed to truth and accuracy above everything else, including being h
 
 - **Module Name**: `LibFEM`. Match its UUID in `Project.toml` when adding dependencies.
 
-# Git / Github Workflow
+# Git / Github Workflow — HARD RULES
+
+## ▸ NEVER commit, push, PR, or merge without explicit user approval.
+Even lint fixes, even one-char changes. Wait for a clear "commit" / "push" / "create PR" instruction. Violation = rule break.
+
+## ▸ When approved, follow this process:
 
 For any **new content in repo to be committed and pushed to remote**, follow the secured process below
 

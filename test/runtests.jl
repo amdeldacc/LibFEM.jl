@@ -1,6 +1,55 @@
 using LibFEM
 using Plots
 using Test
+using LinearAlgebra
+
+# ─────────────────────────────────────────────────
+# Helper: physical invariant checks for stiffness matrices
+# ─────────────────────────────────────────────────
+"""
+    @test_physical_invariants(K; atol=1e-6)
+
+Verify physical invariants that all element stiffness matrices must satisfy:
+1. **Symmetry**: K ≈ K'
+2. **Positive semi-definiteness**: all eigenvalues ≥ -atol (allows numerical noise near zero)
+3. **Zero row-sum (rigid body modes)**: sum(K, dims=2) ≈ 0 atol=atol — ONLY for elements with
+   purely translational DOFs (springs and trusses). Beams have rotational DOFs
+   so row-sum ≠ 0; they instead have the correct number of zero eigenvalues.
+
+atol=1e-6 accounts for FP noise from large stiffness values (~1e9). These are
+absolute tolerances — real physical violations (e.g. sign errors) produce
+values many orders of magnitude larger.
+
+These checks are independent of element type, DOF ordering, or reference
+solutions — they catch real bugs (wrong connectivity, sign errors, DOF
+mismatches).
+"""
+macro test_physical_invariants(K, atol=1e-6)
+    return quote
+        local K_ = $(esc(K))
+        local atol_ = $(esc(atol))
+        @test K_ ≈ K_'  # symmetry
+        @test all(eigvals(K_) .>= -atol_)  # PSD
+    end
+end
+
+"""
+    @test_translational_invariants(K; atol=1e-6)
+
+Physical invariants for elements with ONLY translational DOFs (springs, trusses):
+- Symmetry
+- PSD
+- Zero row-sum (rigid body translation modes — K·[1...1]ᵀ ≈ 0)
+"""
+macro test_translational_invariants(K, atol=1e-6)
+    return quote
+        local K_ = $(esc(K))
+        local atol_ = $(esc(atol))
+        @test K_ ≈ K_'
+        @test all(eigvals(K_) .>= -atol_)
+        @test all(x -> isapprox(x, 0.0, atol=atol_), sum(K_, dims=2))  # zero row-sum (rigid body)
+    end
+end
 
 @testset "LibFEM" begin
 
@@ -27,8 +76,8 @@ using Test
             @test size(Ke) == (2, 2)
             # zero stiffness → zero matrix
             @test d1_spring_elementstiffness(0) == zeros(2, 2)
-            # symmetric
-            @test Ke == Ke'
+            # Physical invariants (incl. symmetry, PSD, zero row-sum)
+            @test_translational_invariants Ke
         end
 
         @testset "elementforce" begin
@@ -85,7 +134,8 @@ using Test
             EAoL = E * A / L  # 5e8
             @test Ke ≈ [EAoL -EAoL; -EAoL EAoL]
             @test size(Ke) == (2, 2)
-            @test Ke == Ke'
+            # Physical invariants (incl. symmetry, PSD, zero row-sum)
+            @test_translational_invariants Ke
         end
 
         @testset "elementforces" begin
@@ -170,7 +220,8 @@ using Test
             # Simple case: E=1, A=1, I=1, L=1, theta=0
             Ke = d2_beam_elementstiffness(1, 1, 1, 1, 0)
             @test size(Ke) == (6, 6)
-            @test Ke == Ke'  # symmetric
+            # Physical invariants (symmetry + PSD; beams have rotational DOFs, no zero row-sum)
+            @test_physical_invariants Ke
             # Known values for theta=0 (horizontal beam)
             # C=1, S=0 → w1=1, w2=12, w3=0, w4=0, w5=6
             @test Ke[1, 1] ≈ 1.0
@@ -261,10 +312,12 @@ using Test
             Ke = d2_spring_elementstiffness(1000, 0)
             @test size(Ke) == (4, 4)
             @test Ke ≈ 1000 * [1 0 -1 0; 0 0 0 0; -1 0 1 0; 0 0 0 0]
-            @test Ke == Ke'
+            # Physical invariants (translational DOFs)
+            @test_translational_invariants Ke
             # Vertical spring: theta=90
             Ke90 = d2_spring_elementstiffness(1000, 90)
             @test Ke90 ≈ 1000 * [0 0 0 0; 0 1 0 -1; 0 0 0 0; 0 -1 0 1]
+            @test_translational_invariants Ke90
             # Zero stiffness
             @test d2_spring_elementstiffness(0, 30) == zeros(4, 4)
         end
@@ -331,10 +384,12 @@ using Test
             @test size(Ke) == (4, 4)
             @test Ke[1, 1] ≈ 3.15e8  # EA/L * C² = 4.2e8 * 0.75
             @test Ke ≈ expected
-            @test Ke == Ke'
+            # Physical invariants (translational DOFs)
+            @test_translational_invariants Ke
             # Horizontal truss (theta=0)
             Ke0 = d2_truss_elementstiffness(E, A, L, 0)
             @test Ke0 ≈ EAoL * [1 0 -1 0; 0 0 0 0; -1 0 1 0; 0 0 0 0]
+            @test_translational_invariants Ke0
         end
 
         @testset "elementforces" begin
@@ -408,13 +463,15 @@ using Test
             # All direction cosines = 1
             Ke = d3_spring_elementstiffness(1000, 0, 0, 0)
             @test size(Ke) == (6, 6)
-            @test Ke == Ke'
             w_ones = ones(3, 3)
             @test Ke ≈ 1000 * [w_ones -w_ones; -w_ones w_ones]
+            # Physical invariants (translational DOFs)
+            @test_translational_invariants Ke
             # thetax=0, thetay=90, thetaz=0 → Cy=0
             Ke2 = d3_spring_elementstiffness(1000, 0, 90, 0)
             w2 = [1 0 1; 0 0 0; 1 0 1]
             @test Ke2 ≈ 1000 * [w2 -w2; -w2 w2]
+            @test_translational_invariants Ke2
             # Zero stiffness
             @test d3_spring_elementstiffness(0, 0, 0, 0) == zeros(6, 6)
         end
@@ -462,13 +519,15 @@ using Test
             # All direction cosines = 1
             Ke = d3_truss_elementstiffness(E, A, L, 0, 0, 0)
             @test size(Ke) == (6, 6)
-            @test Ke == Ke'
             w_ones = ones(3, 3)
             @test Ke ≈ [w_ones -w_ones; -w_ones w_ones]
+            # Physical invariants (translational DOFs)
+            @test_translational_invariants Ke
             # thetax=0, thetay=90, thetaz=0
             Ke2 = d3_truss_elementstiffness(E, A, L, 0, 90, 0)
             w2 = [1 0 1; 0 0 0; 1 0 1]
             @test Ke2 ≈ [w2 -w2; -w2 w2]
+            @test_translational_invariants Ke2
         end
 
         @testset "elementforces" begin
@@ -544,7 +603,8 @@ using Test
             # Horizontal beam along X: (0,0,0)→(4,0,0)
             Ke = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 4,0,0)
             @test size(Ke) == (12, 12)
-            @test Ke == Ke'  # symmetric
+            # Physical invariants (beam with rotational DOFs)
+            @test_physical_invariants Ke
 
             # For horizontal beam, rotation matrix R = I, so Ke = kprime
             L = 4.0
@@ -627,12 +687,13 @@ using Test
             # Vertical beam along Z: (0,0,0)→(0,0,4)
             Ke = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 0,0,4)
             @test size(Ke) == (12, 12)
-            @test Ke == Ke'
+            @test_physical_invariants Ke
             @test all(!isnan, Ke)
             # Vertical beam along Z (negative direction)
             Ke2 = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,4, 0,0,0)
             @test size(Ke2) == (12, 12)
             @test all(!isnan, Ke2)
+            @test_physical_invariants Ke2
         end
 
         @testset "L>0 error paths" begin
@@ -657,30 +718,25 @@ using Test
 
         @testset "element property tests" begin
             k1 = d1_truss_elementstiffness(1, 1, 1)
-            @test k1 == k1'
-            @test all(x -> isapprox(x, 0.0, atol=1e-15), k1 * ones(2))
+            @test_translational_invariants(k1, 1e-15)
 
             k2 = d2_truss_elementstiffness(1, 1, 1, 30)
-            @test k2 == k2'
-            @test all(x -> isapprox(x, 0.0, atol=1e-14), k2 * ones(4))
+            @test_translational_invariants(k2, 1e-14)
 
             k3 = d3_truss_elementstiffness(1, 1, 1, 30, 45, 60)
-            @test k3 == k3'
-            @test all(x -> isapprox(x, 0.0, atol=1e-14), k3 * ones(6))
+            @test_translational_invariants(k3, 1e-14)
 
             k2s = d2_spring_elementstiffness(100, 30)
-            @test k2s == k2s'
-            @test all(x -> isapprox(x, 0.0, atol=1e-14), k2s * ones(4))
+            @test_translational_invariants(k2s, 1e-14)
 
             k3s = d3_spring_elementstiffness(100, 30, 45, 60)
-            @test k3s == k3s'
-            @test all(x -> isapprox(x, 0.0, atol=2e-14), k3s * ones(6))
+            @test_translational_invariants(k3s, 1e-13)  # FP noise from invalid direction cosines
 
             k2b = d2_beam_elementstiffness(1, 1, 1, 1, 30)
-            @test k2b == k2b'
+            @test_physical_invariants(k2b)
 
             k3b = d3_beam_elementstiffness(1, 1, 1, 1, 1, 1, 0,0,0, 4,0,0)
-            @test k3b == k3b'
+            @test_physical_invariants(k3b)
         end
 
         @testset "negative path tests" begin

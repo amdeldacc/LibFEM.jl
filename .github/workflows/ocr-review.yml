@@ -55,9 +55,9 @@ concurrency:
 
 on:
   workflow_dispatch:
-  # Use pull_request_target instead of pull_request so that secrets are
-  # available even for PRs from forks. This is safe because the reusable
-  # action only reads the diff and does not execute any code from the PR.
+  # pull_request is used here (not pull_request_target) so secrets are not
+  # exposed to untrusted PR code. For fork PRs, the action still gets the
+  # diff from the event payload; no elevated permissions needed.
   pull_request:
     types: [opened, synchronize, reopened]
   issue_comment:

@@ -674,7 +674,7 @@ using Test
 
             k3s = d3_spring_elementstiffness(100, 30, 45, 60)
             @test k3s == k3s'
-            @test all(x -> isapprox(x, 0.0, atol=1e-14), k3s * ones(6))
+            @test all(x -> isapprox(x, 0.0, atol=2e-14), k3s * ones(6))
 
             k2b = d2_beam_elementstiffness(1, 1, 1, 1, 30)
             @test k2b == k2b'

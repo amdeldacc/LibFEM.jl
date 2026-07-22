@@ -1,0 +1,29 @@
+{
+  "include": [
+    "src/**/*.jl",
+    "test/**/*.jl",
+    "scripts/**/*.jl",
+    "Doc/**/*.m"
+  ],
+  "exclude": [
+    "**/Manifest.toml",
+    "**/openwiki/**"
+  ],
+  "rules": [
+    {
+      "path": "src/**/*.jl",
+      "rule": "## Julia Finite Element Code Review\n\nFocus on:\n- **Type stability**: Ensure no `Any`-typed variables in hot paths; use concrete types or `Union` where appropriate.\n- **Multiple dispatch**: Prefer generic functions over if-else chains on type; use parametric methods where natural.\n- **Dimension correctness**: Verify matrix dimensions match the element's DOF count (d1=1, d2_spring/truss=2, d2_beam=3, d3_spring/truss=3, d3_beam=6).\n- **Symmetry**: Stiffness matrices must be symmetric (`k == k'`). Flag any asymmetric construction.\n- **Assembly correctness**: `_assemble!` uses `.+=` — ensure indices do not go out of bounds.\n- **Angle conversion**: All angle parameters are in degrees; verify `deg2rad` is called internally.\n- **Performance**: Avoid temporary allocations in hot loops; prefer `@views`, broadcasting, and in-place operations.\n- **Error handling**: Validate positive lengths, non-negative areas where required, raise `ElementDimensionError` for mismatches.\n- **No globals**: Avoid global mutable state in function bodies.\n- **Documentation**: Every exported function should have a docstring describing arguments, return values, and units.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "test/**/*.jl",
+      "rule": "## Julia Test Code Review\n\nFocus on:\n- **Coverage**: Every exported function should have at least one test case.\n- **Assertions**: Use `@test` with appropriate tolerances (`isapprox` / `atol` / `rtol`).\n- **Edge cases**: Test zero-length elements, negative stiffness, boundary conditions.\n- **MATLAB comparison**: Tests in `comparison.jl` must match reference values from `Doc/Kattan/M-Files/`.\n- **No hardcoded TODOs**: Tests should be complete, not placeholders.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "Doc/**/*.m",
+      "rule": "## MATLAB/Octave Reference Code Review\n\nFocus on:\n- **Correctness**: Verify numerical values match the Kattan textbook reference.\n- **Compatibility**: Code should run in both MATLAB and GNU Octave >= 8.0.\n- **Vectorization**: Prefer vectorized operations over explicit loops.\n- **Preallocation**: Arrays should be preallocated, not grown in loops.\n- **Style**: Consistent indentation, meaningful variable names.\n- **No positional API changes**: These are read-only reference files; flag any accidental modifications.",
+      "merge_system_rule": true
+    }
+  ]
+}

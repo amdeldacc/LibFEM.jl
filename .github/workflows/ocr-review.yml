@@ -122,7 +122,7 @@ jobs:
           # Override default '{"thinking": {"type": "disabled"}}' (Anthropic
           # format) which would be sent to an OpenAI-compatible provider and
           # cause LLM API rejection. Keep empty for OpenAI-compatible endpoints.
-          llm_extra_body: '{}'
+          llm_extra_body: "{}"
           rule: .opencodereview/rule.json
           # For issue_comment triggers, pass the resolved refs; for
           # pull_request_target the action resolves them from the event.

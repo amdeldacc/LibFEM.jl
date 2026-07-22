@@ -68,9 +68,19 @@ function _truss_force_component(Cx::Real, Cy::Real, Cz::Real, u::AbstractVector)
 end
 
 """
-    validate_positive(x, name)
+    validate_positive(x::Real, name::AbstractString)
 
-Throw `ElementParameterError(name, ...)` if `x ≤ 0`. Returns `nothing`.
+Validate that a numeric value is positive.
+
+# Arguments
+- `x::Real`: Value to check.
+- `name::AbstractString`: Parameter name for error messages.
+
+# Returns
+`nothing` if `x > 0`, otherwise throws `ElementParameterError`.
+
+# Throws
+- `ElementParameterError` if `x ≤ 0`.
 """
 function validate_positive(x::Real, name::AbstractString)
     x > 0 || throw(ElementParameterError(name, "$name must be positive, got $x"))

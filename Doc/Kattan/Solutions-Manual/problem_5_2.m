@@ -1,35 +1,35 @@
-% =========================================================================
-% Problem 5.2 - Plane Truss with Spring (Fig. 5.6)
-% Reference: P. I. Kattan, "MATLAB Guide to Finite Elements: An Interactive
-% Approach" - Chapter 5, plane truss element formulation.
-% =========================================================================
+% ===============================================================================
+% PROBLEM OVERVIEW: PLANE TRUSS WITH A SPRING (Fig 5.6)
+% ===============================================================================
 %
-%     Node 3: (0,7)
-%       |
-%       |  element 3 (L3=5.657, theta3=315)
-%       |
-%       |      Node 4: (4,3)---[k=3000]---Node 5 (Fx=10 kN)
-%       |     /
-%       |    / element 1 (L1=5, theta1=36.87)
-%       |   /
-%     Node 1: (0,0)
-%       |
-%       |  element 2 (L2=4, theta2=0)
-%       |
-%     Node 2: (0,3)
+%         - - -
+%           ^   //| 3
+%           |   //|--O
+%          4 m  //|    \
+%           |   //|      \
+%           v   //| 2      \                 k               5
+%         - - - //|--O-------O-------------/\/\/\------------O-----> 10 kN
+%           ^   //|          4
+%          3 m  //|        /
+%           |   //|      /
+%           v   //| 1  /
+%         - - - //|--O
 %
-%     Nodes 1,2,3: fixed supports
-%     E = 70 GPa, A = 0.01 m^2
+%                    |<----- 4 m ----->|
 %
-% =========================================================================
+% ===============================================================================
+% NODE COORDINATES & LOADS:
+% ===============================================================================
+% Assuming Node 1 is at the origin (0,0) and the unit is meters:
 %
-% Computes:
-%   1. Global stiffness matrix K
-%   2. Displacements at node 4 and spring end (node 5)
-%   3. Reactions at nodes 1, 2, and 3
-%   4. Stress in each truss element
-%   5. Force in the spring
-% =========================================================================
+%   Node 1 : ( 0, 0)   -> Fixed Support
+%   Node 2 : ( 0, 3)   -> Fixed Support
+%   Node 3 : ( 0, 7)   -> Fixed Support
+%   Node 4 : ( 4, 3)   -> Truss-Spring Junction
+%   Node 5 : ( X, 3)   -> Free End (Spring), Applied Load: Fx = +10 kN
+%                         (Where X = 4 + undeformed length of the spring)
+%
+% ===============================================================================
 
 clear; clc;
 

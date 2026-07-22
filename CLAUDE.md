@@ -65,3 +65,17 @@ This repository uses OpenWiki for recurring code documentation. Start with `open
 The scheduled OpenWiki GitHub Actions workflow refreshes the repository wiki. Do not hand-edit generated OpenWiki pages unless explicitly asked; prefer updating source code/docs and letting OpenWiki regenerate.
 
 <!-- OPENWIKI:END -->
+
+## CRITICAL RULE — NEVER COMMIT WITHOUT APPROVAL
+
+NEVER commit, push, create PRs, or merge without explicit user approval. Even lint fixes, even one-char changes. Wait for a clear "commit" / "push" / "PR" / "create PR" instruction. Violating this is a hard rule break.
+
+## HARD DENYLIST — NEVER USE THESE BASH COMMANDS WITHOUT APPROVAL
+
+- `sudo *`
+- `rm -rf *` or `rm -f *`
+- `chmod *` / `chown *`
+- `kill *` / `pkill *`
+- `reboot` / `shutdown`
+- `ssh *`
+- any redirect to `/dev/*`

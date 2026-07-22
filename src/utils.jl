@@ -76,3 +76,5 @@ function validate_positive(x::Real, name::AbstractString)
     x > 0 || throw(ElementParameterError(name, "$name must be positive, got $x"))
     return nothing
 end
+
+# TODO: exercice review — ajouter conversion C↔K

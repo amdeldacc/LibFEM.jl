@@ -1,8 +1,3 @@
-% =========================================================================
-% Problem 6.1 - Space Truss with Four Elements (Fig. 6.3)
-% Reference: P. I. Kattan, "MATLAB Guide to Finite Elements: An Interactive
-% Approach" - Chapter 6, space truss element formulation.
-%
 % ===============================================================================
 % PROBLEM OVERVIEW: 3D SPACE TRUSS (Fig 6.3)
 % ===============================================================================
@@ -31,21 +26,18 @@
 %               [NODE 2] O - - - - - - - - - - - - - - - - - O [NODE 3]
 %                       ///                                 ///
 %
-%     Node coordinates:
-%       1: (0, 0, -3)    2: (-3, 0, 0)    3: (0, 0, 3)
-%       4: (4, 0, 0)     5: (0, 5, 0)
+% ===============================================================================
+% NODE COORDINATES (X, Y, Z) IN METERS:
+% ===============================================================================
+% Origin (0,0,0) is located on the ground plane, directly below Node 5.
 %
-%     Elements: 1→5, 2→5, 3→5, 4→5
-%     Loads: P1=15 kN (+X), P2=20 kN (-Z)
+%   Node 1 : (-3,  0, -3)    -> Fixed Support
+%   Node 2 : (-3,  0,  3)    -> Fixed Support
+%   Node 3 : ( 4,  0,  3)    -> Fixed Support
+%   Node 4 : ( 4,  0, -3)    -> Fixed Support
+%   Node 5 : ( 0,  5,  0)    -> Free Node (Forces P1 and P2 applied here)
 %
-% =========================================================================
-%
-% Computes:
-%   1. Global stiffness matrix K
-%   2. Displacements at node 5
-%   3. Reactions at nodes 1, 2, 3, and 4
-%   4. Stress in each element
-% =========================================================================
+% ===============================================================================
 
 clear; clc;
 

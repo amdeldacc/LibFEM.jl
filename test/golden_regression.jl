@@ -3,64 +3,9 @@ using Test
 using LinearAlgebra
 
 # ─────────────────────────────────────────────────────────
-# Helpers — MUST be defined before @testset block that uses them
+# Shared parameter ordering (single source of truth)
 # ─────────────────────────────────────────────────────────
-
-"""
-    _ordered_params(func_name::String, params::Dict) -> Vector
-
-Return parameter values in the correct order for the given function.
-This mapping must be kept in sync with the function signatures.
-"""
-function _ordered_params(func_name::String, params::Dict)
-    # Map function name → ordered parameter keys
-    order_map = Dict{String,Vector{String}}(
-        # d1_spring
-        "d1_spring_elementstiffness" => ["k"],
-        "d1_spring_elementforce" => ["Ke", "u"],
-        # d2_spring
-        "d2_spring_elementstiffness" => ["k", "theta"],
-        "d2_spring_elementforce" => ["k", "theta", "u"],
-        # d3_spring
-        "d3_spring_elementstiffness" => ["k", "thetax", "thetay", "thetaz"],
-        "d3_spring_elementforce" => ["k", "thetax", "thetay", "thetaz", "u"],
-        # d1_truss
-        "d1_truss_elementstiffness" => ["E", "A", "L"],
-        "d1_truss_elementforces" => ["Ke", "u"],
-        "d1_truss_elementstress" => ["Ke", "u", "A"],
-        "d1_truss_elementstrain" => ["L", "u"],
-        # d2_truss
-        "d2_truss_elementlength" => ["x1", "y1", "x2", "y2"],
-        "d2_truss_elementstiffness" => ["E", "A", "L", "theta"],
-        "d2_truss_elementforces" => ["E", "A", "L", "theta", "u"],
-        "d2_truss_elementstrain" => ["L", "theta", "u"],
-        "d2_truss_elementstress" => ["E", "L", "theta", "u"],
-        # d3_truss
-        "d3_truss_elementlength" => ["x1", "y1", "z1", "x2", "y2", "z2"],
-        "d3_truss_elementstiffness" => ["E", "A", "L", "thetax", "thetay", "thetaz"],
-        "d3_truss_elementforces" => ["E", "A", "L", "thetax", "thetay", "thetaz", "u"],
-        "d3_truss_elementstrain" => ["L", "thetax", "thetay", "thetaz", "u"],
-        "d3_truss_elementstress" => ["E", "L", "thetax", "thetay", "thetaz", "u"],
-        # d2_beam
-        "d2_beam_elementstiffness" => ["E", "I", "L"],
-        "d2_beam_elementforces" => ["k", "u"],
-        # d2_planeframe
-        "d2_planeframe_elementlength" => ["x1", "y1", "x2", "y2"],
-        "d2_planeframe_elementstiffness" => ["E", "A", "I", "L", "theta"],
-        "d2_planeframe_elementforces" => ["E", "A", "I", "L", "theta", "u"],
-        # d3_spaceframe
-        "d3_spaceframe_elementlength" => ["x1", "y1", "z1", "x2", "y2", "z2"],
-        "d3_spaceframe_elementstiffness" => ["E", "G", "A", "Iy", "Iz", "J", "x1", "y1", "z1", "x2", "y2", "z2"],
-        "d3_spaceframe_elementforces" => ["E", "G", "A", "Iy", "Iz", "J", "x1", "y1", "z1", "x2", "y2", "z2", "u"],
-    )
-
-    keys = get(order_map, func_name, String[])
-    if isempty(keys)
-        error("Unknown function: $func_name — add to _ordered_params mapping in golden_regression.jl")
-    end
-
-    return [params[k] for k in keys]
-end
+include(joinpath(@__DIR__, "golden", "params_common.jl"))
 
 """
     _deserialize_binary(path::String) -> Union{Matrix{Float64}, Nothing}
@@ -122,7 +67,7 @@ end
 
             # Build ordered parameter list from manifest entry
             params = entry["params"]
-            param_values = _ordered_params(func_name, params)
+            param_values = ordered_params(func_name, params)
 
             # Try calling the function
             call_ok = false

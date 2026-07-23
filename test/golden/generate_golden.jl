@@ -27,21 +27,9 @@ const MANIFEST_PATH = joinpath(@__DIR__, "manifests.toml")
 const OUTPUT_DIR    = joinpath(@__DIR__, "v1")
 
 # ---------------------------------------------------------------------------
-# Parameter ordering — TOML Dict iteration order is NOT guaranteed, so we
-# define the correct positional order explicitly per function.
+# Shared parameter ordering (single source of truth)
 # ---------------------------------------------------------------------------
-
-const PARAM_ORDER = Dict(
-    "d1_spring_elementstiffness"       => [:k],
-    "d2_spring_elementstiffness"       => [:k, :theta],
-    "d3_spring_elementstiffness"       => [:k, :thetax, :thetay, :thetaz],
-    "d1_truss_elementstiffness"        => [:E, :A, :L],
-    "d2_truss_elementstiffness"        => [:E, :A, :L, :theta],
-    "d3_truss_elementstiffness"        => [:E, :A, :L, :thetax, :thetay, :thetaz],
-    "d2_beam_elementstiffness"         => [:E, :I, :L],
-    "d2_planeframe_elementstiffness"   => [:E, :A, :I, :L, :theta],
-    "d3_spaceframe_elementstiffness"   => [:E, :G, :A, :Iy, :Iz, :J, :x1, :y1, :z1, :x2, :y2, :z2],
-)
+include(joinpath(@__DIR__, "params_common.jl"))
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -90,18 +78,7 @@ function resolve_func(func_name::String)
     return getfield(LibFEM, Symbol(func_name))
 end
 
-"""
-    build_args(func_name::String, params::Dict) -> Tuple
 
-Build a positional argument tuple from `params` using the explicit
-order defined in `PARAM_ORDER`.
-"""
-function build_args(func_name::String, params::Dict)
-    order = get(PARAM_ORDER, func_name) do
-        error("Unknown function: $func_name (not in PARAM_ORDER)")
-    end
-    return Tuple(params[string(k)] for k in order)
-end
 
 # ---------------------------------------------------------------------------
 # Main
@@ -137,7 +114,7 @@ function main()
 
         try
             func = resolve_func(func_name)
-            args = build_args(func_name, params)
+            args = ordered_params_tuple(func_name, params)
             K    = func(args...)
             serialize_matrix(out_path, K)
             println("  ✓  $(size(K,1))×$(size(K,2))")

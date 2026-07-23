@@ -11,7 +11,7 @@ jobs:
     permissions: read-only
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@<commit-shares-here>
       - name: Check OpenWiki staleness
         run: |
           if [ -f openwiki/.last-update.json ]; then

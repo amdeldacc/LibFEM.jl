@@ -55,9 +55,9 @@ concurrency:
 
 on:
   workflow_dispatch:
-  # Use pull_request_target instead of pull_request so that secrets are
-  # available even for PRs from forks. This is safe because the reusable
-  # action only reads the diff and does not execute any code from the PR.
+  # pull_request is used here (not pull_request_target) so secrets are not
+  # exposed to untrusted PR code. For fork PRs, the action still gets the
+  # diff from the event payload; no elevated permissions needed.
   pull_request:
     types: [opened, synchronize, reopened]
   issue_comment:
@@ -122,7 +122,7 @@ jobs:
           # Override default '{"thinking": {"type": "disabled"}}' (Anthropic
           # format) which would be sent to an OpenAI-compatible provider and
           # cause LLM API rejection. Keep empty for OpenAI-compatible endpoints.
-          llm_extra_body: '{}'
+          llm_extra_body: "{}"
           rule: .opencodereview/rule.json
           # For issue_comment triggers, pass the resolved refs; for
           # pull_request_target the action resolves them from the event.

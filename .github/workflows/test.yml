@@ -3,14 +3,14 @@ name: Test
 on:
   push:
     paths-ignore:
-      - 'Doc/**'
-      - '**.md'
-      - 'openwiki/**'
+      - "Doc/**"
+      - "**.md"
+      - "openwiki/**"
   pull_request:
     paths-ignore:
-      - 'Doc/**'
-      - '**.md'
-      - 'openwiki/**'
+      - "Doc/**"
+      - "**.md"
+      - "openwiki/**"
 
 permissions:
   contents: read

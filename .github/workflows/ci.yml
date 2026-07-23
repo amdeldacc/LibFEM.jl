@@ -4,15 +4,15 @@ on:
   push:
     branches: [master]
     paths-ignore:
-      - 'Doc/**'
-      - '**.md'
-      - 'openwiki/**'
+      - "Doc/**"
+      - "**.md"
+      - "openwiki/**"
   pull_request:
     branches: [master]
     paths-ignore:
-      - 'Doc/**'
-      - '**.md'
-      - 'openwiki/**'
+      - "Doc/**"
+      - "**.md"
+      - "openwiki/**"
   workflow_dispatch:
 
 permissions:

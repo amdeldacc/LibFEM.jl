@@ -443,7 +443,7 @@ function test_beam()
     ))
 
     # Forces (with displacement from Problem 8.1, element 2)
-    # Using computed & verified values from comparison.jl
+    # Using computed & verified values (previously in comparison.jl)
     u2_loaded = [0.1865, 0.0, -0.0298, 0.1865, 0.0, 0.0149]
     push!(results, run_validation(
         "d2_planeframe_elementforces(E, A, I, L, θ, u)",
@@ -460,10 +460,10 @@ function test_beam()
 
     # Length
     push!(results, run_validation(
-        "d3_beam_elementlength(x1, y1, z1, x2, y2, z2)",
-        "d3_beam_elementlength",
+        "d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)",
+        "d3_spaceframe_elementlength",
         "SpaceFrameElementLength.m", "SpaceFrameElementLength";
-        julia_fn = () -> d3_beam_elementlength(0.0, 0.0, 0.0, 4.0, 0.0, 0.0),
+        julia_fn = () -> d3_spaceframe_elementlength(0.0, 0.0, 0.0, 4.0, 0.0, 0.0),
         matlab_args_fn = () -> adapt_space_frame_args(0.0, 0.0, 0.0, 4.0, 0.0, 0.0),
         result_adapter = (r, n) -> [r],
         dof = 1,
@@ -471,10 +471,10 @@ function test_beam()
 
     # Stiffness (along x-axis: horizontal member from Problem 10.1)
     push!(results, run_validation(
-        "d3_beam_elementstiffness(E, G, A, Iy, Iz, J, coords)",
-        "d3_beam_elementstiffness",
+        "d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, coords)",
+        "d3_spaceframe_elementstiffness",
         "SpaceFrameElementStiffness.m", "SpaceFrameElementStiffness";
-        julia_fn = () -> d3_beam_elementstiffness(E3, G3, A3, Iy3, Iz3, J3,
+        julia_fn = () -> d3_spaceframe_elementstiffness(E3, G3, A3, Iy3, Iz3, J3,
                                                     0.0, 0.0, 0.0, 4.0, 0.0, 0.0),
         matlab_args_fn = () -> adapt_space_frame_args(E3, G3, A3, Iy3, Iz3, J3,
                                                        0.0, 0.0, 0.0, 4.0, 0.0, 0.0),
@@ -484,10 +484,10 @@ function test_beam()
     # Forces (with zero displacement)
     u3 = zeros(12)
     push!(results, run_validation(
-        "d3_beam_elementforces(E, G, A, Iy, Iz, J, coords, u=0)",
-        "d3_beam_elementforces",
+        "d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, coords, u=0)",
+        "d3_spaceframe_elementforces",
         "SpaceFrameElementForces.m", "SpaceFrameElementForces";
-        julia_fn = () -> d3_beam_elementforces(E3, G3, A3, Iy3, Iz3, J3,
+        julia_fn = () -> d3_spaceframe_elementforces(E3, G3, A3, Iy3, Iz3, J3,
                                                0.0, 0.0, 0.0, 4.0, 0.0, 0.0, u3),
         matlab_args_fn = () -> adapt_space_frame_args(E3, G3, A3, Iy3, Iz3, J3,
                                                        0.0, 0.0, 0.0, 4.0, 0.0, 0.0, u3),

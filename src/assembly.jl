@@ -30,7 +30,7 @@ function _assemble!(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer
 end
 
 """
-    _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
+    _d3_spaceframe_kprime(E, G, A, Iy, Iz, J, L)
 
 Compute the 12×12 local (primal) stiffness matrix for a
 3-D beam (space frame) element in its local coordinate system.
@@ -50,7 +50,7 @@ A 12×12 matrix in the local coordinate system.
 # Notes
 DOF order: [δx, δy, δz, θx, θy, θz, δx₂, δy₂, δz₂, θx₂, θy₂, θz₂]
 """
-function _d3_beam_kprime(
+function _d3_spaceframe_kprime(
     E::Real,
     G::Real,
     A::Real,

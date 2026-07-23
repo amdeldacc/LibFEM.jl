@@ -93,7 +93,7 @@ The element force (scalar, positive = tension).
 """
 function d2_spring_elementforce(k::Real, theta::Real, u::AbstractVector)
     (C, S) = _direction_cosines(theta)
-    return k * _truss_force_component(C, S, u)
+    return k * (-C * u[1] - S * u[2] + C * u[3] + S * u[4])
 end
 
 """
@@ -160,7 +160,7 @@ The element force (scalar, positive = tension).
 """
 function d3_spring_elementforce(k::Real, thetax::Real, thetay::Real, thetaz::Real, u::AbstractVector)
     (Cx, Cy, Cz) = _direction_cosines(thetax, thetay, thetaz)
-    return k * _truss_force_component(Cx, Cy, Cz, u)
+    return k * (-Cx*u[1] - Cy*u[2] - Cz*u[3] + Cx*u[4] + Cy*u[5] + Cz*u[6])
 end
 
 """

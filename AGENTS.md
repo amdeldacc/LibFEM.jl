@@ -63,7 +63,7 @@ using Pkg; Pkg.test()
   - `src/types.jl` — abstract type hierarchy, `@kwdef` element structs, custom error types
   - `src/spring.jl` — `d1_spring_*`, `d2_spring_*`, `d3_spring_*` functions
   - `src/truss.jl` — `d1_truss_*`, `d2_truss_*`, `d3_truss_*` functions
-  - `src/beam.jl` — `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), `d3_beam_*` (space frame) functions
+  - `src/beam.jl` — `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), `d3_spaceframe_*` (space frame) functions
   - `src/assembly.jl` — `_assemble!` helper and assembly utilities
   - `src/utils.jl` — `deg2rad` and shared helpers
   - `src/plot.jl` — diagram functions (Plots dependency)
@@ -83,7 +83,7 @@ using Pkg; Pkg.test()
   - `LinearBar*`/`PlaneTruss*`/`SpaceTruss*` → `d1_truss_*`, `d2_truss_*`, `d3_truss_*`
   - `Beam*` → `d2_beam_*` (pure beam, 2 DOF/node)
   - `PlaneFrame*` → `d2_planeframe_*` (plane frame, 3 DOF/node)
-  - `SpaceFrame*` → `d3_beam_*` (space frame, 6 DOF/node)
+  - `SpaceFrame*` → `d3_spaceframe_*` (space frame, 6 DOF/node)
   - See `CONTEXT.md` for the full domain glossary and per-file mappings.
 
 ## Dependencies & Metadata

@@ -378,10 +378,10 @@ end
 #     → 12-vector (12 scalars + 12-vec u)
 #   SpaceFrameAssemble(K, k, i, j) → mutated K
 #
-# Julia equivalents (d3_beam_*):
-#   d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)
+# Julia equivalents (d3_spaceframe_*):
+#   d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)
 #     — identical signature
-#   d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)
+#   d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)
 #     — identical signature (returns 12-vec in local frame)
 
 """
@@ -389,7 +389,7 @@ end
 
 Prepare Julia arguments for `SpaceFrameElementStiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)`.
 MATLAB: 12 scalars (E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2).
-Julia:  `d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)`.
+Julia:  `d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)`.
 """
 adapt_space_frame_args(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2) = (E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)
 
@@ -398,7 +398,7 @@ adapt_space_frame_args(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2) = (E, G, A, I
 
 Prepare Julia arguments for `SpaceFrameElementForces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)`.
 MATLAB: 13 args (12 scalars + 12-element disp vector).
-Julia:  `d3_beam_elementforces(...)` — identical.
+Julia:  `d3_spaceframe_elementforces(...)` — identical.
 """
 adapt_space_frame_args(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u) = (E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)
 
@@ -407,7 +407,7 @@ adapt_space_frame_args(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u) = (E, G, A
 
 Prepare Julia arguments for `SpaceFrameElementLength(x1, y1, z1, x2, y2, z2)`.
 MATLAB: 6 coordinates.
-Julia:  `d3_beam_elementlength(x1, y1, z1, x2, y2, z2)` — identical.
+Julia:  `d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)` — identical.
 """
 adapt_space_frame_args(x1::Real, y1::Real, z1::Real, x2::Real, y2::Real, z2::Real) = (x1, y1, z1, x2, y2, z2)
 

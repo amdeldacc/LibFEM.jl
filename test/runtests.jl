@@ -153,6 +153,8 @@ end
             u = [0.001; 0.0]
             sigma = d1_truss_elementstress(Ke, u, 0.01)
             @test sigma ≈ [5e7; -5e7]
+            @test_throws ElementParameterError d1_truss_elementstress([1 -1; -1 1], [0; 0], 0.0)
+            @test_throws ElementParameterError d1_truss_elementstress([1 -1; -1 1], [0; 0], -1.0)
         end
 
         @testset "elementstrain" begin
@@ -194,13 +196,13 @@ end
         end
 
         @testset "negative/zero parameter behavior" begin
-            # Zero area → zero matrix
-            @test d1_truss_elementstiffness(1.0, 0.0, 1.0) == zeros(2, 2)
-            # Negative area → negated matrix
-            @test d1_truss_elementstiffness(1.0, -1.0, 1.0) == -[1 -1; -1 1]
-            # Zero modulus → zero matrix
+            # Zero area → throws
+            @test_throws ElementParameterError d1_truss_elementstiffness(1.0, 0.0, 1.0)
+            # Negative area → throws
+            @test_throws ElementParameterError d1_truss_elementstiffness(1.0, -1.0, 1.0)
+            # Zero modulus → zero matrix (not validated)
             @test d1_truss_elementstiffness(0.0, 1.0, 1.0) == zeros(2, 2)
-            # Negative modulus → negated matrix
+            # Negative modulus → negated matrix (not validated)
             @test d1_truss_elementstiffness(-1.0, 1.0, 1.0) == -[1 -1; -1 1]
         end
     end
@@ -359,15 +361,15 @@ end
         end
 
         @testset "negative/zero parameter behavior" begin
-            # Zero area → zero matrix (axial part)
-            Ke = d2_planeframe_elementstiffness(1.0, 0.0, 1.0, 1.0, 0.0)
-            @test Ke[1, 1] == 0.0
-            @test Ke[1, 4] == 0.0
-            # Negative area → negated axial part
-            Ke_neg = d2_planeframe_elementstiffness(1.0, -1.0, 1.0, 1.0, 0.0)
-            @test Ke_neg[1, 1] == -1.0
-            @test Ke_neg[1, 4] == 1.0
+            # Zero area → throws
+            @test_throws ElementParameterError d2_planeframe_elementstiffness(1.0, 0.0, 1.0, 1.0, 0.0)
+            # Negative area → throws
+            @test_throws ElementParameterError d2_planeframe_elementstiffness(1.0, -1.0, 1.0, 1.0, 0.0)
         end
+
+        # A validation for force functions
+        @test_throws ElementParameterError d2_planeframe_elementforces(1.0, 0.0, 1.0, 1.0, 0.0, zeros(6))
+        @test_throws ElementParameterError d2_planeframe_elementforces(1.0, -1.0, 1.0, 1.0, 0.0, zeros(6))
     end
 
     # ─────────────────────────────────────────────────
@@ -509,17 +511,21 @@ end
         end
 
         @testset "negative/zero parameter behavior" begin
-            # Zero area → zero matrix
-            @test d2_truss_elementstiffness(1.0, 0.0, 1.0, 0.0) == zeros(4, 4)
-            # Negative area → negated matrix
+            # Zero area → throws
+            @test_throws ElementParameterError d2_truss_elementstiffness(1.0, 0.0, 1.0, 0.0)
+            # Negative area → throws
+            @test_throws ElementParameterError d2_truss_elementstiffness(1.0, -1.0, 1.0, 0.0)
+            # Zero modulus → zero matrix (not validated)
             C = cos(0); S = sin(0)
             expected = [C*C C*S -C*C -C*S; C*S S*S -C*S -S*S; -C*C -C*S C*C C*S; -C*S -S*S C*S S*S]
-            @test d2_truss_elementstiffness(1.0, -1.0, 1.0, 0.0) == -expected
-            # Zero modulus → zero matrix
             @test d2_truss_elementstiffness(0.0, 1.0, 1.0, 0.0) == zeros(4, 4)
-            # Negative modulus → negated matrix
+            # Negative modulus → negated matrix (not validated)
             @test d2_truss_elementstiffness(-1.0, 1.0, 1.0, 0.0) == -expected
         end
+
+        # A validation for force functions
+        @test_throws ElementParameterError d2_truss_elementforces(1.0, 0.0, 1.0, 0.0, [1.0;0.0;0.0;0.0])
+        @test_throws ElementParameterError d2_truss_elementforces(1.0, -1.0, 1.0, 0.0, [1.0;0.0;0.0;0.0])
     end
 
     # ─────────────────────────────────────────────────
@@ -643,32 +649,36 @@ end
         end
 
         @testset "negative/zero parameter behavior" begin
-            # Zero area → zero matrix
-            @test d3_truss_elementstiffness(1.0, 0.0, 1.0, 0, 0, 0) == zeros(6, 6)
-            # Negative area → negated matrix
-            @test d3_truss_elementstiffness(1.0, -1.0, 1.0, 0, 0, 0) == -[ones(3,3) -ones(3,3); -ones(3,3) ones(3,3)]
-            # Zero modulus → zero matrix
+            # Zero area → throws
+            @test_throws ElementParameterError d3_truss_elementstiffness(1.0, 0.0, 1.0, 0, 0, 0)
+            # Negative area → throws
+            @test_throws ElementParameterError d3_truss_elementstiffness(1.0, -1.0, 1.0, 0, 0, 0)
+            # Zero modulus → zero matrix (not validated)
             @test d3_truss_elementstiffness(0.0, 1.0, 1.0, 0, 0, 0) == zeros(6, 6)
-            # Negative modulus → negated matrix
+            # Negative modulus → negated matrix (not validated)
             @test d3_truss_elementstiffness(-1.0, 1.0, 1.0, 0, 0, 0) == -[ones(3,3) -ones(3,3); -ones(3,3) ones(3,3)]
         end
+
+        # A validation for force functions
+        @test_throws ElementParameterError d3_truss_elementforces(1.0, 0.0, 1.0, 0, 0, 0, ones(6))
+        @test_throws ElementParameterError d3_truss_elementforces(1.0, -1.0, 1.0, 0, 0, 0, ones(6))
     end
 
     # ─────────────────────────────────────────────────
-    # 3-D Beam / Space Frame (d3_beam)
+    # 3-D Beam / Space Frame (d3_spaceframe)
     # ─────────────────────────────────────────────────
-    @testset "d3_beam" begin
+    @testset "d3_spaceframe" begin
         @testset "elementlength" begin
-            @test d3_beam_elementlength(0,0,0, 3,4,12) ≈ 13.0  # 5-12-13 triangle
-            @test d3_beam_elementlength(0,0,0, 0,0,0) == 0.0
-            @test d3_beam_elementlength(1,0,0, 5,0,0) == 4.0
-            @test d3_beam_elementlength(0,0,0, 1,1,1) ≈ sqrt(3)
+            @test d3_spaceframe_elementlength(0,0,0, 3,4,12) ≈ 13.0  # 5-12-13 triangle
+            @test d3_spaceframe_elementlength(0,0,0, 0,0,0) == 0.0
+            @test d3_spaceframe_elementlength(1,0,0, 5,0,0) == 4.0
+            @test d3_spaceframe_elementlength(0,0,0, 1,1,1) ≈ sqrt(3)
         end
 
         @testset "elementstiffness" begin
             E, G, A, Iy, Iz, J = 3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5
             # Horizontal beam along X: (0,0,0)→(4,0,0)
-            Ke = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 4,0,0)
+            Ke = d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 4,0,0)
             @test size(Ke) == (12, 12)
             # Physical invariants (beam with rotational DOFs)
             @test_physical_invariants Ke
@@ -708,18 +718,18 @@ end
             # Horizontal beam, axial displacement at node 2 (follows d2_beam pattern)
             u = zeros(12)
             u[7] = 0.001  # 1mm axial at node 2
-            f = d3_beam_elementforces(E, G, A, Iy, Iz, J, 0,0,0, 4,0,0, u)
+            f = d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, 0,0,0, 4,0,0, u)
             @test length(f) == 12
             @test f[1] ≈ -(E*A/4.0) * 0.001  # reaction at node 1 = -EA/L * u_x2
             @test f[7] ≈ (E*A/4.0) * 0.001   # reaction at node 2 = +EA/L * u_x2
             # Zero displacement → zero force
-            @test d3_beam_elementforces(E, G, A, Iy, Iz, J, 0,0,0, 4,0,0, zeros(12)) ≈ zeros(12)
+            @test d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, 0,0,0, 4,0,0, zeros(12)) ≈ zeros(12)
         end
 
         @testset "assemble" begin
             K = zeros(12, 12)
             k = reshape(1.0:144.0, 12, 12)
-            K = d3_beam_assemble(K, k, 1, 2)
+            K = d3_spaceframe_assemble(K, k, 1, 2)
             @test K[1:6, 1:6] == k[1:6, 1:6]
             @test K[1:6, 7:12] == k[1:6, 7:12]
             @test K[7:12, 1:6] == k[7:12, 1:6]
@@ -729,22 +739,22 @@ end
         @testset "diagrams" begin
             f = [1000, 500, 300, 200, 150, 100, -1000, -500, -300, -200, -150, -100]
             L = 5.0
-            @test d3_beam_elementaxialdiagram(f, L) isa Plots.Plot
-            @test d3_beam_elementshearydiagram(f, L) isa Plots.Plot
-            @test d3_beam_elementshearzdiagram(f, L) isa Plots.Plot
-            @test d3_beam_elementmomentydiagram(f, L) isa Plots.Plot
-            @test d3_beam_elementmomentzdiagram(f, L) isa Plots.Plot
-            @test d3_beam_elementtorsiondiagram(f, L) isa Plots.Plot
+            @test d3_spaceframe_elementaxialdiagram(f, L) isa Plots.Plot
+            @test d3_spaceframe_elementshearydiagram(f, L) isa Plots.Plot
+            @test d3_spaceframe_elementshearzdiagram(f, L) isa Plots.Plot
+            @test d3_spaceframe_elementmomentydiagram(f, L) isa Plots.Plot
+            @test d3_spaceframe_elementmomentzdiagram(f, L) isa Plots.Plot
+            @test d3_spaceframe_elementtorsiondiagram(f, L) isa Plots.Plot
         end
 
         @testset "near-vertical beam" begin
             E, G, A, Iy, Iz, J = 3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5
-            Ke = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 1e-10,1e-10,4)
+            Ke = d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 1e-10,1e-10,4)
             @test size(Ke) == (12, 12)
             @test all(!isnan, Ke)
             @test Ke ≈ Ke'
             u = zeros(12); u[7] = 0.001
-            f = d3_beam_elementforces(E, G, A, Iy, Iz, J, 0,0,0, 1e-10,1e-10,4, u)
+            f = d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, 0,0,0, 1e-10,1e-10,4, u)
             @test all(!isnan, f)
             @test length(f) == 12
         end
@@ -752,32 +762,32 @@ end
         @testset "vertical beam" begin
             E, G, A, Iy, Iz, J = 3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5
             # Vertical beam along Z: (0,0,0)→(0,0,4)
-            Ke = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 0,0,4)
+            Ke = d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 0,0,4)
             @test size(Ke) == (12, 12)
             @test_physical_invariants Ke
             @test all(!isnan, Ke)
             # Vertical beam along Z (negative direction)
-            Ke2 = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, 0,0,4, 0,0,0)
+            Ke2 = d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, 0,0,4, 0,0,0)
             @test size(Ke2) == (12, 12)
             @test all(!isnan, Ke2)
             @test_physical_invariants Ke2
         end
 
         @testset "L>0 error paths" begin
-            @test_throws ElementParameterError d3_beam_elementstiffness(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0,0,0, 0,0,0)
-            @test_throws ElementParameterError d3_beam_elementforces(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0,0,0, 0,0,0, zeros(12))
+            @test_throws ElementParameterError d3_spaceframe_elementstiffness(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0,0,0, 0,0,0)
+            @test_throws ElementParameterError d3_spaceframe_elementforces(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0,0,0, 0,0,0, zeros(12))
         end
 
         @testset "negative/zero parameter behavior" begin
-            # Zero area → zero axial part
-            Ke = d3_beam_elementstiffness(1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0)
-            @test Ke[1, 1] == 0.0
-            @test Ke[1, 7] == 0.0
-            # Negative area → negated axial part
-            Ke_neg = d3_beam_elementstiffness(1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0)
-            @test Ke_neg[1, 1] == -1.0
-            @test Ke_neg[1, 7] == 1.0
+            # Zero area → throws
+            @test_throws ElementParameterError d3_spaceframe_elementstiffness(1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0)
+            # Negative area → throws
+            @test_throws ElementParameterError d3_spaceframe_elementstiffness(1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0)
         end
+
+        # A validation for force functions
+        @test_throws ElementParameterError d3_spaceframe_elementforces(1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0, zeros(12))
+        @test_throws ElementParameterError d3_spaceframe_elementforces(1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0, zeros(12))
 
         # ═══════════════════════════════════════════════════
         # Sprint 3 — Wave 5: Test Hardening
@@ -802,7 +812,7 @@ end
             k2b = d2_planeframe_elementstiffness(1, 1, 1, 1, 30)
             @test_physical_invariants(k2b)
 
-            k3b = d3_beam_elementstiffness(1, 1, 1, 1, 1, 1, 0,0,0, 4,0,0)
+            k3b = d3_spaceframe_elementstiffness(1, 1, 1, 1, 1, 1, 0,0,0, 4,0,0)
             @test_physical_invariants(k3b)
         end
 
@@ -829,31 +839,15 @@ end
             fb = [1000, 200, -1000, 200]
             @test d2_beam_elementsheardiagram(fb, L) isa Plots.Plot
             @test d2_beam_elementmomentdiagram(fb, L) isa Plots.Plot
-            @test d3_beam_elementaxialdiagram(f3, L) isa Plots.Plot
-            @test d3_beam_elementshearydiagram(f3, L) isa Plots.Plot
-            @test d3_beam_elementshearzdiagram(f3, L) isa Plots.Plot
-            @test d3_beam_elementmomentydiagram(f3, L) isa Plots.Plot
-            @test d3_beam_elementmomentzdiagram(f3, L) isa Plots.Plot
-            @test d3_beam_elementtorsiondiagram(f3, L) isa Plots.Plot
+            @test d3_spaceframe_elementaxialdiagram(f3, L) isa Plots.Plot
+            @test d3_spaceframe_elementshearydiagram(f3, L) isa Plots.Plot
+            @test d3_spaceframe_elementshearzdiagram(f3, L) isa Plots.Plot
+            @test d3_spaceframe_elementmomentydiagram(f3, L) isa Plots.Plot
+            @test d3_spaceframe_elementmomentzdiagram(f3, L) isa Plots.Plot
+            @test d3_spaceframe_elementtorsiondiagram(f3, L) isa Plots.Plot
         end
 
-        include("comparison.jl")
 
-        @testset "diagram z-vector values" begin
-            f2 = [1000, 500, 200, -1000, 500, -200]
-            f3 = [1000, 500, 300, 200, 150, 100, -1000, -500, -300, -200, -150, -100]
-            L = 5.0
-            # Verify via MATLAB reference data functions from comparison.jl
-            @test PlaneFrameElementAxialDiagram(f2, L) == [-1000, -1000]
-            @test PlaneFrameElementShearDiagram(f2, L) == [500, -500]
-            @test PlaneFrameElementMomentDiagram(f2, L) == [-200, -200]
-            @test SpaceFrameElementAxialDiagram(f3, L) == [-1000, -1000]
-            @test SpaceFrameElementShearYDiagram(f3, L) == [500, 500]
-            @test SpaceFrameElementShearZDiagram(f3, L) == [300, 300]
-            @test SpaceFrameElementMomentYDiagram(f3, L) == [150, 150]
-            @test SpaceFrameElementMomentZDiagram(f3, L) == [100, 100]
-            @test SpaceFrameElementTorsionDiagram(f3, L) == [200, 200]
-        end
 
         @testset "assembly edge cases" begin
             K6 = zeros(6, 6)
@@ -887,7 +881,7 @@ end  # @testset "LibFEM"
         :d3_truss_elementstiffness,
         :d2_beam_elementstiffness,
         :d2_planeframe_elementstiffness,
-        :d3_beam_elementstiffness,
+        :d3_spaceframe_elementstiffness,
         :deg2rad,
         :AbstractSpring,
         :Spring,

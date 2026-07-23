@@ -134,16 +134,16 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 | `d3_truss_elementstrain(L, thetax, thetay, thetaz, u)`                 | Scalar strain                         |
 | `d3_truss_elementstress(E, L, thetax, thetay, thetaz, u)`              | Scalar stress                         |
 | `d3_truss_assemble(K, k, i, j)`                                        | Assemble (3 DOF/node)                 |
-| `d3_beam_elementlength(x1, y1, z1, x2, y2, z2)`                        | Element length                        |
-| `d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` | 12×12 stiffness (6 DOF/node)          |
-| `d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` | 12-element force vector (local frame) |
-| `d3_beam_elementaxialdiagram(f, L)`                                    | Plots.jl axial force diagram          |
-| `d3_beam_elementshearydiagram(f, L)`                                   | Plots.jl shear-Y diagram              |
-| `d3_beam_elementshearzdiagram(f, L)`                                   | Plots.jl shear-Z diagram              |
-| `d3_beam_elementmomentydiagram(f, L)`                                  | Plots.jl moment-Y diagram             |
-| `d3_beam_elementmomentzdiagram(f, L)`                                  | Plots.jl moment-Z diagram             |
-| `d3_beam_elementtorsiondiagram(f, L)`                                  | Plots.jl torsion diagram              |
-| `d3_beam_assemble(K, k, i, j)`                                         | Assemble (6 DOF/node)                 |
+| `d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)`                        | Element length                        |
+| `d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` | 12×12 stiffness (6 DOF/node)          |
+| `d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` | 12-element force vector (local frame) |
+| `d3_spaceframe_elementaxialdiagram(f, L)`                                    | Plots.jl axial force diagram          |
+| `d3_spaceframe_elementshearydiagram(f, L)`                                   | Plots.jl shear-Y diagram              |
+| `d3_spaceframe_elementshearzdiagram(f, L)`                                   | Plots.jl shear-Z diagram              |
+| `d3_spaceframe_elementmomentydiagram(f, L)`                                  | Plots.jl moment-Y diagram             |
+| `d3_spaceframe_elementmomentzdiagram(f, L)`                                  | Plots.jl moment-Z diagram             |
+| `d3_spaceframe_elementtorsiondiagram(f, L)`                                  | Plots.jl torsion diagram              |
+| `d3_spaceframe_assemble(K, k, i, j)`                                         | Assemble (6 DOF/node)                 |
 
 ---
 
@@ -178,14 +178,13 @@ LibFEM.jl/
 │   ├── types.jl           # Abstract type hierarchy, @kwdef element structs
 │   ├── errors.jl          # Custom error types (ElementDimensionError, etc.)
 │   ├── utils.jl           # deg2rad and shared helpers
-│   ├── assembly.jl        # _assemble! helper, _d3_beam_kprime
+│   ├── assembly.jl        # _assemble! helper, _d3_spaceframe_kprime
 │   ├── spring.jl          # d1/d2/d3_spring_* implementations
 │   ├── truss.jl           # d1/d2/d3_truss_* implementations
-│   ├── beam.jl            # d2/d3_beam_* implementations
+│   ├── beam.jl            # d2/d3_spaceframe_* implementations
 │   └── plot.jl            # Beam diagram functions (Plots dependency)
 ├── test/
 │   ├── runtests.jl        # Main test suite (~668 lines, covers all 8 element types)
-│   ├── comparison.jl      # MATLAB reference transcriptions for verification
 │   └── benchmark.jl       # BenchmarkTools.jl suite (12 benchmarks)
 ├── scripts/
 │   ├── linear_truss_mtk.jl      # ModelingToolkit example
@@ -218,9 +217,8 @@ julia -e 'using Pkg; Pkg.test()'
 
 **Test suite includes**:
 
-- **Unit tests** (`runtests.jl`, ~668 lines) — per-element correctness: stiffness matrix shape/symmetry, force/stress/strain numeric validation, assembly correctness, MATLAB reference comparison (Problem 10.1).
-- **MATLAB comparison** (`comparison.jl`) — Side-by-side MATLAB reference implementations transcribed from `Doc/Kattan/M-Files/`. Included from `runtests.jl`.
-- **Benchmarks** (`benchmark.jl`, 12 benchmarks) — Stiffness construction (8 element types), assembly (500-element chains), solve (random SPD), d3_beam forces. Run manually: `julia --project=. test/benchmark.jl`.
+- **Unit tests** (`runtests.jl`, ~668 lines) — per-element correctness: stiffness matrix shape/symmetry, force/stress/strain numeric validation, assembly correctness.
+- **Benchmarks** (`benchmark.jl`, 12 benchmarks) — Stiffness construction (8 element types), assembly (500-element chains), solve (random SPD), d3_spaceframe forces. Run manually: `julia --project=. test/benchmark.jl`.
 
 **CI**: GitHub Actions (`.github/workflows/ci.yml`) runs tests on Julia 1 and 1.10. Benchmarks run standalone (not in CI).
 
@@ -256,22 +254,22 @@ x1, y1, z1 = 0.0, 0.0, 0.0
 x2, y2, z2 = 4.0, 0.0, 0.0
 
 # Element length from coordinates
-L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)  # → 4.0
+L = d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)  # → 4.0
 
 # Element stiffness (12×12)
-k = d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)
+k = d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)
 
 # Assemble into global matrix (2 nodes × 6 DOF = 12)
 K = zeros(12, 12)
-K = d3_beam_assemble(K, k, 1, 2)
+K = d3_spaceframe_assemble(K, k, 1, 2)
 
 # After solving K·U = F for displacements u (12×1)...
-f = d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)
+f = d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)
 
 # Visualize internal force diagrams
-d3_beam_elementaxialdiagram(f, L)
-d3_beam_elementshearydiagram(f, L)
-d3_beam_elementtorsiondiagram(f, L)
+d3_spaceframe_elementaxialdiagram(f, L)
+d3_spaceframe_elementshearydiagram(f, L)
+d3_spaceframe_elementtorsiondiagram(f, L)
 ```
 
 ---
@@ -303,7 +301,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 
 ## MATLAB Reference Verification
 
-The `Doc/Kattan/M-Files/` directory contains 80 read-only MATLAB `.m` files from the Kattan textbook. LibFEM functions are numerically validated against these references in `test/comparison.jl` and `test/runtests.jl`.
+The `Doc/Kattan/M-Files/` directory contains 80 read-only MATLAB `.m` files from the Kattan textbook. LibFEM functions are numerically validated against these references in `test/runtests.jl` and via the Octave validation pipeline (`scripts/validate_matlab.jl`).
 
 Mapping convention:
 
@@ -315,7 +313,7 @@ Examples:
 
 - `SpringElementStiffness.m` → `d1_spring_elementstiffness`
 - `PlaneTrussElementForce.m` → `d2_truss_elementforces`
-- `SpaceFrameElementStiffness.m` → `d3_beam_elementstiffness`
+- `SpaceFrameElementStiffness.m` → `d3_spaceframe_elementstiffness`
 - `BeamElementForces.m` → `d2_beam_elementforces` (pure beam)
 - `PlaneFrameElementStiffness.m` → `d2_planeframe_elementstiffness`
 
@@ -325,7 +323,7 @@ See `CONTEXT.md` and `openwiki/reference/kattan-mapping.md` for the complete map
 
 ## MATLAB Reference Validation
 
-In addition to the in-Julia MATLAB reference comparisons in `test/comparison.jl`, LibFEM provides a standalone validation pipeline that runs the original Kattan textbook `.m` files through **GNU Octave** and compares results against Julia implementations. This exercises the actual MATLAB reference code, not hand-transcribed Julia translations.
+LibFEM provides a standalone validation pipeline that runs the original Kattan textbook `.m` files through **GNU Octave** and compares results against Julia implementations. This exercises the actual MATLAB reference code, not hand-transcribed Julia translations.
 
 ### Purpose
 
@@ -383,7 +381,7 @@ This is a required check; discrepancies between Julia and MATLAB reference imple
 
 ### Test Suite Integration
 
-The Octave validation is also wired into `Pkg.test()` as the **"Octave validation"** testset in `test/comparison.jl`. It runs 24 comparisons across all 6 element families. If Octave is unavailable, it warns and skips gracefully rather than failing the test suite.
+The Octave validation is also wired into `Pkg.test()` as the **"Octave validation"** testset in `test/runtests.jl`. It runs 24 comparisons across all 6 element families. If Octave is unavailable, it warns and skips gracefully rather than failing the test suite.
 
 ### Troubleshooting
 

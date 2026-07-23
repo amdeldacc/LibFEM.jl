@@ -98,7 +98,7 @@ d2_planeframe_elementmomentdiagram(f::AbstractVector, L::Real) = _beamdiagram(f,
 # ─── 3-D Beam Diagrams ───
 
 """
-    d3_beam_elementaxialdiagram(f, L)
+    d3_spaceframe_elementaxialdiagram(f, L)
 
 Plot and return the axial force diagram for a 3-D beam element.
 
@@ -109,10 +109,10 @@ Plot and return the axial force diagram for a 3-D beam element.
 # Returns
 A Plots.Plot object.
 """
-d3_beam_elementaxialdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Axial Force Diagram", (f,L)->[-f[1], f[7]])
+d3_spaceframe_elementaxialdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Axial Force Diagram", (f,L)->[-f[1], f[7]])
 
 """
-    d3_beam_elementshearydiagram(f, L)
+    d3_spaceframe_elementshearydiagram(f, L)
 
 Plot and return the shear force Y diagram for a 3-D beam element.
 
@@ -123,10 +123,10 @@ Plot and return the shear force Y diagram for a 3-D beam element.
 # Returns
 A Plots.Plot object.
 """
-d3_beam_elementshearydiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Shear Force Y Diagram", (f,L)->[f[2], -f[8]])
+d3_spaceframe_elementshearydiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Shear Force Y Diagram", (f,L)->[f[2], -f[8]])
 
 """
-    d3_beam_elementshearzdiagram(f, L)
+    d3_spaceframe_elementshearzdiagram(f, L)
 
 Plot and return the shear force Z diagram for a 3-D beam element.
 
@@ -137,10 +137,10 @@ Plot and return the shear force Z diagram for a 3-D beam element.
 # Returns
 A Plots.Plot object.
 """
-d3_beam_elementshearzdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Shear Force Z Diagram", (f,L)->[f[3], -f[9]])
+d3_spaceframe_elementshearzdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Shear Force Z Diagram", (f,L)->[f[3], -f[9]])
 
 """
-    d3_beam_elementmomentydiagram(f, L)
+    d3_spaceframe_elementmomentydiagram(f, L)
 
 Plot and return the bending moment Y diagram for a 3-D beam element.
 
@@ -151,10 +151,10 @@ Plot and return the bending moment Y diagram for a 3-D beam element.
 # Returns
 A Plots.Plot object.
 """
-d3_beam_elementmomentydiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Bending Moment Y Diagram", (f,L)->[f[5], -f[11]])
+d3_spaceframe_elementmomentydiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Bending Moment Y Diagram", (f,L)->[f[5], -f[11]])
 
 """
-    d3_beam_elementmomentzdiagram(f, L)
+    d3_spaceframe_elementmomentzdiagram(f, L)
 
 Plot and return the bending moment Z diagram for a 3-D beam element.
 
@@ -165,10 +165,10 @@ Plot and return the bending moment Z diagram for a 3-D beam element.
 # Returns
 A Plots.Plot object.
 """
-d3_beam_elementmomentzdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Bending Moment Z Diagram", (f,L)->[f[6], -f[12]])
+d3_spaceframe_elementmomentzdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Bending Moment Z Diagram", (f,L)->[f[6], -f[12]])
 
 """
-    d3_beam_elementtorsiondiagram(f, L)
+    d3_spaceframe_elementtorsiondiagram(f, L)
 
 Plot and return the torsion diagram for a 3-D beam element.
 
@@ -179,4 +179,4 @@ Plot and return the torsion diagram for a 3-D beam element.
 # Returns
 A Plots.Plot object.
 """
-d3_beam_elementtorsiondiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Torsion Diagram", (f,L)->[f[4], -f[10]])
+d3_spaceframe_elementtorsiondiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Torsion Diagram", (f,L)->[f[4], -f[10]])

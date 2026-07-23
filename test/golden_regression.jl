@@ -2,6 +2,7 @@ using TOML
 using Test
 using LinearAlgebra
 using LibFEM
+using LibFEM
 
 # ─────────────────────────────────────────────────────────
 # Shared parameter ordering (single source of truth)

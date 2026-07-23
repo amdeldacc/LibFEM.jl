@@ -2,6 +2,85 @@ using TOML
 using Test
 using LinearAlgebra
 
+# ─────────────────────────────────────────────────────────
+# Helpers — MUST be defined before @testset block that uses them
+# ─────────────────────────────────────────────────────────
+
+"""
+    _ordered_params(func_name::String, params::Dict) -> Vector
+
+Return parameter values in the correct order for the given function.
+This mapping must be kept in sync with the function signatures.
+"""
+function _ordered_params(func_name::String, params::Dict)
+    # Map function name → ordered parameter keys
+    order_map = Dict{String,Vector{String}}(
+        # d1_spring
+        "d1_spring_elementstiffness" => ["k"],
+        "d1_spring_elementforce" => ["Ke", "u"],
+        # d2_spring
+        "d2_spring_elementstiffness" => ["k", "theta"],
+        "d2_spring_elementforce" => ["k", "theta", "u"],
+        # d3_spring
+        "d3_spring_elementstiffness" => ["k", "thetax", "thetay", "thetaz"],
+        "d3_spring_elementforce" => ["k", "thetax", "thetay", "thetaz", "u"],
+        # d1_truss
+        "d1_truss_elementstiffness" => ["E", "A", "L"],
+        "d1_truss_elementforces" => ["Ke", "u"],
+        "d1_truss_elementstress" => ["Ke", "u", "A"],
+        "d1_truss_elementstrain" => ["L", "u"],
+        # d2_truss
+        "d2_truss_elementlength" => ["x1", "y1", "x2", "y2"],
+        "d2_truss_elementstiffness" => ["E", "A", "L", "theta"],
+        "d2_truss_elementforces" => ["E", "A", "L", "theta", "u"],
+        "d2_truss_elementstrain" => ["L", "theta", "u"],
+        "d2_truss_elementstress" => ["E", "L", "theta", "u"],
+        # d3_truss
+        "d3_truss_elementlength" => ["x1", "y1", "z1", "x2", "y2", "z2"],
+        "d3_truss_elementstiffness" => ["E", "A", "L", "thetax", "thetay", "thetaz"],
+        "d3_truss_elementforces" => ["E", "A", "L", "thetax", "thetay", "thetaz", "u"],
+        "d3_truss_elementstrain" => ["L", "thetax", "thetay", "thetaz", "u"],
+        "d3_truss_elementstress" => ["E", "L", "thetax", "thetay", "thetaz", "u"],
+        # d2_beam
+        "d2_beam_elementstiffness" => ["E", "I", "L"],
+        "d2_beam_elementforces" => ["k", "u"],
+        # d2_planeframe
+        "d2_planeframe_elementlength" => ["x1", "y1", "x2", "y2"],
+        "d2_planeframe_elementstiffness" => ["E", "A", "I", "L", "theta"],
+        "d2_planeframe_elementforces" => ["E", "A", "I", "L", "theta", "u"],
+        # d3_spaceframe
+        "d3_spaceframe_elementlength" => ["x1", "y1", "z1", "x2", "y2", "z2"],
+        "d3_spaceframe_elementstiffness" => ["E", "G", "A", "Iy", "Iz", "J", "x1", "y1", "z1", "x2", "y2", "z2"],
+        "d3_spaceframe_elementforces" => ["E", "G", "A", "Iy", "Iz", "J", "x1", "y1", "z1", "x2", "y2", "z2", "u"],
+    )
+
+    keys = get(order_map, func_name, String[])
+    if isempty(keys)
+        error("Unknown function: $func_name — add to _ordered_params mapping in golden_regression.jl")
+    end
+
+    return [params[k] for k in keys]
+end
+
+"""
+    _deserialize_binary(path::String) -> Matrix{Float64}
+
+Read a matrix from the binary golden file format:
+  rows::Int32, cols::Int32, data::Vector{Float64} (column-major).
+Matches the format written by generate_golden.jl's serialize_matrix().
+"""
+function _deserialize_binary(path::String)
+    open(path) do io
+        rows = read(io, Int32)
+        cols = read(io, Int32)
+        if rows == 0 && cols == 0
+            error("Error-marker golden file: $path (L=0 or other expected error)")
+        end
+        data = read(io, Float64, rows * cols)
+        return reshape(data, rows, cols)
+    end
+end
+
 @testset "Golden Regression" begin
     manifest_path = joinpath(@__DIR__, "golden", "manifests.toml")
     if !isfile(manifest_path)
@@ -73,82 +152,10 @@ using LinearAlgebra
                     end
                 end
             else
-                # Load golden file
-                golden_data = JSON.parsefile(golden_path)
-                expected = _deserialize_matrix(golden_data)
+                # Load golden binary file
+                expected = _deserialize_binary(golden_path)
                 @test isapprox(result, expected; rtol=rtol, atol=atol)
             end
         end
     end
-end
-
-# ─────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────
-
-"""
-    _ordered_params(func_name::String, params::Dict) -> Vector
-
-Return parameter values in the correct order for the given function.
-This mapping must be kept in sync with the function signatures.
-"""
-function _ordered_params(func_name::String, params::Dict)
-    # Map function name → ordered parameter keys
-    order_map = Dict{String,Vector{String}}(
-        # d1_spring
-        "d1_spring_elementstiffness" => ["k"],
-        "d1_spring_elementforce" => ["Ke", "u"],
-        # d2_spring
-        "d2_spring_elementstiffness" => ["k", "theta"],
-        "d2_spring_elementforce" => ["k", "theta", "u"],
-        # d3_spring
-        "d3_spring_elementstiffness" => ["k", "thetax", "thetay", "thetaz"],
-        "d3_spring_elementforce" => ["k", "thetax", "thetay", "thetaz", "u"],
-        # d1_truss
-        "d1_truss_elementstiffness" => ["E", "A", "L"],
-        "d1_truss_elementforces" => ["Ke", "u"],
-        "d1_truss_elementstress" => ["Ke", "u", "A"],
-        "d1_truss_elementstrain" => ["L", "u"],
-        # d2_truss
-        "d2_truss_elementlength" => ["x1", "y1", "x2", "y2"],
-        "d2_truss_elementstiffness" => ["E", "A", "L", "theta"],
-        "d2_truss_elementforces" => ["E", "A", "L", "theta", "u"],
-        "d2_truss_elementstrain" => ["L", "theta", "u"],
-        "d2_truss_elementstress" => ["E", "L", "theta", "u"],
-        # d3_truss
-        "d3_truss_elementlength" => ["x1", "y1", "z1", "x2", "y2", "z2"],
-        "d3_truss_elementstiffness" => ["E", "A", "L", "thetax", "thetay", "thetaz"],
-        "d3_truss_elementforces" => ["E", "A", "L", "thetax", "thetay", "thetaz", "u"],
-        "d3_truss_elementstrain" => ["L", "thetax", "thetay", "thetaz", "u"],
-        "d3_truss_elementstress" => ["E", "L", "thetax", "thetay", "thetaz", "u"],
-        # d2_beam
-        "d2_beam_elementstiffness" => ["E", "I", "L"],
-        "d2_beam_elementforces" => ["k", "u"],
-        # d2_planeframe
-        "d2_planeframe_elementlength" => ["x1", "y1", "x2", "y2"],
-        "d2_planeframe_elementstiffness" => ["E", "A", "I", "L", "theta"],
-        "d2_planeframe_elementforces" => ["E", "A", "I", "L", "theta", "u"],
-        # d3_spaceframe
-        "d3_spaceframe_elementlength" => ["x1", "y1", "z1", "x2", "y2", "z2"],
-        "d3_spaceframe_elementstiffness" => ["E", "G", "A", "Iy", "Iz", "J", "x1", "y1", "z1", "x2", "y2", "z2"],
-        "d3_spaceframe_elementforces" => ["E", "G", "A", "Iy", "Iz", "J", "x1", "y1", "z1", "x2", "y2", "z2", "u"],
-    )
-
-    keys = get(order_map, func_name, String[])
-    if isempty(keys)
-        error("Unknown function: $func_name — add to _ordered_params mapping in golden_regression.jl")
-    end
-
-    return [params[k] for k in keys]
-end
-
-"""
-    _deserialize_matrix(data::Dict) -> Matrix{Float64}
-
-Reconstruct a Matrix from JSON-serialized format {size: [m,n], data: [values...]}.
-"""
-function _deserialize_matrix(data::Dict)
-    sz = data["size"]
-    vals = data["data"]
-    return reshape(Float64.(vals), sz[1], sz[2])
 end

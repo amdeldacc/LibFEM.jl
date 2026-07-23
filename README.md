@@ -106,13 +106,18 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 | `d2_truss_elementstrain(L, theta, u)`         | Scalar strain                            |
 | `d2_truss_elementstress(E, L, theta, u)`      | Scalar stress                            |
 | `d2_truss_assemble(K, k, i, j)`               | Assemble (2 DOF/node)                    |
-| `d2_beam_elementlength(x1, y1, x2, y2)`       | Element length                           |
-| `d2_beam_elementstiffness(E, A, I, L, theta)` | 6×6 stiffness (3 DOF/node)               |
-| `d2_beam_elementforces(E, A, I, L, theta, u)` | 6-element force vector                   |
-| `d2_beam_elementaxialdiagram(f, L)`           | Plots.jl axial force diagram             |
+| `d2_beam_elementstiffness(E, I, L)`           | 4×4 stiffness for pure beam — bending only, 2 DOF/node (v, θ) |
+| `d2_beam_elementforces(k, u)`                 | 4-element force vector                   |
 | `d2_beam_elementsheardiagram(f, L)`           | Plots.jl shear force diagram             |
 | `d2_beam_elementmomentdiagram(f, L)`          | Plots.jl bending moment diagram          |
-| `d2_beam_assemble(K, k, i, j)`                | Assemble (3 DOF/node)                    |
+| `d2_beam_assemble(K, k, i, j)`                | Assemble (2 DOF/node)                    |
+| `d2_planeframe_elementlength(x1, y1, x2, y2)` | Element length                           |
+| `d2_planeframe_elementstiffness(E, A, I, L, theta)` | 6×6 stiffness (3 DOF/node, axial + bending) |
+| `d2_planeframe_elementforces(E, A, I, L, theta, u)` | 6-element force vector                   |
+| `d2_planeframe_elementaxialdiagram(f, L)`     | Plots.jl axial force diagram             |
+| `d2_planeframe_elementsheardiagram(f, L)`     | Plots.jl shear force diagram             |
+| `d2_planeframe_elementmomentdiagram(f, L)`    | Plots.jl bending moment diagram          |
+| `d2_planeframe_assemble(K, k, i, j)`          | Assemble (3 DOF/node)                    |
 
 ---
 
@@ -155,7 +160,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 - **Angle units**: All angle parameters are in **degrees** (converted internally via `deg2rad`).
 - **Dimension prefixes**:
   - `d1_` — 1 DOF/node (1D spring, linear bar)
-  - `d2_` — 2 DOF/node (2D spring, plane truss); 3 DOF/node for 2D beam
+  - `d2_` — 2 DOF/node (2D spring, plane truss, pure beam); 3 DOF/node for plane frame
   - `d3_` — 3 DOF/node (3D spring, space truss); **6 DOF/node** for 3D beam (space frame)
 - **Multi-file module**: Source organized into `src/LibFEM.jl` + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/plot.jl`.
 - **Assembly refactored**: All 7 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
@@ -311,7 +316,8 @@ Examples:
 - `SpringElementStiffness.m` → `d1_spring_elementstiffness`
 - `PlaneTrussElementForce.m` → `d2_truss_elementforces`
 - `SpaceFrameElementStiffness.m` → `d3_beam_elementstiffness`
-- `BeamElementForces.m` → `d2_beam_elementforces`
+- `BeamElementForces.m` → `d2_beam_elementforces` (pure beam)
+- `PlaneFrameElementStiffness.m` → `d2_planeframe_elementstiffness`
 
 See `CONTEXT.md` and `openwiki/reference/kattan-mapping.md` for the complete mapping.
 
@@ -430,7 +436,7 @@ To add a new element type:
 See the repository's issue tracker for the full list. Highlights:
 
 - **Docstring fixes**: Extra `export` keyword in docstrings, PascalCase vs snake_case mismatch
-- **Plotting**: `d2_beam_*diagram` functions use MATLAB-style `'k'` color syntax; need Julia `:black`
+- **Plotting**: `d2_planeframe_*diagram` functions use MATLAB-style `'k'` color syntax; need Julia `:black`
 - **Dependencies**: `Plots.jl` required; `ModelingToolkit` listed in older docs but not in `Project.toml`
 - **Missing features**: Boundary condition helpers, solver functions, mesh/model builders
 - **Refactoring**: Assembly functions could be unified (already done via `_assemble!`); angle conversion repeated

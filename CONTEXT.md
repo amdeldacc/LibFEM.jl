@@ -16,13 +16,20 @@ This file defines the domain model: element types, dimensionality, and the mappi
 - **Functions**: `*_elementstiffness(E, A, L, ...)`, `*_assemble(K, k, i, j)`, `*_elementforce(E, A, L, ... , u)`, `*_elementstress(...)`, `*_elementstrain(...)`, `*_elementlength(coords...)`
 - **Key mapping**: MATLAB `LinearBarElementStiffness.m` → `d1_truss_elementstiffness`. `PlaneTrussElementForce.m` → `d2_truss_elementforce`. `SpaceTrussElementStress.m` → `d3_truss_elementstress`.
 
-### Beam (2D Plane Beam) / Space Frame (3D Beam)
-- **MATLAB prefix**: `Beam*` (2D beam), `PlaneFrame*` (plane frame — extended beam), `SpaceFrame*` (3D beam)
-- **LibFEM prefix**: `d2_beam_*` (2D), `d3_beam_*` (3D)
-- **Functions (2D)**: `*_elementstiffness(E, A, I, L, theta)`, `*_assemble(K, k, i, j)`, `*_elementforce(E, A, I, L, theta, u)`, `*_elementlength(x1, y1, x2, y2)`, `*_elementaxialdiagram(f, L)`, `*_elementmomentdiagram(f, L)`, `*_elementsheardiagram(f, L)`
+### Beam (2D Pure Beam, Bending Only)
+- **MATLAB prefix**: `Beam*` (pure beam — bending only, no axial DOF)
+- **LibFEM prefix**: `d2_beam_*` (2D)
+- **Functions**: `*_elementstiffness(E, I, L)`, `*_assemble(K, k, i, j)`, `*_elementforces(k, u)`, `*_elementsheardiagram(f, L)`, `*_elementmomentdiagram(f, L)`
+- **DOFs**: 2 DOF/node (v, θ), 4×4 stiffness. **Inextensible** — no axial deformation.
+- **Key mapping**: MATLAB `BeamElementStiffness.m` → `d2_beam_elementstiffness`. MATLAB `BeamElementForces.m` → `d2_beam_elementforces`.
+
+### Plane Frame (2D) / Space Frame (3D)
+- **MATLAB prefix**: `PlaneFrame*` (2D), `SpaceFrame*` (3D)
+- **LibFEM prefix**: `d2_planeframe_*` (2D), `d3_beam_*` (3D, legacy name)
+- **Functions (2D)**: `*_elementstiffness(E, A, I, L, theta)`, `*_assemble(K, k, i, j)`, `*_elementforces(E, A, I, L, theta, u)`, `*_elementlength(x1, y1, x2, y2)`, `*_elementaxialdiagram(f, L)`, `*_elementmomentdiagram(f, L)`, `*_elementsheardiagram(f, L)`
 - **Functions (3D)**: `*_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)`, `*_assemble(K, k, i, j)`, `*_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)`, `*_elementlength(x1, y1, z1, x2, y2, z2)`, plus 6 diagram functions (axial, shearY, shearZ, momentY, momentZ, torsion)
-- **DOFs**: 2D beam uses 3 DOF/node (6×6 stiffness). 3D beam uses **6 DOF/node** (12×12 stiffness — 3 translations + 3 rotations per node).
-- **Key mapping**: MATLAB `BeamElementStiffness.m` → `d2_beam_elementstiffness`. MATLAB `SpaceFrameElementStiffness.m` → `d3_beam_elementstiffness`. MATLAB `PlaneFrameElementForces.m` → similar pattern.
+- **DOFs**: 2D uses 3 DOF/node (6×6 stiffness). 3D uses **6 DOF/node** (12×12 stiffness — 3 translations + 3 rotations per node).
+- **Key mapping**: MATLAB `PlaneFrameElementStiffness.m` → `d2_planeframe_elementstiffness`. MATLAB `SpaceFrameElementStiffness.m` → `d3_beam_elementstiffness`. MATLAB `PlaneFrameElementForces.m` → `d2_planeframe_elementforces`.
 
 ## Dimension System
 

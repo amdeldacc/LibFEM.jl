@@ -68,25 +68,30 @@ These are the MATLAB files whose algorithms are implemented (or planned) in `src
 
 LibFEM adds `d1_truss_elementstrain`, `d2_truss_elementstrain`, and `d3_truss_elementstrain` — strain calculations not present as standalone MATLAB files.
 
-### Beam / Plane Frame Elements
+### Beam (Pure Bending) Elements
 
 | MATLAB File | Julia Function | Status |
 |------------|---------------|--------|
-| `BeamElementStiffness.m` | `d2_beam_elementstiffness` | Implemented |
-| `BeamAssemble.m` | `d2_beam_assemble` | Implemented |
-| `BeamElementForces.m` | `d2_beam_elementforces` | Implemented |
+| `BeamElementStiffness.m` | `d2_beam_elementstiffness` (pure beam, 4×4, `E, I, L`) | Implemented |
+| `BeamAssemble.m` | `d2_beam_assemble` (2 DOF/node) | Implemented |
+| `BeamElementForces.m` | `d2_beam_elementforces` (4-element vector) | Implemented |
 | `BeamElementMomentDiagram.m` | `d2_beam_elementmomentdiagram` | Implemented |
 | `BeamElementShearDiagram.m` | `d2_beam_elementsheardiagram` | Implemented |
-| `PlaneFrameElementStiffness.m` | (same as `d2_beam_elementstiffness`) | Implemented |
-| `PlaneFrameAssemble.m` | (same as `d2_beam_assemble`) | Implemented |
-| `PlaneFrameElementForces.m` | (same as `d2_beam_elementforces`) | Implemented |
-| `PlaneFrameElementLength.m` | `d2_beam_elementlength` | Implemented |
-| `PlaneFrameElementAxialDiagram.m` | `d2_beam_elementaxialdiagram` | Implemented |
-| `PlaneFrameElementMomentDiagram.m` | (same as `d2_beam_elementmomentdiagram`) | Implemented |
-| `PlaneFrameElementShearDiagram.m` | (same as `d2_beam_elementsheardiagram`) | Implemented |
+
+### Plane Frame Elements
+
+| MATLAB File | Julia Function | Status |
+|------------|---------------|--------|
+| `PlaneFrameElementStiffness.m` | `d2_planeframe_elementstiffness` (6×6, `E, A, I, L, theta`) | Implemented |
+| `PlaneFrameAssemble.m` | `d2_planeframe_assemble` (3 DOF/node) | Implemented |
+| `PlaneFrameElementForces.m` | `d2_planeframe_elementforces` (6-element vector) | Implemented |
+| `PlaneFrameElementLength.m` | `d2_planeframe_elementlength` | Implemented |
+| `PlaneFrameElementAxialDiagram.m` | `d2_planeframe_elementaxialdiagram` | Implemented |
+| `PlaneFrameElementMomentDiagram.m` | `d2_planeframe_elementmomentdiagram` | Implemented |
+| `PlaneFrameElementShearDiagram.m` | `d2_planeframe_elementsheardiagram` | Implemented |
 | `PlaneFrameInclinedSupport.m` | — | Not implemented |
 
-**Note**: Kattan separates `Beam*` (simple beam) and `PlaneFrame*` (plane frame with axial effects). LibFEM merges both into `d2_beam_*` — the `d2_beam_elementstiffness` formulation already includes axial stiffness `E*A/L`, making it equivalent to Kattan's `PlaneFrameElementStiffness.m`.
+**Note**: Kattan separates `Beam*` (simple beam, bending only) and `PlaneFrame*` (plane frame with axial effects). LibFEM now reflects this distinction: `d2_beam_*` implements the pure Euler-Bernoulli beam (4×4, 2 DOF/node), while `d2_planeframe_*` implements the plane frame (6×6, 3 DOF/node) with axial + bending.
 
 ### Space Frame Elements
 
@@ -157,7 +162,10 @@ Doc/
 │   │   ├── Tetrahedron*.m          # 5 files
 │   │   ├── Grid*.m                 # 4 files
 │   │   └── FluidFlow1D*.m          # 4 files
-│   └── Solutions Manual/           # .rtf and .doc files
+│   └── Solutions-Manual/          # .rtf and .doc solutions +
+│                                 # per-problem MATLAB scripts
+│                                 # (problem_2_1.m … problem_8_3.m,
+│                                 #  ocr_m_verify.m)
 └── Peter_Kattan_*                  # Book PDF and transcriptions
 ```
 

@@ -195,7 +195,7 @@ end
 
 MATLAB reference: returns the length of a plane frame element between
 coordinates (x1, y1) and (x2, y2).
-Identical to `d2_beam_elementlength(x1, y1, x2, y2)`.
+Identical to `d2_planeframe_elementlength(x1, y1, x2, y2)`.
 """
 function PlaneFrameElementLength(x1, y1, x2, y2)
     return sqrt((x2 - x1)^2 + (y2 - y1)^2)
@@ -207,7 +207,7 @@ end
 MATLAB reference: returns the 6×6 element stiffness matrix for a plane
 frame element with modulus of elasticity E, cross-sectional area A,
 moment of inertia I, length L, and angle theta (in degrees).
-Identical to `d2_beam_elementstiffness(E, A, I, L, theta)`.
+Identical to `d2_planeframe_elementstiffness(E, A, I, L, theta)`.
 """
 function PlaneFrameElementStiffness(E, A, I, L, theta)
     x = LibFEM.deg2rad(theta)
@@ -234,7 +234,7 @@ end
 MATLAB reference: returns the 6-element element force vector given the
 modulus of elasticity E, cross-sectional area A, moment of inertia I,
 length L, angle theta (in degrees), and element nodal displacement
-vector u. Identical to `d2_beam_elementforces(E, A, I, L, theta, u)`.
+vector u. Identical to `d2_planeframe_elementforces(E, A, I, L, theta, u)`.
 """
 function PlaneFrameElementForces(E, A, I, L, theta, u)
     x = LibFEM.deg2rad(theta)
@@ -270,7 +270,7 @@ end
 MATLAB reference: assembles the 6×6 element stiffness matrix k of a
 plane frame element with nodes i and j into the global stiffness matrix K
 using 3-DOF indexing (3i-2,3i-1,3i). Returns the updated global matrix.
-Identical to `d2_beam_assemble(K, k, i, j)`.
+Identical to `d2_planeframe_assemble(K, k, i, j)`.
 """
 function PlaneFrameAssemble(K, k, i, j)
     # Block (i, i)
@@ -322,7 +322,7 @@ end
 MATLAB reference: returns the z-vector of the axial force diagram
 (z = [-f₁, f₄]) for a plane frame element with nodal force vector f
 and length L. (Returns data only, no plot.)
-Identical to the data portion of `d2_beam_elementaxialdiagram(f, L)`.
+Identical to the data portion of `d2_planeframe_elementaxialdiagram(f, L)`.
 """
 function PlaneFrameElementAxialDiagram(f, L)
     return [-f[1], f[4]]
@@ -334,7 +334,7 @@ end
 MATLAB reference: returns the z-vector of the shear force diagram
 (z = [f₂, -f₅]) for a plane frame element with nodal force vector f
 and length L. (Returns data only, no plot.)
-Identical to the data portion of `d2_beam_elementsheardiagram(f, L)`.
+Identical to the data portion of `d2_planeframe_elementsheardiagram(f, L)`.
 """
 function PlaneFrameElementShearDiagram(f, L)
     return [f[2], -f[5]]
@@ -346,7 +346,7 @@ end
 MATLAB reference: returns the z-vector of the bending moment diagram
 (z = [-f₃, f₆]) for a plane frame element with nodal force vector f
 and length L. (Returns data only, no plot.)
-Identical to the data portion of `d2_beam_elementmomentdiagram(f, L)`.
+Identical to the data portion of `d2_planeframe_elementmomentdiagram(f, L)`.
 """
 function PlaneFrameElementMomentDiagram(f, L)
     return [-f[3], f[6]]
@@ -1930,12 +1930,12 @@ end
             # ══════════════════════
             # Julia computation path
             # ══════════════════════
-            k1_jl = d2_beam_elementstiffness(E, A, I, L, 90)
-            k2_jl = d2_beam_elementstiffness(E, A, I, L, 0)
+            k1_jl = d2_planeframe_elementstiffness(E, A, I, L, 90)
+            k2_jl = d2_planeframe_elementstiffness(E, A, I, L, 0)
 
             K_jl = zeros(9, 9)
-            K_jl = d2_beam_assemble(K_jl, k1_jl, 1, 2)
-            K_jl = d2_beam_assemble(K_jl, k2_jl, 2, 3)
+            K_jl = d2_planeframe_assemble(K_jl, k1_jl, 1, 2)
+            K_jl = d2_planeframe_assemble(K_jl, k2_jl, 2, 3)
 
             k_reduced_jl = vcat(
                 hcat(K_jl[4:7, 4:7], K_jl[4:7, 9]),
@@ -1955,8 +1955,8 @@ end
             u1_jl = U_jl[1:6]
             u2_jl = U_jl[4:9]
 
-            f1_jl = d2_beam_elementforces(E, A, I, L, 90, u1_jl)
-            f2_jl = d2_beam_elementforces(E, A, I, L, 0, u2_jl)
+            f1_jl = d2_planeframe_elementforces(E, A, I, L, 90, u1_jl)
+            f2_jl = d2_planeframe_elementforces(E, A, I, L, 0, u2_jl)
 
             # ══════════════════════
             # Assertions: MATLAB vs Julia (exact)
@@ -2598,7 +2598,7 @@ end  # @testset "MATLAB comparison"
         end
 
         # ────────────────────────────────────────────────────
-        # 2D Beam (PlaneFrame / d2_beam)
+        # 2D PlaneFrame
         # ────────────────────────────────────────────────────
         @testset "PlaneFrame (2D Beam)" begin
             # Problem 8.1: cantilever, E=210e6, A=4e-2, I=4e-6, L=4, θ=0°
@@ -2610,7 +2610,7 @@ end  # @testset "MATLAB comparison"
             args = adapt_beam_args(0.0, 0.0, 4.0, 0.0)
             oct_val = OctaveRunner.load_and_call(path, "PlaneFrameElementLength", args...)
             oct_Lval = adapt_beam_result(oct_val, 6)
-            jl_Lval = d2_beam_elementlength(0.0, 0.0, 4.0, 0.0)
+            jl_Lval = d2_planeframe_elementlength(0.0, 0.0, 4.0, 0.0)
             @test check_octave(oct_Lval[1], jl_Lval, "PlaneFrameElementLength")
 
             # PlaneFrameElementStiffness
@@ -2618,7 +2618,7 @@ end  # @testset "MATLAB comparison"
             args = adapt_beam_args(E, A_beam, I_val, L_beam, theta)
             oct_val = OctaveRunner.load_and_call(path, "PlaneFrameElementStiffness", args...)
             oct_k = adapt_beam_result(oct_val, 6)
-            jl_k = d2_beam_elementstiffness(E, A_beam, I_val, L_beam, theta)
+            jl_k = d2_planeframe_elementstiffness(E, A_beam, I_val, L_beam, theta)
             @test check_octave(oct_k, jl_k, "PlaneFrameElementStiffness")
 
             # PlaneFrameElementForces (zero displacement)
@@ -2627,7 +2627,7 @@ end  # @testset "MATLAB comparison"
             args = adapt_beam_args(E, A_beam, I_val, L_beam, theta, u0_6)
             oct_val = OctaveRunner.load_and_call(path, "PlaneFrameElementForces", args...)
             oct_f = adapt_beam_result(oct_val, 6)
-            jl_f = d2_beam_elementforces(E, A_beam, I_val, L_beam, theta, u0_6)
+            jl_f = d2_planeframe_elementforces(E, A_beam, I_val, L_beam, theta, u0_6)
             @test check_octave(oct_f, jl_f, "PlaneFrameElementForces")
 
             # PlaneFrameAssemble
@@ -2635,7 +2635,7 @@ end  # @testset "MATLAB comparison"
             K0 = zeros(12, 12)
             args = adapt_beam_args(K0, oct_k, 1, 2)
             oct_K = OctaveRunner.load_and_call(path, "PlaneFrameAssemble", args...)
-            jl_K = d2_beam_assemble(zeros(12, 12), oct_k, 1, 2)
+            jl_K = d2_planeframe_assemble(zeros(12, 12), oct_k, 1, 2)
             @test check_octave(oct_K, jl_K, "PlaneFrameAssemble")
         end
 

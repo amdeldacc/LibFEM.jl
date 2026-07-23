@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-20T22:36:24.286Z",
+  "updatedAt": "2026-07-23T09:34:03.324Z",
   "command": "update",
-  "gitHead": "fd8cd5f942249c1457b19246a62dbb3aa78375c5",
-  "model": "deepseek-ai/deepseek-v4-pro"
+  "gitHead": "40eb94185df8cba8a6cbb1c313d5bc5ea7091f67",
+  "model": "minimaxai/minimax-m3"
 }

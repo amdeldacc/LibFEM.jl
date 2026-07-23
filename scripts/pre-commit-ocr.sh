@@ -28,7 +28,7 @@ echo "$STAGED" | sed 's/^/  • /'
 echo ""
 
 # --- stash unstaged changes to review only staged content ---
-STASH_NAME="ocr-pre-commit-$(date +%s)"
+STASH_NAME="ocr-pre-commit-hook"
 if ! git diff --quiet && ! git diff --cached --quiet; then
     git stash push --keep-index --message "$STASH_NAME" --quiet
     STASHED=true

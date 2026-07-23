@@ -112,10 +112,10 @@ function main()
         display_name = "v1/$id.bin"
         print(rpad("[$idx/$total] $display_name", 54))
 
+        func = resolve_func(func_name)
+        args = ordered_params_tuple(func_name, params)
         try
-            func = resolve_func(func_name)
-            args = ordered_params_tuple(func_name, params)
-            K    = func(args...)
+            K = func(args...)
             serialize_matrix(out_path, K)
             println("  ✓  $(size(K,1))×$(size(K,2))")
             ok_count += 1

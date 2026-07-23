@@ -42,6 +42,8 @@ function _deserialize_binary(path::String)
 end
 
 @testset "Golden Regression" begin
+    # Golden regression tests: compare function outputs against stored golden files.
+    # For functions without golden files, run sanity checks (symmetry and positive semidefiniteness for matrices).
     manifest_path = joinpath(@__DIR__, "golden", "manifests.toml")
     if !isfile(manifest_path)
         @warn "Golden manifest not found at $manifest_path — skipping golden regression tests"

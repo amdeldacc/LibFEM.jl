@@ -28,7 +28,7 @@ echo "$STAGED" | sed 's/^/  • /'
 echo ""
 
 # --- stash unstaged changes to review only staged content ---
-STASH_NAME="ocr-pre-commit-hook"
+STASH_NAME="ocr-pre-commit-$(date +%s)"
 if ! git diff --quiet && ! git diff --cached --quiet; then
     git stash push --keep-index --message "$STASH_NAME" --quiet
     STASHED=true
@@ -57,6 +57,18 @@ fi
 
 # Then use:
 COMMENT_COUNT=$(echo "$REVIEW_JSON" | "$PYTHON" -c "import sys, json; data=json.load(sys.stdin); print(len(data.get('comments', [])))" 2>/dev/null || echo -1)
+    REVIEW_JSON=$(ocr review --format json --audience agent --background "$BACKGROUND" 2>/dev/null || true)
+    echo "$REVIEW_JSON"
+
+    COMMENT_COUNT=$(echo "$REVIEW_JSON" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    comments = data.get('comments', [])
+    print(len(comments))
+except Exception:
+    print(-1)
+" 2>/dev/null || echo -1)
 
     echo ""
     if [ "$COMMENT_COUNT" -gt 0 ] 2>/dev/null; then
@@ -71,12 +83,10 @@ COMMENT_COUNT=$(echo "$REVIEW_JSON" | "$PYTHON" -c "import sys, json; data=json.
         BLOCKED=false
     fi
 else
-    # Advisory mode: human-readable output, never blocks
     ocr review --background "$BACKGROUND" || true
     BLOCKED=false
 fi
 
-# --- restore unstaged changes ---
 if [ "$STASHED" = true ]; then
     git stash pop --quiet 2>/dev/null || true
 fi

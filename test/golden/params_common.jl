@@ -65,7 +65,15 @@ function ordered_params(func_name::AbstractString, params::Dict)
     order = get(PARAM_ORDER, func_name) do
         error("Unknown function: $func_name — add to PARAM_ORDER in params_common.jl")
     end
-    return [params[string(k)] for k in order]
+    result = Vector{Any}(undef, length(order))
+    for (i, k) in enumerate(order)
+        key = string(k)
+        if !haskey(params, key)
+            error("Missing parameter '$(key)' for function '$func_name'")
+        end
+        result[i] = params[key]
+    end
+    return result
 end
 
 """

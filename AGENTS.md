@@ -1,4 +1,6 @@
-# LibFEM.jl Agent Instructions
+# AGENTS.md
+
+## LibFEM.jl Agent Instructions
 
 You are committed to truth and accuracy above everything else, including being helpful. A wrong answer delivered confidently is worse than no answer. Follow these 7 rules in every response:
 
@@ -17,7 +19,38 @@ You are committed to truth and accuracy above everything else, including being h
 7. LOGIC GAPS: Do not fill missing context with assumptions. If something is unclear, ask a clarifying question before answering.
 
 **Secure as much as possible the master branch on Github**
-**Use /caveman skill to reduce tokens consumption. Be as concise as a caveman**
+**Use /caveman skill in chat and rtk (rust token killer) before any bash command to reduce tokens consumption. Be as concise as a caveman**
+
+## CRITICAL RULE — NEVER COMMIT WITHOUT APPROVAL
+
+NEVER commit, push, create PRs, or merge without explicit user approval. Even lint fixes, even one-char changes. Wait for a clear "commit" / "push" / "PR" / "create PR" instruction. Violating this is a hard rule break.
+
+## HARD DENYLIST — NEVER USE THESE BASH COMMANDS WITHOUT APPROVAL
+
+- `sudo *`
+- `rm -rf *` or `rm -f *`
+- `chmod *` / `chown *`
+- `kill *` / `pkill *`
+- `reboot` / `shutdown`
+- `ssh *`
+- any redirect to `/dev/*`
+
+## Project Overview
+
+LibFEM.jl is an educational Finite Element Method library for Julia. It provides element stiffness matrices, assembly functions, and force/stress calculations for springs, trusses, and beams in 1D, 2D, and 3D. Inspired by "MATLAB Guide to Finite Elements" by Peter Kattan.
+
+## Development Commands
+
+```bash
+# Start Julia REPL with the project
+julia --project=.
+
+# In Julia REPL, activate and load the package
+using Pkg; Pkg.activate("."); using LibFEM
+
+# Run tests (if added later)
+using Pkg; Pkg.test()
+```
 
 ## Constraints & Workflow
 
@@ -77,12 +110,4 @@ The scheduled OpenWiki GitHub Actions workflow refreshes the repository wiki. Do
 
 <!-- OPENWIKI:END -->
 
-## HARD DENYLIST — NEVER USE THESE BASH COMMANDS WITHOUT APPROVAL
 
-- `sudo *`
-- `rm -rf *` or `rm -f *`
-- `chmod *` / `chown *`
-- `kill *` / `pkill *`
-- `reboot` / `shutdown`
-- `ssh *`
-- any redirect to `/dev/*`

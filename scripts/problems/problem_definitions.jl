@@ -39,11 +39,10 @@ end
 Look up a problem definition by its symbolic name (e.g. "problem_2_1").
 Returns `nothing` if no match is found.
 """
+const PROBLEM_DICT = Dict{String, ProblemDef}(pair.name => pair for pair in PROBLEM_REGISTRY)
+
 function problem_by_name(name::String)::Union{ProblemDef, Nothing}
-    for def in PROBLEM_REGISTRY
-        def.name == name && return def
-    end
-    return nothing
+    return get(PROBLEM_DICT, name, nothing)
 end
 
 """

@@ -1,0 +1,211 @@
+schema_version = 1
+
+# =============================================================================
+# LibFEM.jl Golden File Manifest
+# Each [[entries]] block describes one golden file: the function called, its
+# parameters, and the tolerances used when comparing against the stored output.
+# =============================================================================
+
+# --- d1_spring ---
+
+[[entries]]
+id = "d1_spring_stiffness_k200"
+family = "d1_spring"
+function = "d1_spring_elementstiffness"
+params = { k = 200.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d1_spring_stiffness_k200.json"
+
+[[entries]]
+id = "d1_spring_stiffness_k0"
+family = "d1_spring"
+function = "d1_spring_elementstiffness"
+params = { k = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d1_spring_stiffness_k0.json"
+
+[[entries]]
+id = "d1_spring_stiffness_kneg"
+family = "d1_spring"
+function = "d1_spring_elementstiffness"
+params = { k = -100.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d1_spring_stiffness_kneg.json"
+
+# --- d2_spring ---
+
+[[entries]]
+id = "d2_spring_stiffness_theta0"
+family = "d2_spring"
+function = "d2_spring_elementstiffness"
+params = { k = 1000.0, theta = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_spring_stiffness_theta0.json"
+
+[[entries]]
+id = "d2_spring_stiffness_theta90"
+family = "d2_spring"
+function = "d2_spring_elementstiffness"
+params = { k = 1000.0, theta = 90.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_spring_stiffness_theta90.json"
+
+[[entries]]
+id = "d2_spring_stiffness_theta45"
+family = "d2_spring"
+function = "d2_spring_elementstiffness"
+params = { k = 1000.0, theta = 45.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_spring_stiffness_theta45.json"
+
+# --- d3_spring ---
+
+[[entries]]
+id = "d3_spring_stiffness_axis"
+family = "d3_spring"
+function = "d3_spring_elementstiffness"
+params = { k = 1000.0, thetax = 0.0, thetay = 0.0, thetaz = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d3_spring_stiffness_axis.json"
+
+[[entries]]
+id = "d3_spring_stiffness_90"
+family = "d3_spring"
+function = "d3_spring_elementstiffness"
+params = { k = 1000.0, thetax = 0.0, thetay = 90.0, thetaz = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d3_spring_stiffness_90.json"
+
+# --- d1_truss ---
+
+[[entries]]
+id = "d1_truss_stiffness_std"
+family = "d1_truss"
+function = "d1_truss_elementstiffness"
+params = { E = 200e9, A = 0.01, L = 4.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d1_truss_stiffness_std.json"
+
+[[entries]]
+id = "d1_truss_stiffness_0E"
+family = "d1_truss"
+function = "d1_truss_elementstiffness"
+params = { E = 0.0, A = 1.0, L = 1.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d1_truss_stiffness_0E.json"
+
+# --- d2_truss ---
+
+[[entries]]
+id = "d2_truss_stiffness_horiz"
+family = "d2_truss"
+function = "d2_truss_elementstiffness"
+params = { E = 210e9, A = 0.01, L = 5.0, theta = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_truss_stiffness_horiz.json"
+
+[[entries]]
+id = "d2_truss_stiffness_30deg"
+family = "d2_truss"
+function = "d2_truss_elementstiffness"
+params = { E = 210e9, A = 0.01, L = 5.0, theta = 30.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_truss_stiffness_30deg.json"
+
+# --- d3_truss ---
+
+[[entries]]
+id = "d3_truss_stiffness_axis"
+family = "d3_truss"
+function = "d3_truss_elementstiffness"
+params = { E = 1.0, A = 1.0, L = 1.0, thetax = 0.0, thetay = 0.0, thetaz = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d3_truss_stiffness_axis.json"
+
+[[entries]]
+id = "d3_truss_stiffness_90"
+family = "d3_truss"
+function = "d3_truss_elementstiffness"
+params = { E = 1.0, A = 1.0, L = 1.0, thetax = 0.0, thetay = 90.0, thetaz = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d3_truss_stiffness_90.json"
+
+# --- d2_beam ---
+
+[[entries]]
+id = "d2_beam_stiffness_unit"
+family = "d2_beam"
+function = "d2_beam_elementstiffness"
+params = { E = 1.0, I = 1.0, L = 1.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_beam_stiffness_unit.json"
+
+[[entries]]
+id = "d2_beam_stiffness_234"
+family = "d2_beam"
+function = "d2_beam_elementstiffness"
+params = { E = 2.0, I = 3.0, L = 4.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_beam_stiffness_234.json"
+
+# --- d2_planeframe ---
+
+[[entries]]
+id = "d2_pf_stiffness_unit"
+family = "d2_planeframe"
+function = "d2_planeframe_elementstiffness"
+params = { E = 1.0, A = 1.0, I = 1.0, L = 1.0, theta = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_pf_stiffness_unit.json"
+
+[[entries]]
+id = "d2_pf_stiffness_30deg"
+family = "d2_planeframe"
+function = "d2_planeframe_elementstiffness"
+params = { E = 1.0, A = 1.0, I = 1.0, L = 1.0, theta = 30.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_pf_stiffness_30deg.json"
+
+# --- d3_spaceframe ---
+
+[[entries]]
+id = "d3_sf_stiffness_horiz"
+family = "d3_spaceframe"
+function = "d3_spaceframe_elementstiffness"
+params = { E = 3e10, G = 1.15e8, A = 0.01, Iy = 1e-4, Iz = 2e-4, J = 1e-5, x1 = 0.0, y1 = 0.0, z1 = 0.0, x2 = 4.0, y2 = 0.0, z2 = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d3_sf_stiffness_horiz.json"
+
+[[entries]]
+id = "d3_sf_stiffness_vert"
+family = "d3_spaceframe"
+function = "d3_spaceframe_elementstiffness"
+params = { E = 3e10, G = 1.15e8, A = 0.01, Iy = 1e-4, Iz = 2e-4, J = 1e-5, x1 = 0.0, y1 = 0.0, z1 = 0.0, x2 = 0.0, y2 = 0.0, z2 = 4.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d3_sf_stiffness_vert.json"
+
+[[entries]]
+id = "d3_sf_stiffness_nearvert"
+family = "d3_spaceframe"
+function = "d3_spaceframe_elementstiffness"
+params = { E = 3e10, G = 1.15e8, A = 0.01, Iy = 1e-4, Iz = 2e-4, J = 1e-5, x1 = 0.0, y1 = 0.0, z1 = 0.0, x2 = 1e-10, y2 = 1e-10, z2 = 4.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d3_sf_stiffness_nearvert.json"
+
+# --- Error path cases ---
+
+[[entries]]
+id = "d1_truss_stiffness_zeroL"
+family = "d1_truss"
+function = "d1_truss_elementstiffness"
+params = { E = 1.0, A = 1.0, L = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d1_truss_stiffness_zeroL.json"
+
+[[entries]]
+id = "d2_truss_stiffness_zeroL"
+family = "d2_truss"
+function = "d2_truss_elementstiffness"
+params = { E = 1.0, A = 1.0, L = 0.0, theta = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_truss_stiffness_zeroL.json"

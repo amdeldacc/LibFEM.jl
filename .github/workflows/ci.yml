@@ -3,15 +3,22 @@ name: CI
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - 'Doc/**'
+      - '**.md'
+      - 'openwiki/**'
   pull_request:
     branches: [master]
+    paths-ignore:
+      - 'Doc/**'
+      - '**.md'
+      - 'openwiki/**'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  JULIA_VERSION: "1.12"
   JULIA_PKG_USE_CLI_GIT: true
 
 jobs:
@@ -30,6 +37,22 @@ jobs:
         with:
           version: ${{ matrix.version }}
       - uses: julia-actions/cache@v2
+        with:
+          cache-registries: "true"
+      - run: julia --project=. test/runtests.jl
+
+  validate:
+    name: Octave Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.12"
+      - uses: julia-actions/cache@v2
+        with:
+          cache-registries: "true"
       - name: Cache apt packages
         uses: actions/cache@v4
         with:
@@ -37,5 +60,4 @@ jobs:
           key: ${{ runner.os }}-apt-${{ hashFiles('**/ci.yml') }}
       - run: sudo apt-get update && sudo apt-get install -y octave
       - run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
-      - run: julia --project=. test/runtests.jl
       - run: julia --project=. scripts/validate_matlab.jl all

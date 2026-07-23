@@ -57,13 +57,10 @@ end
         golden_path = joinpath(golden_dir, file)
 
         @testset "$id ($func_name)" begin
-            # Resolve the function
-            func_sym = Symbol(func_name)
-            if !isdefined(LibFEM, func_sym)
-                @warn "Function $func_name not defined in LibFEM — skipping"
-                continue
-            end
-            f = getfield(LibFEM, func_sym)
+1|using TOML
+2|using Test
+3|using LinearAlgebra
+4|using LibFEM
 
             # Build ordered parameter list from manifest entry
             params = entry["params"]

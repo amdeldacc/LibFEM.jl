@@ -1,4 +1,6 @@
-# CLAUDE.md
+# CLAUDE.md 
+
+## LibFEM.jl Agent Instructions
 
 You are committed to truth and accuracy above everything else, including being helpful. A wrong answer delivered confidently is worse than no answer. Follow these 7 rules in every response:
 
@@ -16,10 +18,22 @@ You are committed to truth and accuracy above everything else, including being h
 
 7. LOGIC GAPS: Do not fill missing context with assumptions. If something is unclear, ask a clarifying question before answering.
 
-
 **Secure as much as possible the master branch on Github**
+**Use /caveman skill in chat and rtk (rust token killer) before any bash command to reduce tokens consumption. Be as concise as a caveman**
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## CRITICAL RULE — NEVER COMMIT WITHOUT APPROVAL
+
+NEVER commit, push, create PRs, or merge without explicit user approval. Even lint fixes, even one-char changes. Wait for a clear "commit" / "push" / "PR" / "create PR" instruction. Violating this is a hard rule break.
+
+## HARD DENYLIST — NEVER USE THESE BASH COMMANDS WITHOUT APPROVAL
+
+- `sudo *`
+- `rm -rf *` or `rm -f *`
+- `chmod *` / `chown *`
+- `kill *` / `pkill *`
+- `reboot` / `shutdown`
+- `ssh *`
+- any redirect to `/dev/*`
 
 ## Project Overview
 
@@ -38,23 +52,53 @@ using Pkg; Pkg.activate("."); using LibFEM
 using Pkg; Pkg.test()
 ```
 
-## Architecture
+## Constraints & Workflow
 
-All code is in a single module file `src/LibFEM.jl`. Functions follow a naming convention:
-- `d1_*` - 1D elements (scalar DOF per node)
-- `d2_*` - 2D elements (2 DOF per node for springs/trusses, 3 for beams)
-- `d3_*` - 3D elements (3 DOF per node)
+- **Source Organization**: The module is organized into multiple files via `include()` in a single `module LibFEM`:
+  - `src/LibFEM.jl` — module declaration, `export` statements, `include()` directives
+  - `src/types.jl` — abstract type hierarchy, `@kwdef` element structs, custom error types
+  - `src/spring.jl` — `d1_spring_*`, `d2_spring_*`, `d3_spring_*` functions
+  - `src/truss.jl` — `d1_truss_*`, `d2_truss_*`, `d3_truss_*` functions
+  - `src/beam.jl` — `d2_beam_*`, `d3_beam_*` functions
+  - `src/assembly.jl` — `_assemble!` helper and assembly utilities
+  - `src/utils.jl` — `deg2rad` and shared helpers
+  - `src/plot.jl` — diagram functions (Plots dependency)
+  - `src/errors.jl` — custom error type definitions
+- New element families add a corresponding `src/<family>.jl` file and an `include()` line to `src/LibFEM.jl`.
+- **Activation**: Use `julia --project=.` then `using LibFEM` to run or test.
+- **Read-only Directory**: The `Doc/` directory contains MATLAB reference files. Do not modify them.
+- **Testing**: Run with `julia --project=. test/runtests.jl` or `using Pkg; Pkg.test()`.
 
-Each element type has three core functions:
-1. `*_elementstiffness` - returns local stiffness matrix
-2. `*_assemble` - assembles element matrix into global stiffness matrix
-3. `*_elementforce` - calculates element nodal forces
+## Conventions
 
-Angles are always in degrees (converted internally to radians).
+- **Angle Units**: All angles are passed in **degrees** (converted to radians internally).
+- **Dimension Prefixes**: Function names use prefixes for element dimensionality: `d1_*` (1D), `d2_*` (2D), and `d3_*` (3D).
+- **Extension Pattern**: Implement elements using the 3-function pattern: `*_elementstiffness`, `*_assemble`, and either `*_elementforce`, `*_stress`, or `*_strain`.
+- **MATLAB Mapping**: Functions in `Doc/Kattan/M-Files/` follow a `{ElementType}{Operation}` naming convention. LibFEM.jl translates these to the `d{N}_{element}_{operation}` scheme:
+  - `Spring*` → `d1_spring_*` (1D), `d2_spring_*` (2D), `d3_spring_*` (3D)
+  - `LinearBar*`/`PlaneTruss*`/`SpaceTruss*` → `d1_truss_*`, `d2_truss_*`, `d3_truss_*`
+  - `Beam*`/`PlaneFrame*`/`SpaceFrame*` → `d2_beam_*` (plane), `d3_beam_*` hinted (space frame)
+  - See `CONTEXT.md` for the full domain glossary and per-file mappings.
 
-## Dependencies
+## Dependencies & Metadata
 
-- ModelingToolkit v10.2.0
+- **Module Name**: `LibFEM`. Match its UUID in `Project.toml` when adding dependencies.
+
+# Git / Github Workflow — HARD RULES
+
+## ▸ NEVER commit, push, PR, or merge without explicit user approval.
+Even lint fixes, even one-char changes. Wait for a clear "commit" / "push" / "create PR" instruction. Violation = rule break.
+
+## ▸ When approved, follow this process:
+
+For any **new content in repo to be committed and pushed to remote**, follow the secured process below
+
+git checkout -b newfeature
+git add .
+git commit -m "TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT"
+git push origin newfeature
+gh pr create --title "TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT" --body "TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT"
+gh pr merge --merge --delete-branch --admin
 
 <!-- OPENWIKI:START -->
 
@@ -66,16 +110,4 @@ The scheduled OpenWiki GitHub Actions workflow refreshes the repository wiki. Do
 
 <!-- OPENWIKI:END -->
 
-## CRITICAL RULE — NEVER COMMIT WITHOUT APPROVAL
 
-NEVER commit, push, create PRs, or merge without explicit user approval. Even lint fixes, even one-char changes. Wait for a clear "commit" / "push" / "PR" / "create PR" instruction. Violating this is a hard rule break.
-
-## HARD DENYLIST — NEVER USE THESE BASH COMMANDS WITHOUT APPROVAL
-
-- `sudo *`
-- `rm -rf *` or `rm -f *`
-- `chmod *` / `chown *`
-- `kill *` / `pkill *`
-- `reboot` / `shutdown`
-- `ssh *`
-- any redirect to `/dev/*`

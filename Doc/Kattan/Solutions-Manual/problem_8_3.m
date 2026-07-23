@@ -82,7 +82,7 @@ K = zeros(8,8)
 
 K = PlaneFrameAssemble(K,k1,1,2)
 
-K = PlaneTrussAssemble(K,k2,1,3)
+K = PlaneTrussAssemble(K,k2,1,4)
 
 k = K(1:3,1:3)
 

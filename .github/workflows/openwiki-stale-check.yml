@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
+jobs:
   check:
     permissions: read-only
     runs-on: ubuntu-latest

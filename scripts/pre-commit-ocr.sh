@@ -42,15 +42,21 @@ if [ "$BLOCK" = true ]; then
     REVIEW_JSON=$(ocr review --format json --audience agent --background "$BACKGROUND" 2>/dev/null || true)
     echo "$REVIEW_JSON"
 
-    COMMENT_COUNT=$(echo "$REVIEW_JSON" | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    comments = data.get('comments', [])
-    print(len(comments))
-except Exception:
-    print(-1)
-" 2>/dev/null || echo -1)
+# Add near top:
+PYTHON=""
+for cmd in python3 python; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+        PYTHON="$cmd"
+        break
+    fi
+done
+if [ -z "$PYTHON" ]; then
+    echo "Error: python3/python not found" >&2
+    exit 1
+fi
+
+# Then use:
+COMMENT_COUNT=$(echo "$REVIEW_JSON" | "$PYTHON" -c "import sys, json; data=json.load(sys.stdin); print(len(data.get('comments', [])))" 2>/dev/null || echo -1)
 
     echo ""
     if [ "$COMMENT_COUNT" -gt 0 ] 2>/dev/null; then

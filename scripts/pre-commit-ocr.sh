@@ -39,10 +39,13 @@ fi
 # --- run OCR ---
 if [ "$BLOCK" = true ]; then
     # Run in JSON mode to count comments for blocking decision
-    REVIEW_JSON=$(ocr review --format json --audience agent --background "$BACKGROUND" 2>/dev/null || true)
-    echo "$REVIEW_JSON"
+Remove the duplicate OCR call and consolidate the logic:
 
-# Add near top:
+# Run OCR once in JSON mode
+REVIEW_JSON=$(ocr review --format json --audience agent --background "$BACKGROUND" 2>/dev/null || true)
+echo "$REVIEW_JSON"
+
+# Count comments for blocking decision
 PYTHON=""
 for cmd in python3 python; do
     if command -v "$cmd" >/dev/null 2>&1; then
@@ -50,14 +53,7 @@ for cmd in python3 python; do
         break
     fi
 done
-if [ -z "$PYTHON" ]; then
-    echo "Error: python3/python not found" >&2
-    exit 1
-fi
-
-# Then use:
 COMMENT_COUNT=$(echo "$REVIEW_JSON" | "$PYTHON" -c "import sys, json; data=json.load(sys.stdin); print(len(data.get('comments', [])))" 2>/dev/null || echo -1)
-    REVIEW_JSON=$(ocr review --format json --audience agent --background "$BACKGROUND" 2>/dev/null || true)
     echo "$REVIEW_JSON"
 
     COMMENT_COUNT=$(echo "$REVIEW_JSON" | python3 -c "

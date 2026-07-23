@@ -406,16 +406,16 @@ end
 function test_beam()
     results = ValidateResult[]
 
-    # ── 2D Beam / PlaneFrame ──
+    # ── 2D PlaneFrame (formerly d2_beam)
     E2, A2, I2, L2 = 210e6, 4e-2, 4e-6, 4.0
     θ2 = 0.0
 
     # Length
     push!(results, run_validation(
-        "d2_beam_elementlength(x1, y1, x2, y2)",
-        "d2_beam_elementlength",
+        "d2_planeframe_elementlength(x1, y1, x2, y2)",
+        "d2_planeframe_elementlength",
         "PlaneFrameElementLength.m", "PlaneFrameElementLength";
-        julia_fn = () -> d2_beam_elementlength(0.0, 0.0, 4.0, 0.0),
+        julia_fn = () -> d2_planeframe_elementlength(0.0, 0.0, 4.0, 0.0),
         matlab_args_fn = () -> adapt_beam_args(0.0, 0.0, 4.0, 0.0),
         result_adapter = (r, n) -> [r],
         dof = 1,
@@ -423,10 +423,10 @@ function test_beam()
 
     # Stiffness
     push!(results, run_validation(
-        "d2_beam_elementstiffness(E, A, I, L, θ)",
-        "d2_beam_elementstiffness",
+        "d2_planeframe_elementstiffness(E, A, I, L, θ)",
+        "d2_planeframe_elementstiffness",
         "PlaneFrameElementStiffness.m", "PlaneFrameElementStiffness";
-        julia_fn = () -> d2_beam_elementstiffness(E2, A2, I2, L2, θ2),
+        julia_fn = () -> d2_planeframe_elementstiffness(E2, A2, I2, L2, θ2),
         matlab_args_fn = () -> adapt_beam_args(E2, A2, I2, L2, θ2),
         result_adapter = adapt_beam_result, dof = 6,
     ))
@@ -434,10 +434,10 @@ function test_beam()
     # Forces (using zero displacement)
     u2 = zeros(6)
     push!(results, run_validation(
-        "d2_beam_elementforces(E, A, I, L, θ, u=0)",
-        "d2_beam_elementforces",
+        "d2_planeframe_elementforces(E, A, I, L, θ, u=0)",
+        "d2_planeframe_elementforces",
         "PlaneFrameElementForces.m", "PlaneFrameElementForces";
-        julia_fn = () -> d2_beam_elementforces(E2, A2, I2, L2, θ2, u2),
+        julia_fn = () -> d2_planeframe_elementforces(E2, A2, I2, L2, θ2, u2),
         matlab_args_fn = () -> adapt_beam_args(E2, A2, I2, L2, θ2, u2),
         result_adapter = adapt_beam_result, dof = 6,
     ))
@@ -446,10 +446,10 @@ function test_beam()
     # Using computed & verified values from comparison.jl
     u2_loaded = [0.1865, 0.0, -0.0298, 0.1865, 0.0, 0.0149]
     push!(results, run_validation(
-        "d2_beam_elementforces(E, A, I, L, θ, u)",
-        "d2_beam_elementforces",
+        "d2_planeframe_elementforces(E, A, I, L, θ, u)",
+        "d2_planeframe_elementforces",
         "PlaneFrameElementForces.m", "PlaneFrameElementForces";
-        julia_fn = () -> d2_beam_elementforces(E2, A2, I2, L2, θ2, u2_loaded),
+        julia_fn = () -> d2_planeframe_elementforces(E2, A2, I2, L2, θ2, u2_loaded),
         matlab_args_fn = () -> adapt_beam_args(E2, A2, I2, L2, θ2, u2_loaded),
         result_adapter = adapt_beam_result, dof = 6,
     ))

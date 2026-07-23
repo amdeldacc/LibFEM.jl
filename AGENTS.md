@@ -63,7 +63,7 @@ using Pkg; Pkg.test()
   - `src/types.jl` — abstract type hierarchy, `@kwdef` element structs, custom error types
   - `src/spring.jl` — `d1_spring_*`, `d2_spring_*`, `d3_spring_*` functions
   - `src/truss.jl` — `d1_truss_*`, `d2_truss_*`, `d3_truss_*` functions
-  - `src/beam.jl` — `d2_beam_*`, `d3_beam_*` functions
+  - `src/beam.jl` — `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), `d3_beam_*` (space frame) functions
   - `src/assembly.jl` — `_assemble!` helper and assembly utilities
   - `src/utils.jl` — `deg2rad` and shared helpers
   - `src/plot.jl` — diagram functions (Plots dependency)
@@ -81,7 +81,9 @@ using Pkg; Pkg.test()
 - **MATLAB Mapping**: Functions in `Doc/Kattan/M-Files/` follow a `{ElementType}{Operation}` naming convention. LibFEM.jl translates these to the `d{N}_{element}_{operation}` scheme:
   - `Spring*` → `d1_spring_*` (1D), `d2_spring_*` (2D), `d3_spring_*` (3D)
   - `LinearBar*`/`PlaneTruss*`/`SpaceTruss*` → `d1_truss_*`, `d2_truss_*`, `d3_truss_*`
-  - `Beam*`/`PlaneFrame*`/`SpaceFrame*` → `d2_beam_*` (plane), `d3_beam_*` hinted (space frame)
+  - `Beam*` → `d2_beam_*` (pure beam, 2 DOF/node)
+  - `PlaneFrame*` → `d2_planeframe_*` (plane frame, 3 DOF/node)
+  - `SpaceFrame*` → `d3_beam_*` (space frame, 6 DOF/node)
   - See `CONTEXT.md` for the full domain glossary and per-file mappings.
 
 ## Dependencies & Metadata

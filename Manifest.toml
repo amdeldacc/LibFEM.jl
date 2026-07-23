@@ -374,7 +374,7 @@ uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
 version = "8.15.0+0"
 
 [[deps.LibFEM]]
-deps = ["Plots"]
+deps = ["BenchmarkTools", "Plots"]
 path = "."
 uuid = "3625dbae-1167-4e4e-9595-224d0cceb916"
 version = "0.1.0"

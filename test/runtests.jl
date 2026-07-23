@@ -189,8 +189,8 @@ end
             @test_throws AssemblyError d2_truss_assemble(K4, k4, 1, 1)
 
             K6 = zeros(6, 6)
-            k6 = d2_beam_elementstiffness(1, 1, 1, 1, 0)
-            @test_throws AssemblyError d2_beam_assemble(K6, k6, 1, 1)
+            k6 = d2_planeframe_elementstiffness(1, 1, 1, 1, 0)
+            @test_throws AssemblyError d2_planeframe_assemble(K6, k6, 1, 1)
         end
 
         @testset "negative/zero parameter behavior" begin
@@ -206,19 +206,86 @@ end
     end
 
     # ─────────────────────────────────────────────────
-    # 2-D Beam / Plane Frame (d2_beam)
+    # 2-D Pure Beam (d2_beam) — Bending Only, 2 DOF/node
     # ─────────────────────────────────────────────────
     @testset "d2_beam" begin
+        @testset "elementstiffness" begin
+            # Simple: E=1, I=1, L=1
+            Ke = d2_beam_elementstiffness(1, 1, 1)
+            @test size(Ke) == (4, 4)
+            expected = [12 6 -12 6; 6 4 -6 2; -12 -6 12 -6; 6 2 -6 4]
+            @test Ke ≈ expected
+            # Physical invariants (symmetry + PSD; rotational DOFs, no zero row-sum)
+            @test_physical_invariants Ke
+            # E=2, I=3, L=4
+            Ke2 = d2_beam_elementstiffness(2, 3, 4)
+            @test Ke2 ≈ (2 * 3 / 64) * [12 24 -12 24; 24 64 -24 32; -12 -24 12 -24; 24 32 -24 64]
+            @test_physical_invariants Ke2
+        end
+
+        @testset "elementforces" begin
+            k = d2_beam_elementstiffness(1, 1, 1)
+            # Unit transverse displacement at node 2
+            u = [0.0, 0.0, 1.0, 0.0]
+            f = d2_beam_elementforces(k, u)
+            @test length(f) == 4
+            @test f ≈ [-12.0, -6.0, 12.0, -6.0]
+            # zero displacement
+            @test d2_beam_elementforces(k, zeros(4)) ≈ zeros(4)
+        end
+
+        @testset "assemble" begin
+            K = zeros(4, 4)
+            k = ones(4, 4)
+            K = d2_beam_assemble(K, k, 1, 2)
+            @test K == ones(4, 4)
+            # assemble into larger system
+            K6 = zeros(6, 6)
+            ke = reshape(1:16, 4, 4)
+            K6 = d2_beam_assemble(K6, ke, 1, 2)
+            # Node 1 DOF: 1-2, Node 2 DOF: 3-4
+            @test K6[1:2, 1:2] == ke[1:2, 1:2]
+            @test K6[1:2, 3:4] == ke[1:2, 3:4]
+            @test K6[3:4, 1:2] == ke[3:4, 1:2]
+            @test K6[3:4, 3:4] == ke[3:4, 3:4]
+            @test all(K6[5:6, :] .== 0)
+            @test all(K6[:, 5:6] .== 0)
+        end
+
+        @testset "L>0 error paths" begin
+            @test_throws ElementParameterError d2_beam_elementstiffness(1.0, 1.0, 0.0)
+            @test_throws ElementParameterError d2_beam_elementstiffness(1.0, 1.0, -1.0)
+        end
+
+        @testset "elementsheardiagram" begin
+            f = [1000, 200, -1000, 200]
+            L = 5.0
+            p = d2_beam_elementsheardiagram(f, L)
+            @test p isa Plots.Plot
+        end
+
+        @testset "elementmomentdiagram" begin
+            f = [1000, 200, -1000, 200]
+            L = 5.0
+            p = d2_beam_elementmomentdiagram(f, L)
+            @test p isa Plots.Plot
+        end
+    end
+
+    # ─────────────────────────────────────────────────
+    # 2-D Plane Frame (d2_planeframe) — Axial + Bending, 3 DOF/node
+    # ─────────────────────────────────────────────────
+    @testset "d2_planeframe" begin
         @testset "elementlength" begin
-            @test d2_beam_elementlength(0, 0, 3, 4) == 5.0
-            @test d2_beam_elementlength(1, 2, 1, 2) == 0.0  # zero length
-            @test d2_beam_elementlength(-1, -1, 2, 3) ≈ sqrt(3^2 + 4^2)
-            @test d2_beam_elementlength(0, 0, 0, 5) == 5.0
+            @test d2_planeframe_elementlength(0, 0, 3, 4) == 5.0
+            @test d2_planeframe_elementlength(1, 2, 1, 2) == 0.0  # zero length
+            @test d2_planeframe_elementlength(-1, -1, 2, 3) ≈ sqrt(3^2 + 4^2)
+            @test d2_planeframe_elementlength(0, 0, 0, 5) == 5.0
         end
 
         @testset "elementstiffness" begin
             # Simple case: E=1, A=1, I=1, L=1, theta=0
-            Ke = d2_beam_elementstiffness(1, 1, 1, 1, 0)
+            Ke = d2_planeframe_elementstiffness(1, 1, 1, 1, 0)
             @test size(Ke) == (6, 6)
             # Physical invariants (symmetry + PSD; beams have rotational DOFs, no zero row-sum)
             @test_physical_invariants Ke
@@ -237,7 +304,7 @@ end
             # Simple: E=1, A=1, I=1, L=1, theta=0
             # u has only axial displacement at node 2
             u = [0.0, 0.0, 0.0, 0.001, 0.0, 0.0]
-            f = d2_beam_elementforces(1, 1, 1, 1, 0, u)
+            f = d2_planeframe_elementforces(1, 1, 1, 1, 0, u)
             @test length(f) == 6
             @test f[1] ≈ -0.001  # axial force = -EA/L * u_x2
             @test f[4] ≈ 0.001
@@ -246,39 +313,39 @@ end
             @test f[5] ≈ 0.0
             @test f[6] ≈ 0.0
             # zero displacement
-            @test d2_beam_elementforces(1, 1, 1, 1, 0, zeros(6)) ≈ zeros(6)
+            @test d2_planeframe_elementforces(1, 1, 1, 1, 0, zeros(6)) ≈ zeros(6)
         end
 
         @testset "elementaxialdiagram" begin
             f = [1000, 500, 200, -1000, 500, -200]
             L = 5.0
-            p = d2_beam_elementaxialdiagram(f, L)
+            p = d2_planeframe_elementaxialdiagram(f, L)
             @test p isa Plots.Plot
         end
 
         @testset "elementmomentdiagram" begin
             f = [1000, 500, 200, -1000, 500, -200]
             L = 5.0
-            p = d2_beam_elementmomentdiagram(f, L)
+            p = d2_planeframe_elementmomentdiagram(f, L)
             @test p isa Plots.Plot
         end
 
         @testset "elementsheardiagram" begin
             f = [1000, 500, 200, -1000, 500, -200]
             L = 5.0
-            p = d2_beam_elementsheardiagram(f, L)
+            p = d2_planeframe_elementsheardiagram(f, L)
             @test p isa Plots.Plot
         end
 
         @testset "assemble" begin
             K = zeros(6, 6)
             k = ones(6, 6)
-            K = d2_beam_assemble(K, k, 1, 2)
+            K = d2_planeframe_assemble(K, k, 1, 2)
             @test K == ones(6, 6)
             # assemble into larger system
             K9 = zeros(9, 9)
             ke = reshape(1:36, 6, 6)  # non-symmetric to check positions
-            K9 = d2_beam_assemble(K9, ke, 1, 2)
+            K9 = d2_planeframe_assemble(K9, ke, 1, 2)
             # Node 1 DOF: 1-3, Node 2 DOF: 4-6
             @test K9[1:3, 1:3] == ke[1:3, 1:3]
             @test K9[1:3, 4:6] == ke[1:3, 4:6]
@@ -287,17 +354,17 @@ end
         end
 
         @testset "L>0 error paths" begin
-            @test_throws ElementParameterError d2_beam_elementstiffness(1.0, 1.0, 1.0, 0.0, 0.0)
-            @test_throws ElementParameterError d2_beam_elementstiffness(1.0, 1.0, 1.0, -1.0, 0.0)
+            @test_throws ElementParameterError d2_planeframe_elementstiffness(1.0, 1.0, 1.0, 0.0, 0.0)
+            @test_throws ElementParameterError d2_planeframe_elementstiffness(1.0, 1.0, 1.0, -1.0, 0.0)
         end
 
         @testset "negative/zero parameter behavior" begin
             # Zero area → zero matrix (axial part)
-            Ke = d2_beam_elementstiffness(1.0, 0.0, 1.0, 1.0, 0.0)
+            Ke = d2_planeframe_elementstiffness(1.0, 0.0, 1.0, 1.0, 0.0)
             @test Ke[1, 1] == 0.0
             @test Ke[1, 4] == 0.0
             # Negative area → negated axial part
-            Ke_neg = d2_beam_elementstiffness(1.0, -1.0, 1.0, 1.0, 0.0)
+            Ke_neg = d2_planeframe_elementstiffness(1.0, -1.0, 1.0, 1.0, 0.0)
             @test Ke_neg[1, 1] == -1.0
             @test Ke_neg[1, 4] == 1.0
         end
@@ -732,7 +799,7 @@ end
             k3s = d3_spring_elementstiffness(100, 30, 45, 60)
             @test_translational_invariants(k3s, 1e-13)  # FP noise from invalid direction cosines
 
-            k2b = d2_beam_elementstiffness(1, 1, 1, 1, 30)
+            k2b = d2_planeframe_elementstiffness(1, 1, 1, 1, 30)
             @test_physical_invariants(k2b)
 
             k3b = d3_beam_elementstiffness(1, 1, 1, 1, 1, 1, 0,0,0, 4,0,0)
@@ -743,7 +810,7 @@ end
             @test_throws ElementParameterError d1_truss_elementstiffness(1, 1, 0)
             @test_throws ElementParameterError d2_truss_elementstiffness(1, 1, 0, 0)
             @test_throws ElementParameterError d3_truss_elementstiffness(1, 1, 0, 0, 0, 0)
-            @test_throws ElementParameterError d2_beam_elementstiffness(1, 1, 1, 0, 0)
+            @test_throws ElementParameterError d2_planeframe_elementstiffness(1, 1, 1, 0, 0)
             @test_throws ElementParameterError d1_truss_elementstiffness(1, 1, -1)
             # C2: impossible 3D direction cosines → warning, not error
             @test_logs (:warn, r"Direction cosines do not form a unit vector") d3_truss_elementstiffness(1, 1, 1, 90, 90, 90)
@@ -755,9 +822,13 @@ end
             f3 = [1000, 500, 300, 200, 150, 100, -1000, -500, -300, -200, -150, -100]
             L = 5.0
             # Returns Plots.Plot objects (not raw data vectors)
-            @test d2_beam_elementaxialdiagram(f2, L) isa Plots.Plot
-            @test d2_beam_elementsheardiagram(f2, L) isa Plots.Plot
-            @test d2_beam_elementmomentdiagram(f2, L) isa Plots.Plot
+            @test d2_planeframe_elementaxialdiagram(f2, L) isa Plots.Plot
+            @test d2_planeframe_elementsheardiagram(f2, L) isa Plots.Plot
+            @test d2_planeframe_elementmomentdiagram(f2, L) isa Plots.Plot
+            # Pure beam diagrams use 4-element force vectors
+            fb = [1000, 200, -1000, 200]
+            @test d2_beam_elementsheardiagram(fb, L) isa Plots.Plot
+            @test d2_beam_elementmomentdiagram(fb, L) isa Plots.Plot
             @test d3_beam_elementaxialdiagram(f3, L) isa Plots.Plot
             @test d3_beam_elementshearydiagram(f3, L) isa Plots.Plot
             @test d3_beam_elementshearzdiagram(f3, L) isa Plots.Plot
@@ -815,6 +886,7 @@ end  # @testset "LibFEM"
         :d2_truss_elementstiffness,
         :d3_truss_elementstiffness,
         :d2_beam_elementstiffness,
+        :d2_planeframe_elementstiffness,
         :d3_beam_elementstiffness,
         :deg2rad,
         :AbstractSpring,

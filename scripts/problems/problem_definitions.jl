@@ -57,8 +57,7 @@ const PROBLEM_REGISTRY = Vector{ProblemDef}([
         matlab_file="problem_2_1.m",
         element_family="d1_spring",
         description="Two-element spring system",
-        rtol=1e-8, atol=1e-10,
-    ),
+    )
     ProblemDef(
         name="problem_3_1",
         matlab_file="problem_3_1.m",

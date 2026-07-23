@@ -29,7 +29,8 @@ using Pkg; Pkg.activate("."); using LibFEM
 |--------|-----------|-----------|-----------|
 | **Spring** | `d1_spring_*` — scalar stiffness `k` | `d2_spring_*` — angle `theta` | `d3_spring_*` — angles `thetax, thetay, thetaz` |
 | **Truss** | `d1_truss_*` — `E, A, L` | `d2_truss_*` — `E, A, L, theta` | `d3_truss_*` — `E, A, L, thetax, thetay, thetaz` |
-| **Beam** | (not implemented) | `d2_beam_*` — `E, A, I, L, theta` (3 DOF/node) | `d3_beam_*` — `E, G, A, Iy, Iz, J` **+ node coords** (6 DOF/node) |
+| **Beam** (pure) | (not implemented) | `d2_beam_*` — `E, I, L` (2 DOF/node, bending only) | `d3_beam_*` — `E, G, A, Iy, Iz, J` **+ node coords** (6 DOF/node) |
+| **PlaneFrame** | (not implemented) | `d2_planeframe_*` — `E, A, I, L, theta` (3 DOF/node) | (use `d3_beam_*` as space frame) |
 
 ## Core Function Pattern
 
@@ -125,7 +126,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `test/comparison.jl` | MATLAB reference transcriptions for verification |
 | `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (12 benchmarks) |
 | `Doc/Kattan/M-Files/` | Read-only MATLAB reference (80 `.m` files from Kattan) |
-| `Doc/Kattan/Solutions Manual/` | Problem solutions (`.rtf` format) |
+| `Doc/Kattan/Solutions-Manual/` | `.rtf` and `.doc` problem solutions, plus per-problem MATLAB scripts (`problem_2_1.m` … `problem_8_3.m`, `ocr_m_verify.m`) |
 | `Doc/Peter_Kattan_*` | Book PDF and text/Markdown transcriptions |
 | `CONTEXT.md` | Domain glossary: MATLAB→Julia mapping and naming conventions |
 | `AGENTS.md`, `CLAUDE.md` | Agent instructions with constraints and conventions |

@@ -3,9 +3,7 @@
 # ═══════════════════════════════════════════════════════════
 # These functions use Plots.jl, loaded at module scope in LibFEM.jl.
 # All Plots symbols are accessible via the parent module context.
-# The 2-D beam diagram functions (d2_beam_element*diagram) are
-# re-exported from beam.jl. The 3-D beam diagram functions
-# (d3_beam_element*diagram) are defined here and exported from LibFEM.jl.
+# The diagram functions are re-exported from LibFEM.jl.
 #
 # Sign convention follows Kattan: axial positive = tension,
 # shear positive = clockwise on left face, moment positive = sagging.
@@ -21,40 +19,44 @@ function _beamdiagram(f::AbstractVector, L::Real, title_::AbstractString, z_fn::
     return p
 end
 
-# ─── 2-D Beam Diagrams ───
-
-"""
-    d2_beam_elementaxialdiagram(f, L)
-
-Plot and return the axial force diagram for a 2-D beam element.
-
-# Arguments
-- `f::AbstractVector`: Element nodal force vector (6 elements).
-- `L::Real`: Element length.
-
-# Returns
-A Plots.Plot object.
-"""
-d2_beam_elementaxialdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Axial Force Diagram", (f,L)->[-f[1], f[4]])
+# ─── 2-D Pure Beam Diagrams (4-element force vector) ───
+# f = [shear₁, moment₁, shear₂, moment₂]
 
 """
     d2_beam_elementsheardiagram(f, L)
 
-Plot and return the shear force diagram for a 2-D beam element.
+Plot and return the shear force diagram for a 2-D pure beam element.
 
 # Arguments
-- `f::AbstractVector`: Element nodal force vector (6 elements).
+- `f::AbstractVector`: Element nodal force vector (4 elements).
 - `L::Real`: Element length.
 
 # Returns
 A Plots.Plot object.
 """
-d2_beam_elementsheardiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Shear Force Diagram", (f,L)->[f[2], -f[5]])
+d2_beam_elementsheardiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Shear Force Diagram", (f,L)->[f[1], -f[3]])
 
 """
     d2_beam_elementmomentdiagram(f, L)
 
-Plot and return the bending moment diagram for a 2-D beam element.
+Plot and return the bending moment diagram for a 2-D pure beam element.
+
+# Arguments
+- `f::AbstractVector`: Element nodal force vector (4 elements).
+- `L::Real`: Element length.
+
+# Returns
+A Plots.Plot object.
+"""
+d2_beam_elementmomentdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Bending Moment Diagram", (f,L)->[-f[2], f[4]])
+
+# ─── 2-D Plane Frame Diagrams (6-element force vector) ───
+# f = [axial₁, shear₁, moment₁, axial₂, shear₂, moment₂]
+
+"""
+    d2_planeframe_elementaxialdiagram(f, L)
+
+Plot and return the axial force diagram for a 2-D plane frame element.
 
 # Arguments
 - `f::AbstractVector`: Element nodal force vector (6 elements).
@@ -63,7 +65,35 @@ Plot and return the bending moment diagram for a 2-D beam element.
 # Returns
 A Plots.Plot object.
 """
-d2_beam_elementmomentdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Bending Moment Diagram", (f,L)->[-f[3], f[6]])
+d2_planeframe_elementaxialdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Axial Force Diagram", (f,L)->[-f[1], f[4]])
+
+"""
+    d2_planeframe_elementsheardiagram(f, L)
+
+Plot and return the shear force diagram for a 2-D plane frame element.
+
+# Arguments
+- `f::AbstractVector`: Element nodal force vector (6 elements).
+- `L::Real`: Element length.
+
+# Returns
+A Plots.Plot object.
+"""
+d2_planeframe_elementsheardiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Shear Force Diagram", (f,L)->[f[2], -f[5]])
+
+"""
+    d2_planeframe_elementmomentdiagram(f, L)
+
+Plot and return the bending moment diagram for a 2-D plane frame element.
+
+# Arguments
+- `f::AbstractVector`: Element nodal force vector (6 elements).
+- `L::Real`: Element length.
+
+# Returns
+A Plots.Plot object.
+"""
+d2_planeframe_elementmomentdiagram(f::AbstractVector, L::Real) = _beamdiagram(f, L, "Bending Moment Diagram", (f,L)->[-f[3], f[6]])
 
 # ─── 3-D Beam Diagrams ───
 

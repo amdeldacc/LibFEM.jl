@@ -42,6 +42,8 @@
 %       Frame nodes have 3 DOFs (x, y, rotation).
 %       Truss/spring nodes have 2 DOFs (x, y).
 %       Global K is 8x8.
+%       Truss uses separate node numbering: node 4 maps to DOFs 7,8
+%       (2*4-1=7, 2*4=8) to avoid conflict with frame node 2 (DOFs 4-6).
 %
 % Computes:
 %   1. Element stiffness matrices (frame 6x6, spring/truss 4x4)

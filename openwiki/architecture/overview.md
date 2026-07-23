@@ -21,7 +21,7 @@ LibFEM.jl is a single-module library with multi-file source organization. The mo
 | `src/assembly.jl` | `_assemble!` private helper |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
-| `src/beam.jl` | All `d2_beam_*` and `d3_beam_*` implementations |
+| `src/beam.jl` | All `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), and `d3_beam_*` (space frame) implementations |
 | `src/plot.jl` | Beam diagram functions (Plots dependency) |
 
 ```julia
@@ -64,12 +64,15 @@ This is a translation from the MATLAB naming convention in `Doc/Kattan/M-Files/`
 |--------|-------------|------------------|----------------------|
 | `d1_` | 1 | 1D spring, linear bar | Node `i` → row `i` |
 | `d2_` | 2 | 2D spring, plane truss | Node `i` → rows `2i-1, 2i` |
+| `d2_planeframe` | **3** | Plane frame (2D beam with axial) | Node `i` → rows `3i-2, 3i-1, 3i` |
 | `d3_` | 3 (`d3_spring`, `d3_truss`) | 3D spring, space truss | Node `i` → rows `3i-2, 3i-1, 3i` |
 | `d3_beam` | **6** | Space frame (3D beam) | Node `i` → rows `6i-5, 6i-4, 6i-3, 6i-2, 6i-1, 6i` |
 
-### Special cases: Beam elements
+### Beam elements: two variants (2D)
 
-**2D Beam (`d2_beam_*`)**: Uses 3 DOF per node (`u_x`, `u_y`, rotation) — matching the `d3_` indexing scheme — because beam elements carry both axial and bending behavior. The `_assemble!` helper handles this by parameterizing DOF count per node.
+**2D Pure Beam (`d2_beam_*`)**: Uses **2 DOF per node** (deflection `v`, rotation `θ`) — pure bending only, no axial deformation. The 4×4 stiffness matrix is the classical Euler-Bernoulli beam. Assembly uses `_assemble!` with `dofs=2`.
+
+**2D Plane Frame (`d2_planeframe_*`)**: Uses **3 DOF per node** (`u_x`, `u_y`, rotation) — combining axial and bending behavior. The 6×6 stiffness matrix matches Kattan's `PlaneFrameElementStiffness`. Assembly uses `_assemble!` with `dofs=3`.
 
 **3D Beam / Space Frame (`d3_beam_*`)**: Uses **6 DOF per node** (`u_x`, `u_y`, `u_z`, `θ_x`, `θ_y`, `θ_z`) — translations and rotations in all three axes. The element stiffness matrix is 12×12. The rotation matrix `Λ` (3×3 direction cosines) is constructed from the element node coordinates, handling the vertical-element degenerate case where `D = y₂ - y₁ = 0` and `z₂ - z₁ = 0`.
 
@@ -137,7 +140,7 @@ This maps 4 element-level blocks (ii, jj, ii→jj, jj→ii) to the global stiffn
 |--------|---------|
 | `1` | `d1_spring_assemble`, `d1_truss_assemble` |
 | `2` | `d2_spring_assemble`, `d2_truss_assemble` |
-| `3` | `d2_beam_assemble`, `d3_spring_assemble`, `d3_truss_assemble` |
+| `3` | `d2_planeframe_assemble`, `d3_spring_assemble`, `d3_truss_assemble` |
 | `6` | `d3_beam_assemble` |
 
 The helper is private (underscore prefix, not exported). Adding new element types requires only passing the correct `dofs` parameter — no new assembly boilerplate.
@@ -169,14 +172,21 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d2_truss_elementstrain(L, theta, u)` — scalar strain (validates `L > 0`)
 - `d2_truss_elementlength(x1, y1, x2, y2)` — element length
 
-### 2D Beam (`d2_beam`)
-- `d2_beam_elementstiffness(E, A, I, L, theta)` — 6×6 matrix (validates `L > 0`)
-- `d2_beam_assemble(K, k, i, j)` — DOF mapping: 3
-- `d2_beam_elementforces(E, A, I, L, theta, u)` — 6-element vector
-- `d2_beam_elementlength(x1, y1, x2, y2)` — element length
-- `d2_beam_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
-- `d2_beam_elementmomentdiagram(f, L)` — Plots.jl bending moment diagram
+### 2D Pure Beam (`d2_beam`)
+- `d2_beam_elementstiffness(E, I, L)` — 4×4 matrix (Euler-Bernoulli, bending only; validates `L > 0`)
+- `d2_beam_assemble(K, k, i, j)` — DOF mapping: 2
+- `d2_beam_elementforces(k, u)` — 4-element force vector (shear + moment at nodes)
 - `d2_beam_elementsheardiagram(f, L)` — Plots.jl shear force diagram
+- `d2_beam_elementmomentdiagram(f, L)` — Plots.jl bending moment diagram
+
+### 2D Plane Frame (`d2_planeframe`)
+- `d2_planeframe_elementlength(x1, y1, x2, y2)` — element length
+- `d2_planeframe_elementstiffness(E, A, I, L, theta)` — 6×6 matrix (axial + bending; validates `L > 0`)
+- `d2_planeframe_assemble(K, k, i, j)` — DOF mapping: 3
+- `d2_planeframe_elementforces(E, A, I, L, theta, u)` — 6-element vector
+- `d2_planeframe_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
+- `d2_planeframe_elementsheardiagram(f, L)` — Plots.jl shear force diagram
+- `d2_planeframe_elementmomentdiagram(f, L)` — Plots.jl bending moment diagram
 
 ### 3D Spring (`d3_spring`)
 - `d3_spring_elementstiffness(k, thetax, thetay, thetaz)` — 6×6 matrix
@@ -207,7 +217,7 @@ The helper is private (underscore prefix, not exported). Adding new element type
 
 ## Dependencies & Runtime Notes
 
-- **`Plots.jl`** v1 — used by all beam diagram functions (`d2_beam_*` and `d3_beam_*`). Required in `Project.toml`.
+- **`Plots.jl`** v1 — used by all beam diagram functions (`d2_beam_*`, `d2_planeframe_*`, and `d3_beam_*`). Required in `Project.toml`.
 - **`using Plots`** is declared at module level in `src/LibFEM.jl` (though the diagram functions are in `src/plot.jl`).
 - **`deg2rad` is now exported** — users can call `LibFEM.deg2rad(theta)` for degree-to-radian conversion.
 - **No `ModelingToolkit`** — listed as a dependency in `CLAUDE.md`'s older version note, but the `Project.toml` has been updated to `Plots` only. The scripts in `scripts/` use MTK independently.
@@ -251,7 +261,7 @@ See the repository's issue tracker for the full list. The **`ToDo.md`** file at 
 
 **⚠️ False Positives (NOT bugs — mathematically correct per MATLAB reference):**
 - **C1**: `d3_beam_elementforces` uses `R` not `R'` — MATLAB `SpaceFrameElementForces.m:57` uses `kprime * R * u` (identical to Julia). Standard FEM: stiffness uses `R' * k_local * R` (global), forces use `k_local * R * u` (local).
-- **C2**: `d2_beam_elementforces` "inverted transformation" — MATLAB `PlaneFrameElementForces.m:21` uses `kprime * T * u` (identical to Julia).
+- **C2**: `d2_planeframe_elementforces` "inverted transformation" — MATLAB `PlaneFrameElementForces.m:21` uses `kprime * T * u` (identical to Julia).
 
 **✅ Verified Real Issues (from cross-verified review):**
 

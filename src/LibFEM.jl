@@ -49,8 +49,11 @@ export d2_truss_elementlength, d2_truss_elementstiffness, d2_truss_elementforces
 # 3-D Truss / Space Truss
 export d3_truss_elementlength, d3_truss_elementstiffness, d3_truss_elementforces, d3_truss_elementstrain, d3_truss_elementstress, d3_truss_assemble
 
-# 2-D Beam / Plane Frame
-export d2_beam_elementlength, d2_beam_elementstiffness, d2_beam_elementforces, d2_beam_elementaxialdiagram, d2_beam_elementsheardiagram, d2_beam_elementmomentdiagram, d2_beam_assemble
+# 2-D Pure Beam (bending only, 2 DOF/node)
+export d2_beam_elementstiffness, d2_beam_elementforces, d2_beam_assemble, d2_beam_elementsheardiagram, d2_beam_elementmomentdiagram
+
+# 2-D Plane Frame (axial + bending, 3 DOF/node)
+export d2_planeframe_elementlength, d2_planeframe_elementstiffness, d2_planeframe_elementforces, d2_planeframe_assemble, d2_planeframe_elementaxialdiagram, d2_planeframe_elementsheardiagram, d2_planeframe_elementmomentdiagram
 
 # 3-D Beam / Space Frame
 export d3_beam_elementlength, d3_beam_elementstiffness, d3_beam_assemble, d3_beam_elementforces, d3_beam_elementaxialdiagram, d3_beam_elementshearydiagram, d3_beam_elementshearzdiagram, d3_beam_elementmomentydiagram, d3_beam_elementmomentzdiagram, d3_beam_elementtorsiondiagram

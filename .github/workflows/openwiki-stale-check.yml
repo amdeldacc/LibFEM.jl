@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest\n    permissions:\n      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Check OpenWiki staleness

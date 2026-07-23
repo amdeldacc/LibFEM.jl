@@ -38,7 +38,22 @@ fi
 
 # --- run OCR ---
 if [ "$BLOCK" = true ]; then
-    REVIEW_JSON=$(ocr review --format json --audience agent --background "$BACKGROUND" 2>/dev/null || true)
+    # Run in JSON mode to count comments for blocking decision
+Remove the duplicate OCR call and consolidate the logic:
+
+# Run OCR once in JSON mode
+REVIEW_JSON=$(ocr review --format json --audience agent --background "$BACKGROUND" 2>/dev/null || true)
+echo "$REVIEW_JSON"
+
+# Count comments for blocking decision
+PYTHON=""
+for cmd in python3 python; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+        PYTHON="$cmd"
+        break
+    fi
+done
+COMMENT_COUNT=$(echo "$REVIEW_JSON" | "$PYTHON" -c "import sys, json; data=json.load(sys.stdin); print(len(data.get('comments', [])))" 2>/dev/null || echo -1)
     echo "$REVIEW_JSON"
 
     COMMENT_COUNT=$(echo "$REVIEW_JSON" | python3 -c "

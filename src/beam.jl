@@ -117,6 +117,7 @@ A 6×6 element stiffness matrix in global coordinates.
 """
 function d2_planeframe_elementstiffness(E::Real, A::Real, I::Real, L::Real, theta::Real)
     validate_positive(L, "L")
+    validate_positive(A, "A")
     (C, S) = _direction_cosines(theta)
     # Expanded formula matching MATLAB Kattan reference (PlaneFrameElementStiffness)
     w1 = A * C * C + 12 * I * S * S / (L * L)
@@ -153,6 +154,7 @@ A 6-element force vector in the **local** coordinate system
 """
 function d2_planeframe_elementforces(E::Real, A::Real, I::Real, L::Real, theta::Real, u::AbstractVector)
     validate_positive(L, "L")
+    validate_positive(A, "A")
     (C, S) = _direction_cosines(theta)
     w1 = E * A / L
     w2 = 12 * E * I / (L^3)
@@ -199,11 +201,11 @@ function d2_planeframe_assemble(K::AbstractMatrix, k::AbstractMatrix, i::Integer
 end
 
 # ═══════════════════════════════════════════════════════════
-# 3-D Beam / Space Frame Element (d3_beam)
+# 3-D Space Frame Element (d3_spaceframe)
 # ═══════════════════════════════════════════════════════════
 
 """
-    d3_beam_elementlength(x1, y1, z1, x2, y2, z2)
+    d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)
 
 Return the length of the 3-D beam (space frame) element.
 
@@ -218,7 +220,7 @@ Return the length of the 3-D beam (space frame) element.
 # Returns
 The element length.
 """
-function d3_beam_elementlength(
+function d3_spaceframe_elementlength(
     x1::Real,
     y1::Real,
     z1::Real,
@@ -232,7 +234,7 @@ function d3_beam_elementlength(
 end
 
 """
-    d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)
+    d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)
 
 Return the 12×12 element stiffness matrix for a 3-D beam (space frame) element.
 
@@ -256,7 +258,7 @@ A 12×12 element stiffness matrix.
 # Frame
 Stiffness in **global** coordinates via R' * kprime * R.
 """
-function d3_beam_elementstiffness(
+function d3_spaceframe_elementstiffness(
     E::Real,
     G::Real,
     A::Real,
@@ -270,9 +272,10 @@ function d3_beam_elementstiffness(
     y2::Real,
     z2::Real,
 )
-    L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)
+    L = d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)
     validate_positive(L, "L")
-    kprime = _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
+    validate_positive(A, "A")
+    kprime = _d3_spaceframe_kprime(E, G, A, Iy, Iz, J, L)
 
     Cx = (x2 - x1) / L
     Cy = (y2 - y1) / L
@@ -306,7 +309,7 @@ function d3_beam_elementstiffness(
 end
 
 """
-    d3_beam_assemble(K, k, i, j)
+    d3_spaceframe_assemble(K, k, i, j)
 
 Assemble the 3-D beam element stiffness matrix `k` with nodes `i` and `j`
 into the global stiffness matrix `K`.
@@ -320,7 +323,7 @@ into the global stiffness matrix `K`.
 # Returns
 The updated global stiffness matrix `K`.
 """
-function d3_beam_assemble(
+function d3_spaceframe_assemble(
     K::AbstractMatrix,
     k::AbstractMatrix,
     i::Integer,
@@ -330,7 +333,7 @@ function d3_beam_assemble(
 end
 
 """
-    d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)
+    d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)
 
 Return the element force vector for a 3-D beam element.
 
@@ -352,7 +355,7 @@ Return the element force vector for a 3-D beam element.
 # Returns
 A 12-element force vector (positive = tension).
 """
-function d3_beam_elementforces(
+function d3_spaceframe_elementforces(
     E::Real,
     G::Real,
     A::Real,
@@ -367,9 +370,10 @@ function d3_beam_elementforces(
     z2::Real,
     u::AbstractVector,
 )
-    L = d3_beam_elementlength(x1, y1, z1, x2, y2, z2)
+    L = d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)
     validate_positive(L, "L")
-    kprime = _d3_beam_kprime(E, G, A, Iy, Iz, J, L)
+    validate_positive(A, "A")
+    kprime = _d3_spaceframe_kprime(E, G, A, Iy, Iz, J, L)
 
     Cx = (x2 - x1) / L
     Cy = (y2 - y1) / L

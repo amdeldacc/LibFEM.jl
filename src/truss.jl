@@ -16,12 +16,11 @@ Return the 2×2 element stiffness matrix for a 1-D truss (linear bar) element.
 A 2×2 element stiffness matrix.
 
 # Notes
-- Only `L > 0` is validated. `A ≤ 0` is intentionally allowed (produces zero/negated matrices)
-  to support parametric studies and sensitivity analysis. Negative/zero area has physical
-  meaning in some contexts (e.g., tension-only members with slack).
+- `L > 0` and `A > 0` are validated.
 """
 function d1_truss_elementstiffness(E::Real, A::Real, L::Real)
     validate_positive(L, "L")
+    validate_positive(A, "A")
     return E * A / L * [1 -1; -1 1]
 end
 
@@ -55,6 +54,7 @@ Return the element stress for a 1-D truss element.
 A 2-element stress vector (positive = tension).
 """
 function d1_truss_elementstress(Ke::AbstractMatrix, u::AbstractVector, A::Real)
+    validate_positive(A, "A")
     return Ke * u / A
 end
 
@@ -131,11 +131,11 @@ Return the 4×4 element stiffness matrix for a 2-D truss element.
 A 4×4 element stiffness matrix.
 
 # Notes
-- Only `L > 0` is validated. `A ≤ 0` is intentionally allowed (produces zero/negated matrices)
-  to support parametric studies and sensitivity analysis.
+- `L > 0` and `A > 0` are validated.
 """
 function d2_truss_elementstiffness(E::Real, A::Real, L::Real, theta::Real)
     validate_positive(L, "L")
+    validate_positive(A, "A")
     (C, S) = _direction_cosines(theta)
     w = [C * C C * S; C * S S * S]
     return E * A / L * [w -w; -w w]
@@ -158,6 +158,7 @@ The element force (scalar, positive = tension).
 """
 function d2_truss_elementforces(E::Real, A::Real, L::Real, theta::Real, u::AbstractVector)
     validate_positive(L, "L")
+    validate_positive(A, "A")
     (C, S) = _direction_cosines(theta)
     return E * A / L * _truss_force_component(C, S, u)
 end
@@ -263,11 +264,11 @@ Return the 6×6 element stiffness matrix for a 3-D truss (space truss) element.
 A 6×6 element stiffness matrix.
 
 # Notes
-- Only `L > 0` is validated. `A ≤ 0` is intentionally allowed (produces zero/negated matrices)
-  to support parametric studies and sensitivity analysis.
+- `L > 0` and `A > 0` are validated.
 """
 function d3_truss_elementstiffness(E::Real, A::Real, L::Real, thetax::Real, thetay::Real, thetaz::Real)
     validate_positive(L, "L")
+    validate_positive(A, "A")
     (Cx, Cy, Cz) = _direction_cosines(thetax, thetay, thetaz)
     w = [
         Cx * Cx Cx * Cy Cx * Cz
@@ -296,6 +297,7 @@ The element force (scalar, positive = tension).
 """
 function d3_truss_elementforces(E::Real, A::Real, L::Real, thetax::Real, thetay::Real, thetaz::Real, u::AbstractVector)
     validate_positive(L, "L")
+    validate_positive(A, "A")
     (Cx, Cy, Cz) = _direction_cosines(thetax, thetay, thetaz)
     return E * A / L * _truss_force_component(Cx, Cy, Cz, u)
 end

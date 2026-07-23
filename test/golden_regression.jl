@@ -1,6 +1,7 @@
-using TOML
-using Test
-using LinearAlgebra
+1|using TOML
+2|using Test
+3|using LinearAlgebra
+4|using JSON
 
 # ─────────────────────────────────────────────────────────
 # Shared parameter ordering (single source of truth)

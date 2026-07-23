@@ -1,3 +1,7 @@
+using Pkg
+Pkg.activate(joinpath(@__DIR__, ".."))
+Pkg.instantiate()
+
 using LibFEM
 using Plots
 using Test
@@ -895,3 +899,6 @@ end  # @testset "LibFEM"
         @test isdefined(LibFEM, sym) || error("$sym not exported")
     end
 end
+
+# Golden regression tests — compare current function outputs against stored snapshots
+include("golden_regression.jl")

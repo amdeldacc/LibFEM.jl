@@ -21,10 +21,20 @@ function _deserialize_binary(path::String)
     open(path) do io
         rows = Int(read(io, Int32))
         cols = Int(read(io, Int32))
+        if rows < 0 || cols < 0
+            error("Invalid dimensions: rows=$rows, cols=$cols (must be non-negative)")
+        end
         if rows == 0 && cols == 0
             return nothing  # error-marker
         end
+        # Prevent excessive allocation: limit to 100 million elements (adjust as needed)
+        if rows > 0 && cols > 0 && rows > typemax(Int) ÷ cols
+            error("Dimensions too large: rows=$rows, cols=$cols")
+        end
         n = rows * cols
+        if n > 10^8  # arbitrary limit to prevent excessive memory use
+            error("Too many elements: $n")
+        end
         data = Vector{Float64}(undef, n)
         read!(io, data)
         return reshape(data, rows, cols)

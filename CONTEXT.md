@@ -15,11 +15,12 @@ LibFEM.jl is educational-first but targeted to grow into a lightweight FEM toolk
 
 Negative cross-sectional area creates unphysical stiffness matrices (negative `EA/L`) and does not model tension-only behavior — that requires geometric nonlinearity. The `A > 0` precondition will be enforced in all truss and frame element functions, consistent with the `L > 0` validation already in place. For parametric studies near zero area, use `A → 0⁺`.
 
-### Verification Strategy (2026-07): Two-Layer Verification
+### Verification Strategy (2026-07): Three-Layer Verification
 
-The verification stack has 2 layers:
+The verification stack has 3 layers:
 - **Unit tests** (`runtests.jl`) — primary, per-element correctness
 - **Octave validation** (`validate_matlab.jl`) — ground truth against actual Kattan `.m` files
+- **Golden regression tests** (problem registry + binary goldens) — additive snapshot layer for detecting regressions when refactoring internals. Not meant to replace unit tests or Octave validation.
 
 The hand-transcribed MATLAB layer (`comparison.jl`) has been removed due to transcription bugs, overlap with Octave validation, and maintenance burden.
 
@@ -39,9 +40,9 @@ Diagram functions (in `src/plot.jl`) will move to a Julia package extension. Plo
 
 `d2_spring_elementforce` and `d3_spring_elementforce` currently call `_truss_force_component` from `utils.jl`. This is a conceptual leak — springs are not trusses. The spring force functions should get their own projection logic (semantic decoupling), and the `_truss_force_component` helper should become truss-only. Not high priority, but noted as technical debt.
 
-### Type Hierarchy Is Active (2026-07)
+### Type Hierarchy Is Documentation Scaffolding (2026-07)
 
-The abstract type hierarchy (`AbstractElement{NDIM}`, `AbstractSpring{NDIM}`, `AbstractTruss{NDIM}`, `AbstractBeam{NDIM}`) and `@kwdef` concrete structs (`Spring{NDIM}`, `Truss{NDIM}`, `Beam{NDIM}`) are **not** decorative — they are awaiting a refactor where element functions will dispatch on these types. The deprecation notice in `types.jl` is outdated. The structs are the intended future dispatch mechanism, not candidates for removal.
+The abstract type hierarchy (`AbstractElement{NDIM}`, `AbstractSpring{NDIM}`, `AbstractTruss{NDIM}`, `AbstractBeam{NDIM}`) and `@kwdef` concrete structs (`Spring{NDIM}`, `Truss{NDIM}`, `Beam{NDIM}`) are **documentation-only scaffolding**. They serve as a structured type vocabulary for future work but are NOT used by any element function, and there are no active plans to refactor functions to dispatch on them. They are kept because they document the domain model (dimension + element family) in code form and provide a natural extension point if the library grows. Removing them would be breaking but trivial; the cost of carrying them (~120 lines) is acceptable for the documentation value.
 
 ## Element Types
 

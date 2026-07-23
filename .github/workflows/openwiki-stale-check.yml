@@ -1,0 +1,23 @@
+---
+name: OpenWiki Stale Check
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check OpenWiki staleness
+        run: |
+          if [ -f openwiki/.last-update.json ]; then
+            STORED_HASH=$(jq -r '.commit_hash // "none"' openwiki/.last-update.json)
+            CURRENT_HASH=$(git rev-parse HEAD)
+            if [ "$STORED_HASH" != "$CURRENT_HASH" ] && [ "$STORED_HASH" != "none" ]; then
+              echo "⚠️ OpenWiki may be stale: generated at $STORED_HASH, current HEAD is $CURRENT_HASH"
+              echo "Run the OpenWiki Update workflow to refresh."
+            fi
+          fi

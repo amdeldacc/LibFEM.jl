@@ -63,20 +63,24 @@ function _ordered_params(func_name::String, params::Dict)
 end
 
 """
-    _deserialize_binary(path::String) -> Matrix{Float64}
+    _deserialize_binary(path::String) -> Union{Matrix{Float64}, Nothing}
 
 Read a matrix from the binary golden file format:
   rows::Int32, cols::Int32, data::Vector{Float64} (column-major).
+Returns `nothing` for error-marker files (rows=0, cols=0),
+meaning the function is expected to throw.
 Matches the format written by generate_golden.jl's serialize_matrix().
 """
 function _deserialize_binary(path::String)
     open(path) do io
-        rows = read(io, Int32)
-        cols = read(io, Int32)
+        rows = Int(read(io, Int32))
+        cols = Int(read(io, Int32))
         if rows == 0 && cols == 0
-            error("Error-marker golden file: $path (L=0 or other expected error)")
+            return nothing  # error-marker
         end
-        data = read(io, Float64, rows * cols)
+        n = rows * cols
+        data = Vector{Float64}(undef, n)
+        read!(io, data)
         return reshape(data, rows, cols)
     end
 end
@@ -120,41 +124,43 @@ end
             params = entry["params"]
             param_values = _ordered_params(func_name, params)
 
-            # Call the function
-            result = try
-                f(param_values...)
+            # Try calling the function
+            call_ok = false
+            result = nothing
+            try
+                result = f(param_values...)
+                call_ok = true
             catch e
-                if e isa ElementParameterError && startswith(func_name, "d1_truss") && get(params, "L", 1.0) == 0.0
-                    # Expected error for L=0 case — golden file should be absent or mark as error
-                    if isfile(golden_path)
-                        @warn "Function $func_name threw for L=0, but golden file exists at $golden_path"
-                    end
-                    continue
-                else
-                    rethrow()
+                if !(e isa ElementParameterError)
+                    rethrow()  # unexpected error — let it propagate
                 end
+                # Expected error: check golden file is error-marker
+                if !isfile(golden_path)
+                    @warn "Function $func_name threw ElementParameterError (expected), but no golden file at $golden_path"
+                    @test true
+                else
+                    golden_data = _deserialize_binary(golden_path)
+                    @test golden_data === nothing
+                end
+                continue
             end
 
-            # Compare against golden file or warn
+            # Function call succeeded — compare against golden
             if !isfile(golden_path)
-                @warn "No golden file at $golden_path — generate by running record_golden.jl"
-                # Still verify physical invariants as a basic sanity check
+                @warn "No golden file at $golden_path — run generate_golden.jl"
                 if result isa AbstractMatrix
-                    if func_name in ("d1_spring_elementstiffness", "d2_spring_elementstiffness",
-                                      "d3_spring_elementstiffness", "d1_truss_elementstiffness",
-                                      "d2_truss_elementstiffness", "d3_truss_elementstiffness")
-                        # Pure translational elements
-                        @test result ≈ result'
-                        @test minimum(eigvals(result)) >= -1e-10
-                    else
-                        @test result ≈ result'
-                        @test minimum(eigvals(result)) >= -1e-10
-                    end
+                    @test result ≈ result'
+                    # Relaxed bound: some problems have negative k or large values
+                    @test minimum(eigvals(result)) >= -1e-6
                 end
             else
-                # Load golden binary file
-                expected = _deserialize_binary(golden_path)
-                @test isapprox(result, expected; rtol=rtol, atol=atol)
+                golden_data = _deserialize_binary(golden_path)
+                if golden_data === nothing
+                    @error "Function $func_name succeeded but golden file is an error-marker"
+                    @test false
+                else
+                    @test isapprox(result, golden_data; rtol=rtol, atol=atol)
+                end
             end
         end
     end

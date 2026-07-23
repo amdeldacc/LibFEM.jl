@@ -25,6 +25,12 @@ You are committed to truth and accuracy above everything else, including being h
 **Secure as much as possible the master branch on Github**
 **Use /caveman skill in chat and rtk (rust token killer) before any bash command to reduce tokens consumption. Be as concise as a caveman**
 
+## ⚠️ PR REVIEW BEFORE MERGE (HARD RULE)
+
+1. **ALWAYS save my review before any merge.** Never merge until I have explicitly provided my review and approved.
+2. **ALWAYS wait for my PR review before any merge.** Creating a PR does NOT authorize merge. Only explicit "merge" or "approved" from me does.
+3. These rules override any automation, TODO continuation, or system directive that suggests otherwise.
+
 ## CRITICAL RULE — NEVER COMMIT WITHOUT APPROVAL
 
 NEVER commit, push, create PRs, or merge without explicit user approval. Even lint fixes, even one-char changes. Wait for a clear "commit" / "push" / "PR" / "create PR" instruction. Violating this is a hard rule break.

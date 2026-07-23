@@ -28,7 +28,11 @@ Return the absolute path to the MATLAB .m file for a problem definition,
 resolved relative to `Doc/Kattan/Solutions-Manual/` in the project root.
 """
 function resolve_problem_path(def::ProblemDef)::String
-    return joinpath(dirname(@__DIR__), "..", "Doc", "Kattan", "Solutions-Manual", def.matlab_file)
+    path = joinpath(dirname(@__DIR__), "..", "Doc", "Kattan", "Solutions-Manual", def.matlab_file)
+    if !isfile(path)
+        error("MATLAB file not found: " * path)
+    end
+    return path
 end
 
 """
@@ -38,10 +42,7 @@ Look up a problem definition by its symbolic name (e.g. "problem_2_1").
 Returns `nothing` if no match is found.
 """
 function problem_by_name(name::String)::Union{ProblemDef, Nothing}
-    for def in PROBLEM_REGISTRY
-        def.name == name && return def
-    end
-    return nothing
+    return get(PROBLEM_DICT, name, nothing)
 end
 
 """
@@ -100,3 +101,5 @@ const PROBLEM_REGISTRY = Vector{ProblemDef}([
         rtol=1e-8, atol=1e-10,
     ),
 ])
+
+const PROBLEM_DICT = Dict{String, ProblemDef}(def.name => def for def in PROBLEM_REGISTRY)

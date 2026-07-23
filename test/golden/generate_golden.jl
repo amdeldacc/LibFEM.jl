@@ -89,8 +89,13 @@ function main()
     mkpath(OUTPUT_DIR)
 
     # Parse manifest
+    if !isfile(MANIFEST_PATH)
+        error("Manifest file not found: ", MANIFEST_PATH)
+    end
     manifest = TOML.parsefile(MANIFEST_PATH)
-    entries  = manifest["entries"]
+    haskey(manifest, "entries") || error("Manifest missing 'entries' key")
+    entries = manifest["entries"]
+    entries isa Vector || error("Manifest 'entries' must be an array")
 
     total       = length(entries)
     ok_count    = 0

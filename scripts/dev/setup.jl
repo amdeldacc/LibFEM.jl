@@ -12,6 +12,8 @@ catch
 end
 
 using Pkg
+project_dir = dirname(dirname(@__DIR__))
+Pkg.activate(project_dir)
 Pkg.instantiate()
 
 using LibFEM, LinearAlgebra, Plots

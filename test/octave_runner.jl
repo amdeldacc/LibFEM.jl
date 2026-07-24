@@ -11,7 +11,8 @@
 module OctaveRunner
 
 export OctaveInfo, OctaveResult, OctaveError,
-       detect_octave, call_function, load_and_call
+       detect_octave, call_function, load_and_call,
+       run_script, parse_octave_object
 
 import Base: showerror
 
@@ -262,6 +263,98 @@ function _split_top_level(s::AbstractString)
     return result
 end
 
+"""
+    _split_top_level_object(s) -> Vector{String}
+
+Split a JSON object body string on commas at depth 0 only,
+tracking both `[]` and `{}` bracket depth.
+Example: `"\"K\":[[1,2],[3,4]],\"U\":[0,1]"` → `["\"K\":[[1,2],[3,4]]", "\"U\":[0,1]"]`
+"""
+function _split_top_level_object(s::AbstractString)
+    result = String[]
+    depth = 0
+    start_idx = 1
+    for i in eachindex(s)
+        c = s[i]
+        if c == '[' || c == '{'
+            depth += 1
+        elseif c == ']' || c == '}'
+            depth -= 1
+        elseif c == ',' && depth == 0
+            push!(result, strip(s[start_idx:i-1]))
+            start_idx = i + 1
+        end
+    end
+    last = strip(s[start_idx:end])
+    if !isempty(last)
+        push!(result, last)
+    end
+    return result
+end
+
+"""
+    _split_key_value(s) -> (String, String)
+
+Split a JSON key:value pair at the first top-level `:` (depth 0).
+Strips quotes from the key. Returns (key, value_string).
+
+Example: `"\"K\":[[1,2],[3,4]]"` → `("K", "[[1,2],[3,4]]")`
+"""
+function _split_key_value(s::AbstractString)
+    s = strip(s)
+    depth = 0
+    for i in eachindex(s)
+        c = s[i]
+        if c == '[' || c == '{'
+            depth += 1
+        elseif c == ']' || c == '}'
+            depth -= 1
+        elseif c == ':' && depth == 0
+            key = strip(s[1:i-1])
+            val = strip(s[i+1:end])
+            # Strip surrounding double quotes from key
+            if length(key) >= 2 && key[1] == '"' && key[end] == '"'
+                key = key[2:end-1]
+            end
+            return key, val
+        end
+    end
+    error("Invalid JSON object entry (no key:value separator at depth 0): '$(s)'")
+end
+
+"""
+    _parse_octave_object(s) -> Dict{String, Any}
+
+Parse a JSON object string produced by Octave's `jsonencode(struct(...))`.
+The expected format is:
+    `{"K":[[1,2],[3,4]],"U":[0,1,2],"F":[1.0,2.0,3.0]}`
+
+Returns a dictionary mapping string keys to parsed Julia values
+(scalars, vectors, or matrices via `_parse_value`).
+"""
+function _parse_octave_object(s::AbstractString)
+    s = strip(s)
+    if isempty(s)
+        return Dict{String,Any}()
+    end
+    if s[1] != '{' || s[end] != '}'
+        error("Expected JSON object wrapped in {...}, got: '$(s[1:min(end,80)])...'")
+    end
+    inner = strip(s[2:end-1])
+    isempty(inner) && return Dict{String,Any}()
+
+    pairs = _split_top_level_object(inner)
+    result = Dict{String,Any}()
+    for pair in pairs
+        key, val_str = _split_key_value(pair)
+        result[key] = _parse_value(val_str)
+    end
+    return result
+end
+
+"""Public wrapper for `_parse_octave_object`."""
+parse_octave_object(s::AbstractString) = _parse_octave_object(s)
+
 """Parse a single JSON number (or `null` → `NaN`)."""
 function _parse_number(s::AbstractString)
     s = strip(s)
@@ -427,6 +520,100 @@ function call_function(m_file_path::String, func_name::String, args_json::String
         # Determine success: treat as success if we got non-empty JSON output.
         # Warnings (gnuplot deprecation, etc.) go to stderr but are non-fatal.
         # Only flag failure if stderr contains actual "error:" lines.
+        err_trimmed = strip(err_str)
+        has_fatal_error = false
+        for line in split(err_trimmed, '\n')
+            trimmed = strip(line)
+            if !isempty(trimmed) && startswith(lowercase(trimmed), "error:")
+                has_fatal_error = true
+                break
+            end
+        end
+
+        out_trimmed = strip(out_str)
+        if has_fatal_error || isempty(out_trimmed)
+            return OctaveResult(false, out_trimmed, err_trimmed, duration_ms)
+        end
+
+        return OctaveResult(true, out_trimmed, err_trimmed, duration_ms)
+    end
+end
+
+"""
+    run_script(script_body; dirs, sanitize, timeout) -> OctaveResult
+
+Run an arbitrary Octave script (not just a single function call).
+Wraps the script in the same headless/timeout infrastructure as
+`call_function`, but does NOT inject sanitize code by default.
+
+# Arguments
+- `script_body::String`: Raw Octave code to execute.
+
+# Keyword Arguments
+- `dirs::Vector{String}`: Directories to add to Octave's path via `addpath`.
+- `sanitize::Bool`: Whether to replace NaN/Inf with 1e99 (default: `false`).
+- `timeout::Float64`: Maximum execution time in seconds (default: `CALL_TIMEOUT`).
+
+# Returns
+An `OctaveResult` struct. On success, `.output_json` contains the raw stdout.
+"""
+function run_script(
+    script_body::String;
+    dirs::Vector{String}=String[],
+    sanitize::Bool=false,
+    timeout::Float64=CALL_TIMEOUT,
+)
+    # Build addpath lines
+    addpath_lines = join(["addpath(\"$d\");" for d in dirs], "\n")
+
+    # Build sanitization block (off by default for problem scripts)
+    sanitize_block = if sanitize
+        """
+        function result = __sanitize__(x)
+            if isfloat(x)
+                x(isnan(x)) = 1e99;
+                x(isinf(x)) = 1e99;
+            end
+            result = x;
+        end
+        """
+    else
+        ""
+    end
+
+    # Suppress graphics — problem scripts may call diagram functions
+    wrapper_script = """
+set(0, "DefaultFigureVisible", "off");
+$(addpath_lines)
+$(sanitize_block)
+
+$(script_body)
+"""
+
+    octave_bin = OCTAVE_PATH
+    if !isfile(octave_bin)
+        return OctaveResult(false, "", "Octave not found at $(octave_bin)", 0.0)
+    end
+
+    info = detect_octave()
+    if !info.has_json
+        return OctaveResult(false, "", "Octave $(info.version) does not have jsonencode (need ≥8.0)", 0.0)
+    end
+
+    return mktemp() do path, io
+        write(io, wrapper_script)
+        close(io)
+
+        cmd = `$(octave_bin) --no-gui --no-window-system --quiet --no-history --no-init-file --no-site-file $(path)`
+        t_start = time()
+        out_str, err_str, completed = _run_with_timeout(cmd, timeout)
+        duration_ms = (time() - t_start) * 1000.0
+
+        if !completed
+            return OctaveResult(false, "", "Timeout after $(timeout)s", duration_ms)
+        end
+
+        # Determine success
         err_trimmed = strip(err_str)
         has_fatal_error = false
         for line in split(err_trimmed, '\n')

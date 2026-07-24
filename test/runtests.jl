@@ -1,6 +1,9 @@
-using Pkg
-Pkg.activate(joinpath(@__DIR__, ".."))
-Pkg.instantiate()
+# Pkg setup for direct runs; Pkg.test() handles its own environment
+if Base.active_project() == joinpath(@__DIR__, "..", "Project.toml")
+    using Pkg
+    Pkg.activate(joinpath(@__DIR__, ".."))
+    Pkg.instantiate()
+end
 
 using LibFEM
 using Plots
@@ -78,8 +81,8 @@ end
             Ke = d1_spring_elementstiffness(k)
             @test Ke == [1000 -1000; -1000 1000]
             @test size(Ke) == (2, 2)
-            # zero stiffness → zero matrix
-            @test d1_spring_elementstiffness(0) == zeros(2, 2)
+            # zero stiffness rejected
+            @test_throws ElementParameterError d1_spring_elementstiffness(0)
             # Physical invariants (incl. symmetry, PSD, zero row-sum)
             @test_translational_invariants Ke
         end
@@ -117,14 +120,9 @@ end
             # No L>0 checks needed for spring elements
         end
 
-        @testset "negative/zero parameter behavior" begin
-            # Zero stiffness → zero matrix
-            @test d1_spring_elementstiffness(0) == zeros(2, 2)
-            # Negative stiffness → negated matrix
-            @test d1_spring_elementstiffness(-100) == -100 * [1 -1; -1 1]
-            # Negative stiffness force
-            Ke_neg = d1_spring_elementstiffness(-100)
-            @test d1_spring_elementforce(Ke_neg, [0.01; 0.0]) ≈ [-1.0; 1.0]
+        @testset "parameter validation" begin
+            @test_throws ElementParameterError d1_spring_elementstiffness(0)
+            @test_throws ElementParameterError d1_spring_elementstiffness(-100)
         end
     end
 
@@ -208,6 +206,90 @@ end
             @test d1_truss_elementstiffness(0.0, 1.0, 1.0) == zeros(2, 2)
             # Negative modulus → negated matrix (not validated)
             @test d1_truss_elementstiffness(-1.0, 1.0, 1.0) == -[1 -1; -1 1]
+        end
+    end
+
+    # ─────────────────────────────────────────────────
+    # 1-D Quadratic Bar (d1_quadraticbar)
+    # ─────────────────────────────────────────────────
+    @testset "d1_quadraticbar" begin
+        @testset "elementstiffness" begin
+            E, A, L = 70e6, 0.001, 4.0
+            Ke = d1_quadraticbar_elementstiffness(E, A, L)
+            @test size(Ke) == (3, 3)
+            @test Ke ≈ Ke'  # symmetry
+            scale = E * A / (3 * L)  # 5833.333...
+            @test Ke ≈ scale * [7 1 -8; 1 7 -8; -8 -8 16]
+            # Physical invariants (symmetry + PSD; no zero row-sum for higher-order element)
+            @test_physical_invariants Ke
+        end
+
+        @testset "elementforces" begin
+            Ke = d1_quadraticbar_elementstiffness(70e6, 0.001, 4.0)
+            u = [0.001; 0.002; 0.0015]
+            f = d1_quadraticbar_elementforces(Ke, u)
+            @test f ≈ Ke * u
+            @test length(f) == 3
+            # zero displacement
+            @test d1_quadraticbar_elementforces(Ke, zeros(3)) ≈ zeros(3)
+        end
+
+        @testset "elementstress" begin
+            Ke = d1_quadraticbar_elementstiffness(70e6, 0.001, 4.0)
+            u = [0.001; 0.002; 0.0015]
+            sigma = d1_quadraticbar_elementstress(Ke, u, 0.001)
+            @test sigma ≈ Ke * u / 0.001
+            @test length(sigma) == 3
+            @test_throws ElementParameterError d1_quadraticbar_elementstress(Ke, u, 0.0)
+            @test_throws ElementParameterError d1_quadraticbar_elementstress(Ke, u, -1.0)
+        end
+
+        @testset "assemble" begin
+            Ke = d1_quadraticbar_elementstiffness(70e6, 0.001, 4.0)
+            K = zeros(5, 5)
+            K = d1_quadraticbar_assemble(K, Ke, 1, 3, 2)
+            # Node 1 → row/col 1, Node 3 → row/col 3, Node 2 → row/col 2
+            @test K[1, 1] ≈ Ke[1, 1]
+            @test K[1, 3] ≈ Ke[1, 2]
+            @test K[1, 2] ≈ Ke[1, 3]
+            @test K[3, 1] ≈ Ke[2, 1]
+            @test K[3, 3] ≈ Ke[2, 2]
+            @test K[3, 2] ≈ Ke[2, 3]
+            @test K[2, 1] ≈ Ke[3, 1]
+            @test K[2, 3] ≈ Ke[3, 2]
+            @test K[2, 2] ≈ Ke[3, 3]
+            # All other entries remain zero
+            @test all(K[4:5, :] .== 0)
+            @test all(K[:, 4:5] .== 0)
+        end
+
+        @testset "validation" begin
+            @test_throws ElementParameterError d1_quadraticbar_elementstiffness(1.0, 1.0, 0.0)
+            @test_throws ElementParameterError d1_quadraticbar_elementstiffness(1.0, 1.0, -1.0)
+            @test_throws ElementParameterError d1_quadraticbar_elementstiffness(1.0, 0.0, 1.0)
+            @test_throws ElementParameterError d1_quadraticbar_elementstiffness(1.0, -1.0, 1.0)
+            @test_throws ElementParameterError d1_quadraticbar_elementstress([1 0 0; 0 1 0; 0 0 1], [0;0;0], 0.0)
+            @test_throws ElementParameterError d1_quadraticbar_elementstress([1 0 0; 0 1 0; 0 0 1], [0;0;0], -1.0)
+        end
+
+        @testset "problem_4_2_integration" begin
+            E, A, L = 70e6, 0.001, 4.0
+            k1 = d1_spring_elementstiffness(2000)
+            k2 = d1_quadraticbar_elementstiffness(E, A, L)
+            K = zeros(4, 4)
+            K = d1_spring_assemble(K, k1, 1, 2)
+            K = d1_quadraticbar_assemble(K, k2, 2, 4, 3)
+            k = K[2:4, 2:4]
+            f = [0.0; 10.0; 5.0]
+            u = k \ f
+            U = [0.0; u]
+            F = K * U
+            @test size(K) == (4, 4)
+            @test K ≈ K'  # global symmetry
+            # Verify solve produces finite displacements
+            @test all(isfinite, U)
+            # Verify equilibrium: F should have reaction at node 1
+            @test F[1] ≈ -15.0  # sum of applied forces = 10 + 5 = 15
         end
     end
 

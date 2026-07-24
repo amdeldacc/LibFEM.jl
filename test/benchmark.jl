@@ -27,8 +27,8 @@ STIFF["d2_truss"] = @benchmarkable d2_truss_elementstiffness(200e9, 0.01, 2.0, 3
 # d3_truss: E = 200e9, A = 0.01, L = 2.0, thetax = 30, thetay = 45, thetaz = 60
 STIFF["d3_truss"] = @benchmarkable d3_truss_elementstiffness(200e9, 0.01, 2.0, 30, 45, 60)
 
-# d2_beam: E = 200e9, A = 0.01, I = 2e-4, L = 2.0, theta = 0 (horizontal)
-STIFF["d2_beam"] = @benchmarkable d2_beam_elementstiffness(200e9, 0.01, 2e-4, 2.0, 0)
+# d2_beam: E = 200e9, I = 2e-4, L = 2.0 (pure beam, local coords, no axial DOF)
+STIFF["d2_beam"] = @benchmarkable d2_beam_elementstiffness(200e9, 2e-4, 2.0)
 
 # d3_spaceframe: E = 3e10, G = 1.15e8, A = 0.01, Iy = 1e-4, Iz = 2e-4, J = 1e-5, (0,0,0)→(4,0,0)
 STIFF["d3_spaceframe"] = @benchmarkable d3_spaceframe_elementstiffness(3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5, 0, 0, 0, 4, 0, 0)
@@ -101,11 +101,11 @@ ASSEMBLE["d1_truss"] = @benchmarkable begin
     end
 end
 
-# d2_beam: 500 elements, 501 nodes, 3 DOF/node → 1503 DOF
+# d2_beam: 500 elements, 501 nodes, 2 DOF/node → 1002 DOF
 const n_d2b = 500
 const n_d2b_nodes = n_d2b + 1
-K_d2b = zeros(3 * n_d2b_nodes, 3 * n_d2b_nodes)
-k_d2b_elements = [d2_beam_elementstiffness(200e9, 0.01, 2e-4, 2.0, 0) for _ in 1:n_d2b]
+K_d2b = zeros(2 * n_d2b_nodes, 2 * n_d2b_nodes)
+k_d2b_elements = [d2_beam_elementstiffness(200e9, 2e-4, 2.0) for _ in 1:n_d2b]
 ASSEMBLE["d2_beam"] = @benchmarkable begin
     fill!($K_d2b, 0.0)
     for idx in 1:$n_d2b
@@ -178,9 +178,10 @@ FORCES["d2_truss"] = @benchmarkable d2_truss_elementforces(200e9, 0.01, 2.0, 30,
 const u_t3 = [0.001; zeros(5)]
 FORCES["d3_truss"] = @benchmarkable d3_truss_elementforces(200e9, 0.01, 2.0, 30, 45, 60, $u_t3)
 
-# d2_beam: E = 200e9, A = 0.01, I = 2e-4, L = 2.0, theta = 0, u (6-element)
-const u_b2 = [0.001; zeros(5)]
-FORCES["d2_beam"] = @benchmarkable d2_beam_elementforces(200e9, 0.01, 2e-4, 2.0, 0, $u_b2)
+# d2_beam: pre-compute stiffness (E=200e9, I=2e-4, L=2.0), u (4-element)
+const k_b2 = d2_beam_elementstiffness(200e9, 2e-4, 2.0)
+const u_b2 = [0.001; zeros(3)]
+FORCES["d2_beam"] = @benchmarkable d2_beam_elementforces($k_b2, $u_b2)
 
 # =====================
 # Group 4: d3_spaceframe Assembly into ~3000 DOF system

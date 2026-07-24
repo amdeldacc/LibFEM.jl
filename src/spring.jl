@@ -14,6 +14,7 @@ Return the 2×2 element stiffness matrix for a 1-D spring element.
 A 2×2 element stiffness matrix.
 """
 function d1_spring_elementstiffness(k::Real)
+    validate_positive(k, "k")
     return [k -k; -k k]
 end
 

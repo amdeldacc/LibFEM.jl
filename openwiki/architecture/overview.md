@@ -18,10 +18,11 @@ LibFEM.jl is a single-module library with multi-file source organization. The mo
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
 | `src/utils.jl` | `deg2rad` and shared helpers |
-| `src/assembly.jl` | `_assemble!` private helper |
+| `src/assembly.jl` | `_assemble!` private helper, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime` |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
-| `src/beam.jl` | All `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), and `d3_beam_*` (space frame) implementations |
+| `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (1-D quadratic bar, 3-node) |
+| `src/beam.jl` | All `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), and `d3_spaceframe_*` (space frame) implementations |
 | `src/plot.jl` | Beam diagram functions (Plots dependency) |
 
 ```julia
@@ -35,6 +36,7 @@ include("utils.jl")
 include("assembly.jl")
 include("spring.jl")
 include("truss.jl")
+include("quadraticbar.jl")
 include("beam.jl")
 include("plot.jl")
 
@@ -42,7 +44,7 @@ include("plot.jl")
 end
 ```
 
-**Exports**: All public functions are exported in grouped blocks. `deg2rad` is exported for external use. The helpers `_assemble!` and `_d3_beam_kprime` remain private (underscore prefix, not exported).
+**Exports**: All public functions are exported in grouped blocks. `deg2rad` is exported for external use. The helpers `_assemble!`, `_d2_planeframe_kprime`, and `_d3_spaceframe_kprime` remain private (underscore prefix, not exported).
 
 ## Naming Convention
 
@@ -62,11 +64,11 @@ This is a translation from the MATLAB naming convention in `Doc/Kattan/M-Files/`
 
 | Prefix | DOF per node | Typical elements | Global matrix indexing |
 |--------|-------------|------------------|----------------------|
-| `d1_` | 1 | 1D spring, linear bar | Node `i` → row `i` |
+| `d1_` | 1 | 1D spring, linear bar, quadratic bar | Node `i` → row `i` |
 | `d2_` | 2 | 2D spring, plane truss | Node `i` → rows `2i-1, 2i` |
 | `d2_planeframe` | **3** | Plane frame (2D beam with axial) | Node `i` → rows `3i-2, 3i-1, 3i` |
 | `d3_` | 3 (`d3_spring`, `d3_truss`) | 3D spring, space truss | Node `i` → rows `3i-2, 3i-1, 3i` |
-| `d3_beam` | **6** | Space frame (3D beam) | Node `i` → rows `6i-5, 6i-4, 6i-3, 6i-2, 6i-1, 6i` |
+| `d3_spaceframe` | **6** | Space frame (3D beam) | Node `i` → rows `6i-5, 6i-4, 6i-3, 6i-2, 6i-1, 6i` |
 
 ### Beam elements: two variants (2D)
 
@@ -74,7 +76,7 @@ This is a translation from the MATLAB naming convention in `Doc/Kattan/M-Files/`
 
 **2D Plane Frame (`d2_planeframe_*`)**: Uses **3 DOF per node** (`u_x`, `u_y`, rotation) — combining axial and bending behavior. The 6×6 stiffness matrix matches Kattan's `PlaneFrameElementStiffness`. Assembly uses `_assemble!` with `dofs=3`.
 
-**3D Beam / Space Frame (`d3_beam_*`)**: Uses **6 DOF per node** (`u_x`, `u_y`, `u_z`, `θ_x`, `θ_y`, `θ_z`) — translations and rotations in all three axes. The element stiffness matrix is 12×12. The rotation matrix `Λ` (3×3 direction cosines) is constructed from the element node coordinates, handling the vertical-element degenerate case where `D = y₂ - y₁ = 0` and `z₂ - z₁ = 0`.
+**3D Space Frame (`d3_spaceframe_*`)**: Uses **6 DOF per node** (`u_x`, `u_y`, `u_z`, `θ_x`, `θ_y`, `θ_z`) — translations and rotations in all three axes. The element stiffness matrix is 12×12. The rotation matrix `Λ` (3×3 direction cosines) is constructed from the element node coordinates, handling the vertical-element degenerate case where `D = y₂ - y₁ = 0` and `z₂ - z₁ = 0`.
 
 ## Function Pattern
 
@@ -102,7 +104,7 @@ epsilon = d2_truss_elementstrain(L, theta, u)
 Additional helpers exist per domain:
 - **Length**: `_elementlength(...)` — Euclidean distance between node coordinates (2D/3D truss, beam)
 - **Diagrams** (beam only): `_elementaxialdiagram`, `_elementmomentdiagram`, `_elementsheardiagram` — return Plots.jl `Plot` objects
-- **3D beam internals**: `_d3_beam_kprime(E, G, A, Iy, Iz, J, L)` — private helper returning the 12×12 local stiffness matrix in element coordinates (before rotation to global). Used by `d3_beam_elementstiffness` and `d3_beam_elementforces`.
+- **3D space frame internals**: `_d3_spaceframe_kprime(E, G, A, Iy, Iz, J, L)` — private helper returning the 12×12 local stiffness matrix in element coordinates (before rotation to global). Used by `d3_spaceframe_elementstiffness` and `d3_spaceframe_elementforces`.
 
 ### Angle Conventions
 
@@ -141,7 +143,7 @@ This maps 4 element-level blocks (ii, jj, ii→jj, jj→ii) to the global stiffn
 | `1` | `d1_spring_assemble`, `d1_truss_assemble` |
 | `2` | `d2_spring_assemble`, `d2_truss_assemble` |
 | `3` | `d2_planeframe_assemble`, `d3_spring_assemble`, `d3_truss_assemble` |
-| `6` | `d3_beam_assemble` |
+| `6` | `d3_spaceframe_assemble` |
 
 The helper is private (underscore prefix, not exported). Adding new element types requires only passing the correct `dofs` parameter — no new assembly boilerplate.
 
@@ -151,6 +153,12 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d1_spring_elementstiffness(k)` — 2×2 matrix
 - `d1_spring_assemble(K, k, i, j)` — DOF mapping: 1
 - `d1_spring_elementforce(k, u)` — 2-element vector
+
+### 1D Quadratic Bar (`d1_quadraticbar`)
+- `d1_quadraticbar_elementstiffness(E, A, L)` — 3×3 matrix (validates `L > 0`, `A > 0`)
+- `d1_quadraticbar_assemble(K, k, i, j, m)` — custom assembly for 3-node element (DOF mapping: 1)
+- `d1_quadraticbar_elementforces(Ke, u)` — 3-element vector
+- `d1_quadraticbar_elementstress(Ke, u, A)` — 3-element stress vector (validates `A > 0`)
 
 ### 1D Truss (`d1_truss`)
 - `d1_truss_elementstiffness(E, A, L)` — 2×2 matrix (validates `L > 0`, `A > 0`)
@@ -201,23 +209,23 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d3_truss_elementstrain(L, thetax, thetay, thetaz, u)` — scalar strain (validates `L > 0`)
 - `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)` — element length
 
-### 3D Beam / Space Frame (`d3_beam`)
-- `d3_beam_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` — 12×12 matrix (validates `L > 0`)
-- `d3_beam_assemble(K, k, i, j)` — DOF mapping: **6**
-- `d3_beam_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` — 12-element vector (local frame) (validates `L > 0`)
-- `d3_beam_elementlength(x1, y1, z1, x2, y2, z2)` — 3D Euclidean distance
-- `d3_beam_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
-- `d3_beam_elementshearydiagram(f, L)` — Plots.jl shear force (Y) diagram
-- `d3_beam_elementshearzdiagram(f, L)` — Plots.jl shear force (Z) diagram
-- `d3_beam_elementmomentydiagram(f, L)` — Plots.jl bending moment (Y) diagram
-- `d3_beam_elementmomentzdiagram(f, L)` — Plots.jl bending moment (Z) diagram
-- `d3_beam_elementtorsiondiagram(f, L)` — Plots.jl torsion diagram
+### 3D Space Frame (`d3_spaceframe`)
+- `d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` — 12×12 matrix (validates `L > 0`)
+- `d3_spaceframe_assemble(K, k, i, j)` — DOF mapping: **6**
+- `d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` — 12-element vector (local frame) (validates `L > 0`)
+- `d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)` — 3D Euclidean distance
+- `d3_spaceframe_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
+- `d3_spaceframe_elementshearydiagram(f, L)` — Plots.jl shear force (Y) diagram
+- `d3_spaceframe_elementshearzdiagram(f, L)` — Plots.jl shear force (Z) diagram
+- `d3_spaceframe_elementmomentydiagram(f, L)` — Plots.jl bending moment (Y) diagram
+- `d3_spaceframe_elementmomentzdiagram(f, L)` — Plots.jl bending moment (Z) diagram
+- `d3_spaceframe_elementtorsiondiagram(f, L)` — Plots.jl torsion diagram
 
-  **Note**: The 3D beam uses a 12×12 local stiffness matrix with an embedded 3×3 rotation matrix `Λ` built from node coordinates (not angle parameters). `Iy` governs bending about the y-axis (δz, θy), `Iz` governs bending about the z-axis (δy, θz). The vertical-element degenerate case (`D = y₂ - y₁ = 0` and `z₂ - z₁ = 0`) is handled automatically.
+  **Note**: The 3D space frame uses a 12×12 local stiffness matrix with an embedded 3×3 rotation matrix `Λ` built from node coordinates (not angle parameters). `Iy` governs bending about the y-axis (δz, θy), `Iz` governs bending about the z-axis (δy, θz). The vertical-element degenerate case (`D = y₂ - y₁ = 0` and `z₂ - z₁ = 0`) is handled automatically.
 
 ## Dependencies & Runtime Notes
 
-- **`Plots.jl`** v1 — used by all beam diagram functions (`d2_beam_*`, `d2_planeframe_*`, and `d3_beam_*`). Required in `Project.toml`.
+- **`Plots.jl`** v1 — used by all beam diagram functions (`d2_beam_*`, `d2_planeframe_*`, and `d3_spaceframe_*`). Required in `Project.toml`.
 - **`using Plots`** is declared at module level in `src/LibFEM.jl` (though the diagram functions are in `src/plot.jl`).
 - **`deg2rad` is now exported** — users can call `LibFEM.deg2rad(theta)` for degree-to-radian conversion.
 - **No `ModelingToolkit`** — listed as a dependency in `CLAUDE.md`'s older version note, but the `Project.toml` has been updated to `Plots` only. The scripts in `scripts/` use MTK independently.
@@ -225,9 +233,12 @@ The helper is private (underscore prefix, not exported). Adding new element type
 ## Testing
 
 Tests are in `test/`:
-- **`runtests.jl`** — Main test suite (~400 lines). Uses `Test` standard library. Covers all 8 element types (including `d3_beam`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, and MATLAB reference comparison for Problem 10.1.
+- **`runtests.jl`** — Main test suite (~900 lines). Uses `Test` standard library. Covers all 8 element types (including `d3_spaceframe` and `d1_quadraticbar`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, and MATLAB reference comparison for Problem 10.1. Includes golden regression tests against `test/golden/v1/` binary reference files.
 - **`comparison.jl`** — Side-by-side MATLAB reference implementations transcribed from `Doc/Kattan/M-Files/`. Not run as independent tests; included from `runtests.jl`.
-- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (12 benchmarks). Covers stiffness construction (8 element types), assembly (500-element d2_truss chain + 500-element d3_beam chain), solve (random SPD system), and d3_beam element forces. Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
+- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (12 benchmarks). Covers stiffness construction (8 element types), assembly (500-element d2_truss chain + 500-element d3_spaceframe chain), solve (random SPD system), and d3_spaceframe element forces. Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
+- **`golden_regression.jl`** — Regression test runner that diffs current outputs against `test/golden/v1/`.
+- **`octave_runner.jl`** — Octave runner module for MATLAB validation (used by `scripts/validate_matlab.jl`).
+- **`matlab_adapters.jl`** — MATLAB↔Julia argument/result adapters used by the Octave verification harness.
 
 To run tests:
 ```julia
@@ -260,7 +271,7 @@ Key invariants to maintain:
 See the repository's issue tracker for the full list. The **`ToDo.md`** file at the repository root is the merged code review backlog from two independent AI reviews. The cross-verified review (`ToDo_Promethus_inkling.md`) identified **false positives** in the merged list:
 
 **⚠️ False Positives (NOT bugs — mathematically correct per MATLAB reference):**
-- **C1**: `d3_beam_elementforces` uses `R` not `R'` — MATLAB `SpaceFrameElementForces.m:57` uses `kprime * R * u` (identical to Julia). Standard FEM: stiffness uses `R' * k_local * R` (global), forces use `k_local * R * u` (local).
+- **C1**: `d3_spaceframe_elementforces` uses `R` not `R'` — MATLAB `SpaceFrameElementForces.m:57` uses `kprime * R * u` (identical to Julia). Standard FEM: stiffness uses `R' * k_local * R` (global), forces use `k_local * R * u` (local).
 - **C2**: `d2_planeframe_elementforces` "inverted transformation" — MATLAB `PlaneFrameElementForces.m:21` uses `kprime * T * u` (identical to Julia).
 
 **✅ Verified Real Issues (from cross-verified review):**
@@ -269,7 +280,7 @@ See the repository's issue tracker for the full list. The **`ToDo.md`** file at 
 |---|---|---|---|
 | **H1** | HIGH | Duplicated rotation matrix (Λ/R) in 3D beam stiffness & force (~30 lines each) | `src/beam.jl:200-228`, `297-322` |
 | **H2** | HIGH | Inconsistent force return types: 1D returns 2-element Vector, 2D/3D return scalar | `src/truss.jl:161, 313, 339, 366` |
-| **H3** | HIGH | `_d3_beam_kprime` misplaced in `assembly.jl` (belongs in `beam.jl`) | `src/assembly.jl:32-87` |
+| **H3** | HIGH | `_d3_spaceframe_kprime` misplaced in `assembly.jl` (belongs in `beam.jl`) | `src/assembly.jl:32-87` |
 | **H4** | MEDIUM | `_assemble!` missing bounds checks on `K` size vs indices | `src/assembly.jl:21-27` |
 | **H5** | HIGH | `LinearAlgebra` not declared in `Project.toml` deps | `Project.toml` |
 | **M1** | MEDIUM | `d3_truss` angle variable naming: `u` vs `w` for `thetay` | `src/truss.jl:282-284` vs `315+` |

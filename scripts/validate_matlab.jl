@@ -26,7 +26,9 @@ const PROJECT_DIR = dirname(SCRIPT_DIR)
 
 include(joinpath(PROJECT_DIR, "test", "octave_runner.jl"))
 include(joinpath(PROJECT_DIR, "test", "matlab_adapters.jl"))
+include(joinpath(PROJECT_DIR, "scripts", "problem_wrapper.jl"))
 using .OctaveRunner
+using .ProblemWrapper
 
 # ─── Paths & Constants ──────────────────────────────────────────
 
@@ -498,13 +500,34 @@ function test_beam()
 end
 
 # ═════════════════════════════════════════════════════════════════
+# Problem Script Validation
+# ═════════════════════════════════════════════════════════════════
+
+function test_problems()
+    results = ValidateResult[]
+    problems = ProblemWrapper.PROBLEM_NAMES
+
+    for pn in problems
+        pw_results = ProblemWrapper.validate_problem(pn)
+        # Convert ProblemWrapper.ValidateResult → local ValidateResult
+        for r in pw_results
+            push!(results, ValidateResult(
+                r.label, r.julia_func, r.matlab_file,
+                r.status, r.rel_error, r.abs_error, r.message))
+        end
+    end
+
+    return results
+end
+
+# ═════════════════════════════════════════════════════════════════
 # CLI
 # ═════════════════════════════════════════════════════════════════
 
 function print_usage()
     println("Usage: julia --project=. scripts/validate_matlab.jl [element_type]")
     println()
-    println("element_type: spring | truss | beam | all")
+    println("element_type: spring | truss | beam | problems | all")
     println()
     println("Exit codes:")
     println("  0 — all tests within tolerance (rtol=$(RTOL))")
@@ -514,7 +537,7 @@ end
 
 function main()
     # ─── Parse args ─────────────────────────────────────────────
-    valid_types = ["spring", "truss", "beam", "all"]
+    valid_types = ["spring", "truss", "beam", "problems", "all"]
     element_type = length(ARGS) >= 1 ? lowercase(strip(ARGS[1])) : "all"
 
     if element_type ∉ valid_types
@@ -570,6 +593,13 @@ function main()
         print_separator("─", 80)
         r = test_beam()
         print_results(r, "Beam Elements")
+        append!(all_results, r)
+    end
+
+    if element_type ∈ ("problems", "all")
+        print_separator("─", 80)
+        r = test_problems()
+        print_results(r, "Kattan Solution Problems (via Octave)")
         append!(all_results, r)
     end
 

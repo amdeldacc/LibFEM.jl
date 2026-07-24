@@ -45,7 +45,7 @@ jobs:
   validate:
     name: Octave Validation
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
@@ -59,6 +59,6 @@ jobs:
         with:
           path: /var/cache/apt
           key: ${{ runner.os }}-apt-${{ hashFiles('**/ci.yml') }}
-      - run: sudo apt-get update && sudo apt-get install -y octave
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends octave
       - run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
       - run: julia --project=. scripts/validate_matlab.jl all

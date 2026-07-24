@@ -30,6 +30,40 @@ function _assemble!(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer
 end
 
 """
+    _d2_planeframe_kprime(E, A, I, L)
+
+Compute the 6×6 local (primal) stiffness matrix for a
+2-D plane frame element in its local coordinate system.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `A::Real`: Cross-sectional area.
+- `I::Real`: Moment of inertia.
+- `L::Real`: Element length.
+
+# Returns
+A 6×6 matrix in the local coordinate system.
+
+# Notes
+DOF order: [u₁, v₁, θ₁, u₂, v₂, θ₂] (axial, transverse, rotation).
+"""
+function _d2_planeframe_kprime(E::Real, A::Real, I::Real, L::Real)
+    w1 = E * A / L
+    w2 = 12 * E * I / (L^3)
+    w3 = 6 * E * I / (L^2)
+    w4 = 4 * E * I / L
+    w5 = 2 * E * I / L
+    return [
+        w1  0   0   -w1  0    0
+        0   w2  w3   0   -w2  w3
+        0   w3  w4   0   -w3  w5
+        -w1 0   0    w1  0    0
+        0   -w2 -w3  0    w2  -w3
+        0   w3  w5   0   -w3  w4
+    ]
+end
+
+"""
     _d3_spaceframe_kprime(E, G, A, Iy, Iz, J, L)
 
 Compute the 12×12 local (primal) stiffness matrix for a

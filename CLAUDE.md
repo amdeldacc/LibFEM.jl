@@ -69,6 +69,12 @@ using Pkg; Pkg.activate("."); using LibFEM
 using Pkg; Pkg.test()
 ```
 
+## Julia MCP Server (preferred over bash `julia`)
+
+Prefer the `julia_eval` MCP tool (persistent REPL with Revise.jl) over `julia` via bash.
+Use MCP for: running snippets, testing functions, validating numerics, any interactive work.
+Use bash `julia` only for: scripting with file I/O, long-running batch jobs, Pkg operations.
+
 ## Constraints & Workflow
 
 - **Source Organization**: The module is organized into multiple files via `include()` in a single `module LibFEM`:

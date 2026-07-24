@@ -94,7 +94,9 @@ using Pkg; Pkg.test()
 - **MATLAB Mapping**: Functions in `Doc/Kattan/M-Files/` follow a `{ElementType}{Operation}` naming convention. LibFEM.jl translates these to the `d{N}_{element}_{operation}` scheme:
   - `Spring*` → `d1_spring_*` (1D), `d2_spring_*` (2D), `d3_spring_*` (3D)
   - `LinearBar*`/`PlaneTruss*`/`SpaceTruss*` → `d1_truss_*`, `d2_truss_*`, `d3_truss_*`
-  - `Beam*`/`PlaneFrame*`/`SpaceFrame*` → `d2_beam_*` (plane), `d3_spaceframe_*` hinted (space frame)
+  - `Beam*` → `d2_beam_*` (pure beam, 2 DOF/node)
+  - `PlaneFrame*` → `d2_planeframe_*` (plane frame, 3 DOF/node)
+  - `SpaceFrame*` → `d3_spaceframe_*` (space frame, 6 DOF/node)
   - See `CONTEXT.md` for the full domain glossary and per-file mappings.
 
 ## Dependencies & Metadata

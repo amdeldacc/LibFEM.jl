@@ -100,9 +100,10 @@ A complete Octave script string ready for `run_script`.
 function build_problem_wrapper(mfile_path::String, output_vars::Vector{String})
     script = read(mfile_path, String)
 
-    # Strip `clear; clc;` (don't clear workspace between runs)
-    # It may appear after the comment header, not necessarily at line 1.
-    script = replace(script, r"clear\s*;\s*clc\s*;" => "")
+    # Strip `clear;` and `clc;` (don't clear workspace between runs)
+    # They may appear on separate lines, possibly with trailing comments.
+    script = replace(script, r"\s*clear\s*;.*" => "", count=1)
+    script = replace(script, r"\s*clc\s*;.*" => "", count=1)
 
     # Suppress diagram/plot output — some scripts call diagram functions
     # that would produce gnuplot warnings. We add a brief comment.
@@ -171,9 +172,7 @@ end
 # Each function computes the same variables as the MATLAB problem
 # script but using LibFEM.jl Julia functions.
 #
-# Currently implemented: Problems 2.1, 2.2 (spring systems)
-# All others return nothing (TODO — need Julia equivalents for
-# truss/beam/plane-frame element systems).
+# All 14 Kattan problems (2.1 through 8.3) have Julia equivalents.
 # ═══════════════════════════════════════════════════════════════
 
 """
@@ -895,15 +894,32 @@ end
 
 Extract the final JSON object `{...}` from a mixed output string.
 Problem scripts echo intermediate values (no semicolons), so we
-must find the last JSON struct at the end of the output.
+must find the last valid JSON struct at the end of the output.
+Iterates `{` positions from right to left, using brace-balancing
+to find a well-formed object.
 """
 function _extract_last_json(s::AbstractString)
     s = strip(s)
-    idx = findlast('{', s)
-    if idx === nothing
-        return s
+    pos = findlast('{', s)
+    while pos !== nothing
+        cand = s[pos:end]
+        bal = 0
+        ok = true
+        for c in cand
+            if c == '{'
+                bal += 1
+            elseif c == '}'
+                bal -= 1
+                bal < 0 && (ok = false; break)
+            end
+        end
+        if ok && bal == 0
+            return cand
+        end
+        pos = pos > 1 ? findprev('{', s, pos - 1) : nothing
     end
-    return s[idx:end]
+    idx = findlast('{', s)
+    return idx === nothing ? s : s[idx:end]
 end
 
 end  # module ProblemWrapper

@@ -1,62 +1,60 @@
 #!/usr/bin/env julia
 # ═══════════════════════════════════════════════════════════════
-# Problem 2.2 — Four-Element Spring System (Fig. 2.5)
+# Problem 4.2 — Quadratic Bar with a Spring (Fig. 4.4)
 # Reference: P. I. Kattan, "MATLAB Guide to Finite Elements:
 #   An Interactive Approach" (2nd ed., Springer, 2007)
 # ═══════════════════════════════════════════════════════════════
 #
-#                                k
-#                         +---/\/\/\---+
-# |/           k          |            |           k
-# |/----o----/\/\/\-------o            o-------/\/\/\----o---> P
-# |/    1                 2            3                 4
-#                         |            |
-#                         +---/\/\/\---+
-#                                k
+#                             10 kN         5 kN
+#                             ---->         ---->
+# |/----o---/\/\/\---o=============o=============o
+# |/    1           2             3             4
+# |/    |<- k=2000 ->|<-- 2m ---->|<-- 2m ----->|
+#                    |<--- quadratic bar (E=70GPa, A=0.001m²) -->|
 #
 # ═══════════════════════════════════════════════════════════════
 # Computes:
 #   1. Global stiffness matrix K
 #   2. Displacements at nodes 2, 3, and 4
 #   3. Reaction at node 1
-#   4. Force in each spring
+#   4. Force in the spring
+#   5. Quadratic bar element stresses
 # ═══════════════════════════════════════════════════════════════
 
 using LibFEM
 using LinearAlgebra
 
 # ─── Parameters ──────────────────────────────────────────────
-k_val = 170.0
+E = 70e6
+A = 0.001
+L = 4.0
+k_spring = 2000.0
 
 # ─── Element stiffness matrices ──────────────────────────────
-k1 = d1_spring_elementstiffness(k_val)
-k2 = d1_spring_elementstiffness(k_val)
-k3 = d1_spring_elementstiffness(k_val)
-k4 = d1_spring_elementstiffness(k_val)
+k1 = d1_spring_elementstiffness(k_spring)
+k2 = d1_quadraticbar_elementstiffness(E, A, L)
 
-println("k1 =")
+println("k1 (spring) =")
 display(k1)
+println("k2 (quadratic bar) =")
+display(k2)
 
 # ─── Assembly ────────────────────────────────────────────────
+# Nodes: 1 (spring left), 2 (spring right / bar left), 3 (bar mid), 4 (bar right)
 K = zeros(4, 4)
 K = d1_spring_assemble(K, k1, 1, 2)
-K = d1_spring_assemble(K, k2, 2, 3)
-K = d1_spring_assemble(K, k3, 2, 3)
-K = d1_spring_assemble(K, k4, 3, 4)
+K = d1_quadraticbar_assemble(K, k2, 2, 4, 3)  # MATLAB: QuadBarAssemble(K,k2,2,4,3)
 
 println("\nK =")
 display(K)
 
 # ─── Solve ───────────────────────────────────────────────────
 k = K[2:4, 2:4]
-f = [0.0; 0.0; 25.0]
+f = [0.0; 10.0; 5.0]
 
 u = k \ f
 U = [0.0; u]
-
 F = K * U
-# Zero out near-zero entries (same as MATLAB's abs(F) < 1e-10 → 0)
-F[abs.(F) .< 1e-10] .= 0.0
 
 println("\nk =")
 display(k)
@@ -69,55 +67,31 @@ display(U)
 println("\nF =")
 display(F)
 
-# ─── Post-processing: element forces ─────────────────────────
+# ─── Post-processing ─────────────────────────────────────────
 u1 = [0.0; U[2]]
 f1 = d1_spring_elementforce(k1, u1)
 
-u2 = [U[2]; U[3]]
-f2 = d1_spring_elementforce(k2, u2)
-
-u3 = [U[2]; U[3]]
-f3 = d1_spring_elementforce(k3, u3)
-
-u4 = [U[3]; U[4]]
-f4 = d1_spring_elementforce(k4, u4)
+# MATLAB: QuadBarElementStresses(k2, [U(2); U(4); U(3)], A)
+# i.e. nodes 2, 4, 3 in that order
+u2 = [U[2]; U[4]; U[3]]
+sigma2 = d1_quadraticbar_elementstress(k2, u2, A)
 
 println("\nu1 =")
 display(u1)
-println("\nf1 =")
+println("\nf1 (spring force) =")
 display(f1)
-println("\nu2 =")
-display(u2)
-println("\nf2 =")
-display(f2)
-println("\nu3 =")
-display(u3)
-println("\nf3 =")
-display(f3)
-println("\nu4 =")
-display(u4)
-println("\nf4 =")
-display(f4)
+println("\nsigma2 (quadratic bar stress) =")
+display(sigma2)
 
 # ─── Equilibrium check ───────────────────────────────────────
 println("\n--- Equilibrium check ---")
-println("Applied force P: 25.0 at node 4")
+println("Applied forces: 10 kN at node 3, 5 kN at node 4")
 println("Reaction at node 1 (F1): ", F[1])
-println("Sum F (should be [25? 0 0 0?]): ", sum(F))
-println("Spring force f1: ", f1)
-println("Spring force f2: ", f2)
-println("Spring force f3: ", f3)
-println("Spring force f4: ", f4)
+println("Sum F = ", sum(F), " (should be ", sum(f), ")")
 
 # ─── Self-validation ─────────────────────────────────────────
-# Expected values verified against Octave execution of Kattan's problem_2_2.m
-@assert isapprox(K, [170 -170 0 0; -170 510 -340 0; 0 -340 510 -170; 0 0 -170 170]; rtol=1e-10) "K mismatch"
-@assert isapprox(k, [510 -340 0; -340 510 -170; 0 -170 170]; rtol=1e-10) "k mismatch"
-@assert isapprox(f, [0.0; 0.0; 25.0]; rtol=1e-10) "f mismatch"
-@assert isapprox(u, [0.14705882352941177; 0.22058823529411764; 0.36764705882352944]; rtol=1e-10) "u mismatch"
-@assert isapprox(U, [0.0; 0.14705882352941177; 0.22058823529411764; 0.36764705882352944]; rtol=1e-10) "U mismatch"
-@assert isapprox(F, [-25.0; 0.0; 0.0; 25.0]; rtol=1e-10) "F mismatch"
-@assert isapprox(f1, [-25.0, 25.0]; rtol=1e-10) "f1 mismatch"
-@assert isapprox(f2, [-12.5, 12.5]; rtol=1e-10) "f2 mismatch"
-@assert isapprox(f3, [-12.5, 12.5]; rtol=1e-10) "f3 mismatch"
-@assert isapprox(f4, [-25.0, 25.0]; rtol=1e-10) "f4 mismatch"
+# Expected values verified against Octave execution of Kattan's problem_4_2.m
+@assert isapprox(u, [0.0075, 0.007892857142857201, 0.00807142857142863]; rtol=1e-10) "u mismatch"
+@assert isapprox(F, [-15.0, 0.0, 10.0, 5.0]; rtol=1e-10) "F mismatch"
+@assert isapprox(f1, [-15.0, 15.0]; rtol=1e-10) "f1 mismatch"
+@assert isapprox(sigma2, [-15000.0, 5000.0, 10000.0]; rtol=1e-10) "sigma2 mismatch"

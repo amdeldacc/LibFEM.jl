@@ -29,6 +29,7 @@ using Pkg; Pkg.activate("."); using LibFEM
 |--------|-----------|-----------|-----------|
 | **Spring** | `d1_spring_*` — scalar stiffness `k` | `d2_spring_*` — angle `theta` | `d3_spring_*` — angles `thetax, thetay, thetaz` |
 | **Truss** | `d1_truss_*` — `E, A, L` | `d2_truss_*` — `E, A, L, theta` | `d3_truss_*` — `E, A, L, thetax, thetay, thetaz` |
+| **Quadratic Bar** | `d1_quadraticbar_*` — `E, A, L` (3 nodes, 1 DOF/node) | (not implemented) | (not implemented) |
 | **Beam** (pure) | (not implemented) | `d2_beam_*` — `E, I, L` (2 DOF/node, bending only) | (not implemented) |
 | **Plane/Space Frame** | (not implemented) | `d2_planeframe_*` — `E, A, I, L, theta` (3 DOF/node) | `d3_spaceframe_*` — `E, G, A, Iy, Iz, J` **+ node coords** (6 DOF/node) |
 
@@ -117,9 +118,10 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
 | `src/utils.jl` | `deg2rad` and shared helpers |
-| `src/assembly.jl` | `_assemble!` private helper, `_d3_spaceframe_kprime` |
+| `src/assembly.jl` | `_assemble!` private helper, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime` |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
+| `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (3-node quadratic bar) |
 | `src/beam.jl` | All `d2_beam_*`, `d2_planeframe_*`, and `d3_spaceframe_*` implementations |
 | `src/plot.jl` | Beam diagram functions (Plots dependency) |
 | `test/runtests.jl` | Main test suite (~900 lines, covers all 8 element types, includes golden regression) |

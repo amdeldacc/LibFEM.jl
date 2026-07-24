@@ -97,18 +97,29 @@ LibFEM adds `d1_truss_elementstrain`, `d2_truss_elementstrain`, and `d3_truss_el
 
 | MATLAB File | Julia Function | Status |
 |------------|---------------|--------|
-| `SpaceFrameElementStiffness.m` | `d3_beam_elementstiffness` | Implemented |
-| `SpaceFrameAssemble.m` | `d3_beam_assemble` | Implemented |
-| `SpaceFrameElementForces.m` | `d3_beam_elementforces` | Implemented |
-| `SpaceFrameElementLength.m` | `d3_beam_elementlength` | Implemented |
-| `SpaceFrameElementAxialDiagram.m` | `d3_beam_elementaxialdiagram` | Implemented |
-| `SpaceFrameElementMomentYDiagram.m` | `d3_beam_elementmomentydiagram` | Implemented |
-| `SpaceFrameElementMomentZDiagram.m` | `d3_beam_elementmomentzdiagram` | Implemented |
-| `SpaceFrameElementShearYDiagram.m` | `d3_beam_elementshearydiagram` | Implemented |
-| `SpaceFrameElementShearZDiagram.m` | `d3_beam_elementshearzdiagram` | Implemented |
-| `SpaceFrameElementTorsionDiagram.m` | `d3_beam_elementtorsiondiagram` | Implemented |
+| `SpaceFrameElementStiffness.m` | `d3_spaceframe_elementstiffness` | Implemented |
+| `SpaceFrameAssemble.m` | `d3_spaceframe_assemble` | Implemented |
+| `SpaceFrameElementForces.m` | `d3_spaceframe_elementforces` | Implemented |
+| `SpaceFrameElementLength.m` | `d3_spaceframe_elementlength` | Implemented |
+| `SpaceFrameElementAxialDiagram.m` | `d3_spaceframe_elementaxialdiagram` | Implemented |
+| `SpaceFrameElementMomentYDiagram.m` | `d3_spaceframe_elementmomentydiagram` | Implemented |
+| `SpaceFrameElementMomentZDiagram.m` | `d3_spaceframe_elementmomentzdiagram` | Implemented |
+| `SpaceFrameElementShearYDiagram.m` | `d3_spaceframe_elementshearydiagram` | Implemented |
+| `SpaceFrameElementShearZDiagram.m` | `d3_spaceframe_elementshearzdiagram` | Implemented |
+| `SpaceFrameElementTorsionDiagram.m` | `d3_spaceframe_elementtorsiondiagram` | Implemented |
 
-Space frame (3D beam) is the most complex structural element — it carries 6 DOF per node (3 translations + 3 rotations) with a 12×12 stiffness matrix and a rotation matrix `Λ` built from node coordinates (no angle parameters). The Julia implementation in `d3_beam_*` uses a private `_d3_beam_kprime` helper for the local stiffness matrix and a rotation matrix `R` that handles the vertical-element degenerate case automatically via `Λ` (3×3 direction cosines).
+Space frame (3D beam) is the most complex structural element — it carries 6 DOF per node (3 translations + 3 rotations) with a 12×12 stiffness matrix and a rotation matrix `Λ` built from node coordinates (no angle parameters). The Julia implementation in `d3_spaceframe_*` uses a private `_d3_spaceframe_kprime` helper for the local stiffness matrix and a rotation matrix `R` that handles the vertical-element degenerate case automatically via `Λ` (3×3 direction cosines).
+
+### Quadratic Bar Elements
+
+| MATLAB File | Julia Function | Status |
+|------------|---------------|--------|
+| `QuadraticBarAssemble.m` | `d1_quadraticbar_assemble` | Implemented |
+| `QuadraticBarElementStiffness.m` | `d1_quadraticbar_elementstiffness` | Implemented |
+| `QuadraticBarElementForces.m` | `d1_quadraticbar_elementforces` | Implemented |
+| `QuadraticBarElementStresses.m` | `d1_quadraticbar_elementstress` | Implemented |
+
+The 1-D quadratic bar element (3 nodes, 1 DOF per node) is a higher-order element with a 3×3 stiffness matrix. It uses a custom assembly function `d1_quadraticbar_assemble(K, k, i, j, m)` because the generic `_assemble!` helper only supports 2-node elements. The quadratic bar integrates with 1D spring and linear truss elements for mixed-mesh problems (see `test/runtests.jl` problem_4_2_integration test).
 
 ### Other MATLAB Files (Not Yet Implemented)
 
@@ -118,7 +129,6 @@ Kattan covers additional element types beyond springs/trusses/beams. These MATLA
 |----------|-------------|
 | **Linear Triangle (CST)** | `LinearTriangleAssemble.m`, `LinearTriangleElementStiffness.m`, `LinearTriangleElementStresses.m`, `LinearTriangleElementPStresses.m`, `LinearTriangleElementArea.m` |
 | **Bilinear Quad (Q4)** | `BilinearQuadAssemble.m`, `BilinearQuadElementStiffness.m`, `BilinearQuadElementStiffness2.m`, `BilinearQuadElementStresses.m`, `BilinearQuadElementPStresses.m`, `BilinearQuadElementArea.m` |
-| **Quadratic Bar** | `QuadraticBarAssemble.m`, `QuadraticBarElementStiffness.m`, `QuadraticBarElementForces.m`, `QuadraticBarElementStresses.m` |
 | **Quadratic Triangle (T6)** | `QuadTriangleAssemble.m`, `QuadTriangleElementStiffness.m`, `QuadTriangleElementStresses.m`, `QuadTriangleElementPStresses.m`, `QuadTriangleElementArea.m` |
 | **Quadratic Quad (Q8)** | `QuadraticQuadAssemble.m`, `QuadraticQuadElementStiffness.m`, `QuadraticQuadElementStresses.m`, `QuadraticQuadElementPStresses.m`, `QuadraticQuadElementArea.m` |
 | **Linear Brick (B8)** | `LinearBrickAssemble.m`, `LinearBrickElementStiffness.m`, `LinearBrickElementStresses.m`, `LinearBrickElementPStresses.m`, `LinearBrickElementVolume.m` |

@@ -183,13 +183,38 @@ Compute the same variables as the MATLAB problem script using
 LibFEM.jl Julia functions. Returns `nothing` for problems that
 do not yet have a Julia equivalent.
 
-Currently implemented: "2.1", "2.2" (1-D spring systems).
+Implemented: "2.1", "2.2", "3.1", "3.3", "4.2", "5.1", "5.2",
+"6.1", "7.1", "7.2", "7.3", "8.1", "8.2", "8.3".
 """
 function run_julia_problem(problem_name::AbstractString)
     if problem_name == "2.1"
         return _problem_2_1_julia()
     elseif problem_name == "2.2"
         return _problem_2_2_julia()
+    elseif problem_name == "3.1"
+        return _problem_3_1_julia()
+    elseif problem_name == "3.3"
+        return _problem_3_3_julia()
+    elseif problem_name == "4.2"
+        return _problem_4_2_julia()
+    elseif problem_name == "5.1"
+        return _problem_5_1_julia()
+    elseif problem_name == "5.2"
+        return _problem_5_2_julia()
+    elseif problem_name == "6.1"
+        return _problem_6_1_julia()
+    elseif problem_name == "7.1"
+        return _problem_7_1_julia()
+    elseif problem_name == "7.2"
+        return _problem_7_2_julia()
+    elseif problem_name == "7.3"
+        return _problem_7_3_julia()
+    elseif problem_name == "8.1"
+        return _problem_8_1_julia()
+    elseif problem_name == "8.2"
+        return _problem_8_2_julia()
+    elseif problem_name == "8.3"
+        return _problem_8_3_julia()
     else
         return nothing
     end
@@ -259,6 +284,444 @@ function _problem_2_2_julia()
         "K" => K, "k" => k, "f" => f, "u" => u,
         "U" => U, "F" => F,
         "f1" => f1, "f2" => f2, "f3" => f3, "f4" => f4,
+    )
+end
+
+"""Julia equivalent of Problem 3.1: Three-bar structure (d1_truss)."""
+function _problem_3_1_julia()
+    E = 70e6; A = 0.005; L1 = 1.0; L2 = 2.0; L3 = 1.0
+
+    k1 = d1_truss_elementstiffness(E, A, L1)
+    k2 = d1_truss_elementstiffness(E, A, L2)
+    k3 = d1_truss_elementstiffness(E, A, L3)
+
+    K = zeros(4, 4)
+    K = d1_truss_assemble(K, k1, 1, 2)
+    K = d1_truss_assemble(K, k2, 2, 3)
+    K = d1_truss_assemble(K, k3, 3, 4)
+
+    k = K[2:4, 2:4]
+    f = [-10.0; 0.0; 15.0]
+    u = k \ f
+    U = [0.0; u]
+    F = K * U
+
+    sigma1 = d1_truss_elementstress(k1, [0.0; U[2]], A)
+    sigma2 = d1_truss_elementstress(k2, [U[2]; U[3]], A)
+    sigma3 = d1_truss_elementstress(k3, [U[3]; U[4]], A)
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "sigma1" => sigma1, "sigma2" => sigma2, "sigma3" => sigma3,
+    )
+end
+
+"""Julia equivalent of Problem 3.3: Linear bar with a spring."""
+function _problem_3_3_julia()
+    E = 200e6; A = 0.01; L = 2.0; k_spring = 1000.0
+
+    k1 = d1_truss_elementstiffness(E, A, L)
+    k2 = d1_spring_elementstiffness(k_spring)
+
+    K = zeros(3, 3)
+    K = d1_truss_assemble(K, k1, 1, 2)
+    K = d1_spring_assemble(K, k2, 2, 3)
+
+    k = K[2:2, 2:2]
+    f = [25.0]
+    u = k \ f
+    U = [0.0; u; 0.0]
+    F = K * U
+
+    sigma1 = d1_truss_elementstress(k1, [0.0; u], A)
+    f2 = d1_spring_elementforce(k2, [u; 0.0])
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "sigma1" => sigma1, "f2" => f2,
+    )
+end
+
+"""Julia equivalent of Problem 4.2: Quadratic bar with a spring."""
+function _problem_4_2_julia()
+    E = 70e6; A = 0.001; L = 4.0; k_spring = 2000.0
+
+    k1 = d1_spring_elementstiffness(k_spring)
+    k2 = d1_quadraticbar_elementstiffness(E, A, L)
+
+    K = zeros(4, 4)
+    K = d1_spring_assemble(K, k1, 1, 2)
+    K = d1_quadraticbar_assemble(K, k2, 2, 4, 3)
+
+    k = K[2:4, 2:4]
+    f = [0.0; 10.0; 5.0]
+    u = k \ f
+    U = [0.0; u]
+    F = K * U
+
+    f1 = d1_spring_elementforce(k1, [0.0; U[2]])
+    sigma2 = d1_quadraticbar_elementstress(k2, [U[2]; U[4]; U[3]], A)
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "f1" => f1, "sigma2" => sigma2,
+    )
+end
+
+"""Julia equivalent of Problem 5.1: Nine-element plane truss."""
+function _problem_5_1_julia()
+    E = 210e6; A = 0.005
+
+    x = [0.0, 5.0, 5.0, 10.0, 10.0, 15.0]
+    y = [0.0, 7.0, 0.0, 7.0, 0.0, 0.0]
+
+    elements = [(1,2), (1,3), (2,3), (3,5), (2,5), (2,4), (4,5), (5,6), (4,6)]
+
+    L_vals = Float64[]
+    theta_vals = Float64[]
+    k_vals = []
+
+    for (n1, n2) in elements
+        dx = x[n2] - x[n1]
+        dy = y[n2] - y[n1]
+        L = sqrt(dx^2 + dy^2)
+        theta = atan(dy, dx) * 180 / pi
+        push!(L_vals, L)
+        push!(theta_vals, theta)
+        push!(k_vals, d2_truss_elementstiffness(E, A, L, theta))
+    end
+
+    K = zeros(12, 12)
+    for (idx, (n1, n2)) in enumerate(elements)
+        d2_truss_assemble(K, k_vals[idx], n1, n2)
+    end
+
+    k = K[3:10, 3:10]
+    f = [20.0; 0.0; zeros(6)...]
+    u = k \ f
+    U = [0.0; 0.0; u; 0.0; 0.0]
+    F = K * U
+
+    sigma = Float64[]
+    for (idx, (n1, n2)) in enumerate(elements)
+        u_elem = [U[2*n1-1]; U[2*n1]; U[2*n2-1]; U[2*n2]]
+        push!(sigma, d2_truss_elementstress(E, L_vals[idx], theta_vals[idx], u_elem))
+    end
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "sigma1" => sigma[1], "sigma2" => sigma[2], "sigma3" => sigma[3],
+        "sigma4" => sigma[4], "sigma5" => sigma[5], "sigma6" => sigma[6],
+        "sigma7" => sigma[7], "sigma8" => sigma[8], "sigma9" => sigma[9],
+    )
+end
+
+"""Julia equivalent of Problem 5.2: Plane truss with a spring."""
+function _problem_5_2_julia()
+    E = 70e6; A = 0.01; k_spring = 3000.0
+
+    x = [0.0, 0.0, 0.0, 4.0, 4.0]
+    y = [0.0, 3.0, 7.0, 3.0, 3.0]
+
+    L1 = d2_truss_elementlength(x[1], y[1], x[4], y[4])
+    L2 = d2_truss_elementlength(x[2], y[2], x[4], y[4])
+    L3 = d2_truss_elementlength(x[3], y[3], x[4], y[4])
+
+    theta1 = atan(y[4] - y[1], x[4] - x[1]) * 180 / pi
+    theta2 = atan(y[4] - y[2], x[4] - x[2]) * 180 / pi
+    theta3 = atan(y[4] - y[3], x[4] - x[3]) * 180 / pi
+    if theta3 < 0
+        theta3 += 360.0
+    end
+
+    k1 = d2_truss_elementstiffness(E, A, L1, theta1)
+    k2 = d2_truss_elementstiffness(E, A, L2, theta2)
+    k3 = d2_truss_elementstiffness(E, A, L3, theta3)
+    k4 = d1_spring_elementstiffness(k_spring)
+
+    K = zeros(9, 9)
+    K = d2_truss_assemble(K, k1, 1, 4)
+    K = d2_truss_assemble(K, k2, 2, 4)
+    K = d2_truss_assemble(K, k3, 3, 4)
+    K = d1_spring_assemble(K, k4, 7, 9)
+
+    k = K[7:9, 7:9]
+    f = [0.0; 0.0; 10.0]
+    u = k \ f
+    U = [0.0; 0.0; 0.0; 0.0; 0.0; 0.0; u]
+    F = K * U
+
+    sigma1 = d2_truss_elementstress(E, L1, theta1, [U[1]; U[2]; U[7]; U[8]])
+    sigma2 = d2_truss_elementstress(E, L2, theta2, [U[3]; U[4]; U[7]; U[8]])
+    sigma3 = d2_truss_elementstress(E, L3, theta3, [U[5]; U[6]; U[7]; U[8]])
+
+    f4 = d1_spring_elementforce(k4, [U[7]; U[9]])
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "sigma1" => sigma1, "sigma2" => sigma2, "sigma3" => sigma3,
+        "f4" => f4,
+    )
+end
+
+"""Julia equivalent of Problem 6.1: 3D space truss (4 elements)."""
+function _problem_6_1_julia()
+    E = 200e6; A = 0.003
+
+    nodes = [
+        (0.0,  0.0, -3.0),
+        (-3.0, 0.0,  0.0),
+        (0.0,  0.0,  3.0),
+        (4.0,  0.0,  0.0),
+        (0.0,  5.0,  0.0),
+    ]
+    elem_pairs = [(1,5), (2,5), (3,5), (4,5)]
+
+    L_vals = Float64[]
+    theta_x = Float64[]
+    theta_y = Float64[]
+    theta_z = Float64[]
+    k_vals = []
+
+    for (n1, n2) in elem_pairs
+        x1, y1, z1 = nodes[n1]
+        x2, y2, z2 = nodes[n2]
+        L = d3_truss_elementlength(x1, y1, z1, x2, y2, z2)
+        push!(L_vals, L)
+        tx = acos((x2 - x1) / L) * 180 / pi
+        ty = acos((y2 - y1) / L) * 180 / pi
+        tz = acos((z2 - z1) / L) * 180 / pi
+        push!(theta_x, tx)
+        push!(theta_y, ty)
+        push!(theta_z, tz)
+        push!(k_vals, d3_truss_elementstiffness(E, A, L, tx, ty, tz))
+    end
+
+    K = zeros(15, 15)
+    for (idx, (n1, n2)) in enumerate(elem_pairs)
+        d3_truss_assemble(K, k_vals[idx], n1, n2)
+    end
+
+    k = K[13:15, 13:15]
+    f = [15.0; 0.0; -20.0]
+    u = k \ f
+    U = [zeros(12); u]
+    F = K * U
+    F[abs.(F) .< 1e-10] .= 0.0
+
+    sigma = Float64[]
+    for (idx, (n1, n2)) in enumerate(elem_pairs)
+        u_elem = [U[3*n1-2]; U[3*n1-1]; U[3*n1]; U[3*n2-2]; U[3*n2-1]; U[3*n2]]
+        push!(sigma, d3_truss_elementstress(E, L_vals[idx], theta_x[idx], theta_y[idx], theta_z[idx], u_elem))
+    end
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "sigma1" => sigma[1], "sigma2" => sigma[2], "sigma3" => sigma[3], "sigma4" => sigma[4],
+    )
+end
+
+"""Julia equivalent of Problem 7.1: Two-span beam with three supports."""
+function _problem_7_1_julia()
+    E = 200e6; I = 70e-5; L1 = 3.5; L2 = 2.0
+
+    k1 = d2_beam_elementstiffness(E, I, L1)
+    k2 = d2_beam_elementstiffness(E, I, L2)
+
+    K = zeros(6, 6)
+    K = d2_beam_assemble(K, k1, 1, 2)
+    K = d2_beam_assemble(K, k2, 2, 3)
+
+    k = K[[2, 4, 6], [2, 4, 6]]
+    f = [0.0; -15.0; 0.0]
+    u = k \ f
+    U = zeros(6)
+    U[[2, 4, 6]] = u
+    F = K * U
+
+    f1 = d2_beam_elementforces(k1, [U[1]; U[2]; U[3]; U[4]])
+    f2 = d2_beam_elementforces(k2, [U[3]; U[4]; U[5]; U[6]])
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "f1" => f1, "f2" => f2,
+    )
+end
+
+"""Julia equivalent of Problem 7.2: Beam with distributed load."""
+function _problem_7_2_julia()
+    E = 210e6; I = 50e-6; L1 = 3.0; L2 = 3.0; L3 = 4.0
+
+    k1 = d2_beam_elementstiffness(E, I, L1)
+    k2 = d2_beam_elementstiffness(E, I, L2)
+    k3 = d2_beam_elementstiffness(E, I, L3)
+
+    K = zeros(8, 8)
+    K = d2_beam_assemble(K, k1, 1, 2)
+    K = d2_beam_assemble(K, k2, 2, 3)
+    K = d2_beam_assemble(K, k3, 3, 4)
+
+    k = K[[4, 6, 8], [4, 6, 8]]
+    f = [7.5; -15.0; 15.0]
+    u = k \ f
+    U = zeros(8)
+    U[[4, 6, 8]] = u
+    F = K * U
+
+    f1 = d2_beam_elementforces(k1, [U[1]; U[2]; U[3]; U[4]])
+    f1 = f1 - [-15.0; -7.5; -15.0; 7.5]
+
+    f2 = d2_beam_elementforces(k2, [U[3]; U[4]; U[5]; U[6]])
+
+    f3 = d2_beam_elementforces(k3, [U[5]; U[6]; U[7]; U[8]])
+    f3 = f3 - [-15.0; -15.0; -15.0; 15.0]
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "f1" => f1, "f2" => f2, "f3" => f3,
+    )
+end
+
+"""Julia equivalent of Problem 7.3: Beam with a spring."""
+function _problem_7_3_julia()
+    E = 70e6; I = 40e-6; L1 = 3.0; L2 = 3.0; k_spring = 5000.0
+
+    k1 = d2_beam_elementstiffness(E, I, L1)
+    k2 = d2_beam_elementstiffness(E, I, L2)
+    k3 = d1_spring_elementstiffness(k_spring)
+
+    K = zeros(7, 7)
+    K = d2_beam_assemble(K, k1, 1, 2)
+    K = d2_beam_assemble(K, k2, 2, 3)
+    K = d1_spring_assemble(K, k3, 3, 7)
+
+    k = vcat(hcat(K[3:4, 3:4], K[3:4, 6:6]), hcat(K[6:6, 3:4], K[6:6, 6:6]))
+    f = [-10.0; 0.0; 0.0]
+    u = k \ f
+    U = [0.0; 0.0; u[1]; u[2]; 0.0; u[3]; 0.0]
+    F = K * U
+    F[abs.(F) .< 1e-10] .= 0.0
+
+    f1 = d2_beam_elementforces(k1, [U[1]; U[2]; U[3]; U[4]])
+    f2 = d2_beam_elementforces(k2, [U[3]; U[4]; U[5]; U[6]])
+    f3 = d1_spring_elementforce(k3, [U[3]; U[7]])
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "f1" => f1, "f2" => f2, "f3" => f3,
+    )
+end
+
+"""Julia equivalent of Problem 8.1: Plane frame with two elements."""
+function _problem_8_1_julia()
+    E = 210e6; A = 4e-2; I = 4e-6; L = 4.0
+
+    k1 = d2_planeframe_elementstiffness(E, A, I, L, 90.0)
+    k2 = d2_planeframe_elementstiffness(E, A, I, L, 0.0)
+
+    K = zeros(9, 9)
+    K = d2_planeframe_assemble(K, k1, 1, 2)
+    K = d2_planeframe_assemble(K, k2, 2, 3)
+
+    k = vcat(hcat(K[4:7, 4:7], K[4:7, 9:9]), hcat(K[9:9, 4:7], K[9:9, 9:9]))
+    f = [0.0; 0.0; 15.0; 20.0; 0.0]
+    u = k \ f
+    U = [0.0; 0.0; 0.0; u[1:4]; 0.0; u[5]]
+    F = K * U
+    F[abs.(F) .< 1e-10] .= 0.0
+
+    f1 = d2_planeframe_elementforces(E, A, I, L, 90.0, [U[1]; U[2]; U[3]; U[4]; U[5]; U[6]])
+    f2 = d2_planeframe_elementforces(E, A, I, L, 0.0, [U[4]; U[5]; U[6]; U[7]; U[8]; U[9]])
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "f1" => f1, "f2" => f2,
+    )
+end
+
+"""Julia equivalent of Problem 8.2: Plane frame with distributed load."""
+function _problem_8_2_julia()
+    E = 210e6; A = 1e-2; I = 9e-5
+
+    x = [0.0, 2.0, 7.0, 9.0]
+    y = [0.0, 3.0, 3.0, 0.0]
+
+    L1 = d2_planeframe_elementlength(x[1], y[1], x[2], y[2])
+    L2 = d2_planeframe_elementlength(x[2], y[2], x[3], y[3])
+    L3 = d2_planeframe_elementlength(x[3], y[3], x[4], y[4])
+
+    theta1 = atan(y[2] - y[1], x[2] - x[1]) * 180 / pi
+    theta2 = 0.0
+    theta3 = 360.0 - theta1
+
+    k1 = d2_planeframe_elementstiffness(E, A, I, L1, theta1)
+    k2 = d2_planeframe_elementstiffness(E, A, I, L2, theta2)
+    k3 = d2_planeframe_elementstiffness(E, A, I, L3, theta3)
+
+    K = zeros(12, 12)
+    K = d2_planeframe_assemble(K, k1, 1, 2)
+    K = d2_planeframe_assemble(K, k2, 2, 3)
+    K = d2_planeframe_assemble(K, k3, 3, 4)
+
+    k = K[4:9, 4:9]
+    f = [20.0; -12.5; -10.417; 0.0; -12.5; 10.417]
+    u = k \ f
+    U = [0.0; 0.0; 0.0; u; 0.0; 0.0; 0.0]
+    F = K * U
+    F[abs.(F) .< 1e-10] .= 0.0
+
+    f1 = d2_planeframe_elementforces(E, A, I, L1, theta1, [U[1]; U[2]; U[3]; U[4]; U[5]; U[6]])
+    f2 = d2_planeframe_elementforces(E, A, I, L2, theta2, [U[4]; U[5]; U[6]; U[7]; U[8]; U[9]])
+    f2 = f2 - [0.0; -12.5; -10.417; 0.0; -12.5; 10.417]
+    f3 = d2_planeframe_elementforces(E, A, I, L3, theta3, [U[7]; U[8]; U[9]; U[10]; U[11]; U[12]])
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "f1" => f1, "f2" => f2, "f3" => f3,
+    )
+end
+
+"""Julia equivalent of Problem 8.3: Plane frame with a spring (mixed elements)."""
+function _problem_8_3_julia()
+    E1 = 70e6; A1 = 1e-2; I = 1e-5
+    E2 = 2500.0; A2 = 10.0; L2 = 5.0
+    L1 = 4.0
+
+    theta1 = 0.0
+    theta2 = atan(3.0, 4.0) * 180 / pi
+
+    k1 = d2_planeframe_elementstiffness(E1, A1, I, L1, theta1)
+    k2 = d2_truss_elementstiffness(E2, A2, L2, theta2)
+
+    K = zeros(8, 8)
+    K = d2_planeframe_assemble(K, k1, 1, 2)
+    K = d2_truss_assemble(K, k2, 1, 3)
+
+    k = K[1:3, 1:3]
+    f = [0.0; -10.0; 0.0]
+    u = k \ f
+    U = [u; 0.0; 0.0; 0.0; 0.0; 0.0]
+    F = K * U
+    F[abs.(F) .< 1e-10] .= 0.0
+
+    f1 = d2_planeframe_elementforces(E1, A1, I, L1, theta1, [U[1]; U[2]; U[3]; U[4]; U[5]; U[6]])
+    f2 = d2_truss_elementforces(E2, A2, L2, theta2, [U[1]; U[2]; U[7]; U[8]])
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F,
+        "f1" => f1, "f2" => f2,
     )
 end
 

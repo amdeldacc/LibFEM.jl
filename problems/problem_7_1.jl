@@ -1,34 +1,37 @@
 #!/usr/bin/env julia
 # ═══════════════════════════════════════════════════════════════
-# Problem 2.1 — Two-Element Spring System (Fig. 2.4)
+# Problem 7.1 — Two-Span Beam with Three Supports (Fig. 7.5)
 # Reference: P. I. Kattan, "MATLAB Guide to Finite Elements:
 #   An Interactive Approach" (2nd ed., Springer, 2007)
 # ═══════════════════════════════════════════════════════════════
 #
-#                             P
-#               k1          ----->         k2
-# |/----o-----/\/\/\----------o---------/\/\/\-----o----\|
-# |/    1                     2                    3    \|
-# |/                                                    \|
+#     Node 1 (fixed v)   Node 2 (fixed v, -15 kN-m)   Node 3 (fixed v)
+#        O====================O============================O
+#               L1 = 3.5 m               L2 = 2 m
+#
+#     E = 200 GPa, I = 70e-5 m^4
+#     Load: -15 kN-m applied at node 2 (rotation DOF)
 #
 # ═══════════════════════════════════════════════════════════════
 # Computes:
 #   1. Global stiffness matrix K
-#   2. Displacement at node 2
-#   3. Forces (reactions at 1,3 and internal spring forces)
-#   4. Equilibrium check
+#   2. Rotations at nodes 1, 2, and 3
+#   3. Reactions (shear and moment at each node)
+#   4. Element forces for each beam element
 # ═══════════════════════════════════════════════════════════════
 
 using LibFEM
 using LinearAlgebra
 
 # ─── Parameters ──────────────────────────────────────────────
-k1_val = 200.0
-k2_val = 250.0
+E = 200e6
+I = 70e-5
+L1 = 3.5
+L2 = 2.0
 
 # ─── Element stiffness matrices ──────────────────────────────
-k1 = d1_spring_elementstiffness(k1_val)
-k2 = d1_spring_elementstiffness(k2_val)
+k1 = d2_beam_elementstiffness(E, I, L1)
+k2 = d2_beam_elementstiffness(E, I, L2)
 
 println("k1 =")
 display(k1)
@@ -36,22 +39,24 @@ println("k2 =")
 display(k2)
 
 # ─── Assembly ────────────────────────────────────────────────
-K = zeros(3, 3)
-K = d1_spring_assemble(K, k1, 1, 2)
-K = d1_spring_assemble(K, k2, 2, 3)
+K = zeros(6, 6)
+K = d2_beam_assemble(K, k1, 1, 2)
+K = d2_beam_assemble(K, k2, 2, 3)
 
 println("\nK =")
 display(K)
 
 # ─── Solve ───────────────────────────────────────────────────
-k = K[2:2, 2:2]
-f = [10.0]
+# Free DOFs: rotations at nodes 1, 2, 3 = DOFs 2, 4, 6 (even-numbered)
+k = K[[2, 4, 6], [2, 4, 6]]
+f = [0.0; -15.0; 0.0]
 
 u = k \ f
-U = [0.0; u; 0.0]
+U = zeros(6)
+U[[2, 4, 6]] = u
 F = K * U
 
-println("\nk =")
+println("\nk (reduced) =")
 display(k)
 println("\nf =")
 display(f)
@@ -63,11 +68,11 @@ println("\nF =")
 display(F)
 
 # ─── Post-processing: element forces ─────────────────────────
-u1 = [0.0; u]
-f1 = d1_spring_elementforce(k1, u1)
+u1 = [U[1]; U[2]; U[3]; U[4]]
+f1 = d2_beam_elementforces(k1, u1)
 
-u2 = [u; 0.0]
-f2 = d1_spring_elementforce(k2, u2)
+u2 = [U[3]; U[4]; U[5]; U[6]]
+f2 = d2_beam_elementforces(k2, u2)
 
 println("\nu1 =")
 display(u1)
@@ -80,22 +85,21 @@ display(f2)
 
 # ─── Equilibrium check ───────────────────────────────────────
 println("\n--- Equilibrium check ---")
-println("Sum of reactions: ", sum(F[1:3:end]))
-println("Applied force P: 10.0")
-println("Reacted force at node 1 (F1): ", F[1])
-println("Reacted force at node 3 (F3): ", F[3])
-println("Spring force f1: ", f1)
-println("Spring force f2: ", f2)
-println("Sum F1 + F3 = ", F[1] + F[3], " (should equal -10.0)")
-println("Equilibrium satisfied (round-trip): ", abs(F[1] + F[3] + 10.0) < 1e-10)
+println("Applied moment at node 2: -15 kN-m")
+println("F (reactions) =")
+display(F)
+println("Sum F (should be ~0): ", sum(F))
 
 # ─── Self-validation ─────────────────────────────────────────
-# Expected values verified against Octave execution of Kattan's problem_2_1.m
-@assert isapprox(K, [200 -200 0; -200 450 -250; 0 -250 250]; rtol=1e-10) "K mismatch"
-@assert isapprox(k, [450.0]; rtol=1e-10) "k mismatch"
-@assert isapprox(f, [10.0]; rtol=1e-10) "f mismatch"
-@assert isapprox(u, [0.022222222222222223]; rtol=1e-10) "u mismatch"
-@assert isapprox(U, [0.0; 0.022222222222222223; 0.0]; rtol=1e-10) "U mismatch"
-@assert isapprox(F, [-4.444444444444445; 10.0; -5.555555555555555]; rtol=1e-10) "F mismatch"
-@assert isapprox(f1, [-4.444444444444445; 4.444444444444445]; rtol=1e-10) "f1 mismatch"
-@assert isapprox(f2, [5.555555555555555; -5.555555555555555]; rtol=1e-10) "f2 mismatch"
+# Expected values verified against Octave execution of Kattan's problem_7_1.m
+@assert isapprox(u, [2.272727272727273e-5, -4.545454545454546e-5, 2.2727272727272733e-5]; rtol=1e-8) "u mismatch"
+@assert isapprox(F[4], -15.0; rtol=1e-10) "F[4] mismatch"
+@assert isapprox(f1, [-1.5584415584415587, 0.0, 1.5584415584415587, -5.454545454545455]; rtol=1e-8, atol=1e-14) "f1 mismatch"
+@assert isapprox(f2, [-4.7727272727272725, -9.545454545454545, 4.7727272727272725, 0.0]; rtol=1e-8, atol=1e-14) "f2 mismatch"
+
+# ─── Diagrams (optional, uncomment if Plots works) ──────────
+# using Plots
+# d2_beam_elementsheardiagram(f1, L1)
+# d2_beam_elementsheardiagram(f2, L2)
+# d2_beam_elementmomentdiagram(f1, L1)
+# d2_beam_elementmomentdiagram(f2, L2)

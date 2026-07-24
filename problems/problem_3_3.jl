@@ -1,43 +1,46 @@
 #!/usr/bin/env julia
 # ═══════════════════════════════════════════════════════════════
-# Problem 2.1 — Two-Element Spring System (Fig. 2.4)
+# Problem 3.3 — Linear Bar with a Spring (Fig. 3.6)
 # Reference: P. I. Kattan, "MATLAB Guide to Finite Elements:
 #   An Interactive Approach" (2nd ed., Springer, 2007)
 # ═══════════════════════════════════════════════════════════════
 #
-#                             P
-#               k1          ----->         k2
-# |/----o-----/\/\/\----------o---------/\/\/\-----o----\|
-# |/    1                     2                    3    \|
-# |/                                                    \|
+#                                  P
+#                  E, A          ----->         k
+# |/----o========================o---------/\/\/\-----o----\|
+# |/    1                        2                    3    \|
+# |/    <-------- 2 m --------->                           \|
 #
 # ═══════════════════════════════════════════════════════════════
 # Computes:
 #   1. Global stiffness matrix K
 #   2. Displacement at node 2
-#   3. Forces (reactions at 1,3 and internal spring forces)
-#   4. Equilibrium check
+#   3. Reactions at nodes 1 and 3
+#   4. Stress in the bar
+#   5. Force in the spring
 # ═══════════════════════════════════════════════════════════════
 
 using LibFEM
 using LinearAlgebra
 
 # ─── Parameters ──────────────────────────────────────────────
-k1_val = 200.0
-k2_val = 250.0
+E = 200e6
+A = 0.01
+L = 2.0
+k_spring = 1000.0
 
 # ─── Element stiffness matrices ──────────────────────────────
-k1 = d1_spring_elementstiffness(k1_val)
-k2 = d1_spring_elementstiffness(k2_val)
+k1 = d1_truss_elementstiffness(E, A, L)
+k2 = d1_spring_elementstiffness(k_spring)
 
-println("k1 =")
+println("k1 (bar) =")
 display(k1)
-println("k2 =")
+println("k2 (spring) =")
 display(k2)
 
 # ─── Assembly ────────────────────────────────────────────────
 K = zeros(3, 3)
-K = d1_spring_assemble(K, k1, 1, 2)
+K = d1_truss_assemble(K, k1, 1, 2)
 K = d1_spring_assemble(K, k2, 2, 3)
 
 println("\nK =")
@@ -45,7 +48,7 @@ display(K)
 
 # ─── Solve ───────────────────────────────────────────────────
 k = K[2:2, 2:2]
-f = [10.0]
+f = [25.0]
 
 u = k \ f
 U = [0.0; u; 0.0]
@@ -62,40 +65,28 @@ display(U)
 println("\nF =")
 display(F)
 
-# ─── Post-processing: element forces ─────────────────────────
+# ─── Post-processing ─────────────────────────────────────────
 u1 = [0.0; u]
-f1 = d1_spring_elementforce(k1, u1)
+sigma1 = d1_truss_elementstress(k1, u1, A)
 
 u2 = [u; 0.0]
-f2 = d1_spring_elementforce(k2, u2)
+f_spring = d1_spring_elementforce(k2, u2)
 
-println("\nu1 =")
-display(u1)
-println("\nf1 =")
-display(f1)
-println("\nu2 =")
-display(u2)
-println("\nf2 =")
-display(f2)
+println("\nsigma1 =")
+display(sigma1)
+println("\nf_spring =")
+display(f_spring)
 
 # ─── Equilibrium check ───────────────────────────────────────
 println("\n--- Equilibrium check ---")
-println("Sum of reactions: ", sum(F[1:3:end]))
-println("Applied force P: 10.0")
-println("Reacted force at node 1 (F1): ", F[1])
-println("Reacted force at node 3 (F3): ", F[3])
-println("Spring force f1: ", f1)
-println("Spring force f2: ", f2)
-println("Sum F1 + F3 = ", F[1] + F[3], " (should equal -10.0)")
-println("Equilibrium satisfied (round-trip): ", abs(F[1] + F[3] + 10.0) < 1e-10)
+println("Applied force P: 25.0")
+println("Reaction at node 1 (F1): ", F[1])
+println("Reaction at node 3 (F3): ", F[3])
+println("Sum F (should be 0): ", sum(F))
 
 # ─── Self-validation ─────────────────────────────────────────
-# Expected values verified against Octave execution of Kattan's problem_2_1.m
-@assert isapprox(K, [200 -200 0; -200 450 -250; 0 -250 250]; rtol=1e-10) "K mismatch"
-@assert isapprox(k, [450.0]; rtol=1e-10) "k mismatch"
-@assert isapprox(f, [10.0]; rtol=1e-10) "f mismatch"
-@assert isapprox(u, [0.022222222222222223]; rtol=1e-10) "u mismatch"
-@assert isapprox(U, [0.0; 0.022222222222222223; 0.0]; rtol=1e-10) "U mismatch"
-@assert isapprox(F, [-4.444444444444445; 10.0; -5.555555555555555]; rtol=1e-10) "F mismatch"
-@assert isapprox(f1, [-4.444444444444445; 4.444444444444445]; rtol=1e-10) "f1 mismatch"
-@assert isapprox(f2, [5.555555555555555; -5.555555555555555]; rtol=1e-10) "f2 mismatch"
+# Expected values verified against Octave execution of Kattan's problem_3_3.m
+@assert isapprox(u, [2.4975024975024975e-5]; rtol=1e-10) "u mismatch"
+@assert isapprox(F, [-24.975024975024976, 25.0, -0.024975024975024976]; rtol=1e-10) "F mismatch"
+@assert isapprox(sigma1, [-2497.5024975024976, 2497.5024975024976]; rtol=1e-10) "sigma1 mismatch"
+@assert isapprox(f_spring, [0.024975024975024976, -0.024975024975024976]; rtol=1e-10) "f_spring mismatch"

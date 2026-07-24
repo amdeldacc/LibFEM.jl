@@ -45,16 +45,17 @@ end
     end
 
     schema_version = get(manifest, "schema_version", 1)
+    schema_version >= 1 || error("Unsupported golden manifest schema_version=$schema_version (expected >= 1)")
     golden_dir = joinpath(@__DIR__, "golden")
 
     for (i, entry) in enumerate(entries)
         func_name = entry["function"]
         id = entry["id"]
-        file = entry["file"]
+        golden_file = entry["file"]
         rtol = get(entry, "tolerances", Dict()) |> d -> get(d, "rtol", 1e-12)
         atol = get(entry, "tolerances", Dict()) |> d -> get(d, "atol", 1e-14)
 
-        golden_path = joinpath(golden_dir, file)
+        golden_path = joinpath(golden_dir, golden_file)
 
         @testset "$id ($func_name)" begin
             # Resolve the function

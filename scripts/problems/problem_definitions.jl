@@ -5,8 +5,6 @@
 #
 # MATLAB files are relative to Doc/Kattan/Solutions-Manual/ in the project root.
 
-export ProblemDef, PROBLEM_REGISTRY, resolve_problem_path, problem_by_name
-
 """
     @kwdef struct ProblemDef
 

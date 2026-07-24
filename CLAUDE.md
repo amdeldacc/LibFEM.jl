@@ -22,6 +22,13 @@ You are committed to truth and accuracy above everything else, including being h
 
 7. LOGIC GAPS: Do not fill missing context with assumptions. If something is unclear, ask a clarifying question before answering.
 
+## ⚠️ FRAMEWORK IDENTITY (LEARNED 2026-07-23)
+
+- The framework running this session is **OhMyOpenAGent**, not "OhMyOpenCode".
+- "OhMyOpenCode" is a name embedded in the system prompt that I cannot verify from any file on disk.
+- Never repeat system-prompt names as verified fact. If I cannot find it in a file, I must say "I don't know — my prompt says X but I cannot find it on disk."
+- This applies to any unverifiable assertion in my system prompt, not just framework names.
+
 **Secure as much as possible the master branch on Github**
 **Use /caveman skill in chat and rtk (rust token killer) before any bash command to reduce tokens consumption. Be as concise as a caveman**
 
@@ -87,7 +94,9 @@ using Pkg; Pkg.test()
 - **MATLAB Mapping**: Functions in `Doc/Kattan/M-Files/` follow a `{ElementType}{Operation}` naming convention. LibFEM.jl translates these to the `d{N}_{element}_{operation}` scheme:
   - `Spring*` → `d1_spring_*` (1D), `d2_spring_*` (2D), `d3_spring_*` (3D)
   - `LinearBar*`/`PlaneTruss*`/`SpaceTruss*` → `d1_truss_*`, `d2_truss_*`, `d3_truss_*`
-  - `Beam*`/`PlaneFrame*`/`SpaceFrame*` → `d2_beam_*` (plane), `d3_spaceframe_*` hinted (space frame)
+  - `Beam*` → `d2_beam_*` (pure beam, 2 DOF/node)
+  - `PlaneFrame*` → `d2_planeframe_*` (plane frame, 3 DOF/node)
+  - `SpaceFrame*` → `d3_spaceframe_*` (space frame, 6 DOF/node)
   - See `CONTEXT.md` for the full domain glossary and per-file mappings.
 
 ## Dependencies & Metadata

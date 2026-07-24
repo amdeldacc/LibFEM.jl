@@ -96,7 +96,7 @@ Return the length of the 2-D plane frame element.
 The element length.
 """
 function d2_planeframe_elementlength(x1::Real, y1::Real, x2::Real, y2::Real)
-    return sqrt((x2 - x1)^2 + (y2 - y1)^2)
+    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
 end
 
 """
@@ -156,19 +156,7 @@ function d2_planeframe_elementforces(E::Real, A::Real, I::Real, L::Real, theta::
     validate_positive(L, "L")
     validate_positive(A, "A")
     (C, S) = _direction_cosines(theta)
-    w1 = E * A / L
-    w2 = 12 * E * I / (L^3)
-    w3 = 6 * E * I / (L^2)
-    w4 = 4 * E * I / L
-    w5 = 2 * E * I / L
-    kprime = [
-        w1  0   0   -w1  0    0
-        0   w2  w3   0   -w2  w3
-        0   w3  w4   0   -w3  w5
-        -w1 0   0    w1  0    0
-        0   -w2 -w3  0    w2  -w3
-        0   w3  w5   0   -w3  w4
-    ]
+    kprime = _d2_planeframe_kprime(E, A, I, L)
     # Transformation from global to local (MATLAB Kattan convention)
     T = [
         C  S 0 0 0 0

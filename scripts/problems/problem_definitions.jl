@@ -48,7 +48,7 @@ end
 """
     PROBLEM_REGISTRY::Vector{ProblemDef}
 
-Vector of 7 canonical FEM problems from the Kattan textbook.
+Vector of 14 canonical FEM problems from the Kattan textbook.
 """
 const PROBLEM_REGISTRY = Vector{ProblemDef}([
     ProblemDef(
@@ -59,6 +59,13 @@ const PROBLEM_REGISTRY = Vector{ProblemDef}([
         rtol=1e-8, atol=1e-10,
     ),
     ProblemDef(
+        name="problem_2_2",
+        matlab_file="problem_2_2.m",
+        element_family="d1_spring",
+        description="Four-element spring system",
+        rtol=1e-8, atol=1e-10,
+    ),
+    ProblemDef(
         name="problem_3_1",
         matlab_file="problem_3_1.m",
         element_family="d1_truss",
@@ -66,10 +73,17 @@ const PROBLEM_REGISTRY = Vector{ProblemDef}([
         rtol=1e-8, atol=1e-10,
     ),
     ProblemDef(
+        name="problem_3_3",
+        matlab_file="problem_3_3.m",
+        element_family="d1_truss",
+        description="Linear bar with a spring",
+        rtol=1e-8, atol=1e-10,
+    ),
+    ProblemDef(
         name="problem_4_2",
         matlab_file="problem_4_2.m",
         element_family="quadratic_bar",
-        description="Quadratic bar element (pending impl)",
+        description="Quadratic bar element",
         rtol=1e-8, atol=1e-10,
     ),
     ProblemDef(
@@ -77,6 +91,13 @@ const PROBLEM_REGISTRY = Vector{ProblemDef}([
         matlab_file="problem_5_1.m",
         element_family="d2_truss",
         description="2D plane truss, 6 nodes",
+        rtol=1e-8, atol=1e-10,
+    ),
+    ProblemDef(
+        name="problem_5_2",
+        matlab_file="problem_5_2.m",
+        element_family="d2_truss",
+        description="2D plane truss with a spring, 5 nodes",
         rtol=1e-8, atol=1e-10,
     ),
     ProblemDef(
@@ -94,10 +115,38 @@ const PROBLEM_REGISTRY = Vector{ProblemDef}([
         rtol=1e-8, atol=1e-10,
     ),
     ProblemDef(
+        name="problem_7_2",
+        matlab_file="problem_7_2.m",
+        element_family="d2_beam",
+        description="2D pure beam, 3 elements, distributed load",
+        rtol=1e-8, atol=1e-10,
+    ),
+    ProblemDef(
+        name="problem_7_3",
+        matlab_file="problem_7_3.m",
+        element_family="d2_beam",
+        description="2D pure beam with spring support",
+        rtol=1e-8, atol=1e-10,
+    ),
+    ProblemDef(
         name="problem_8_1",
         matlab_file="problem_8_1.m",
         element_family="d2_planeframe",
         description="2D plane frame, 2 elements",
+        rtol=1e-8, atol=1e-10,
+    ),
+    ProblemDef(
+        name="problem_8_2",
+        matlab_file="problem_8_2.m",
+        element_family="d2_planeframe",
+        description="2D plane frame, 3 elements, distributed load",
+        rtol=1e-8, atol=1e-10,
+    ),
+    ProblemDef(
+        name="problem_8_3",
+        matlab_file="problem_8_3.m",
+        element_family="d2_planeframe",
+        description="2D plane frame with spring/truss, mixed DOF",
         rtol=1e-8, atol=1e-10,
     ),
 ])

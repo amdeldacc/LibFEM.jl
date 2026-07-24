@@ -13,6 +13,7 @@ include("assembly.jl")
 include("spring.jl")
 include("truss.jl")
 include("beam.jl")
+include("quadraticbar.jl")
 include("plot.jl")
 
 # ═══════════════════════════════════════════════════════════
@@ -57,5 +58,8 @@ export d2_planeframe_elementlength, d2_planeframe_elementstiffness, d2_planefram
 
 # 3-D Beam / Space Frame
 export d3_spaceframe_elementlength, d3_spaceframe_elementstiffness, d3_spaceframe_assemble, d3_spaceframe_elementforces, d3_spaceframe_elementaxialdiagram, d3_spaceframe_elementshearydiagram, d3_spaceframe_elementshearzdiagram, d3_spaceframe_elementmomentydiagram, d3_spaceframe_elementmomentzdiagram, d3_spaceframe_elementtorsiondiagram
+
+# 1-D Quadratic Bar (3-node element, 1 DOF/node)
+export d1_quadraticbar_elementstiffness, d1_quadraticbar_elementforces, d1_quadraticbar_elementstress, d1_quadraticbar_assemble
 
 end # module

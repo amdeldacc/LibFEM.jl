@@ -48,7 +48,7 @@ end
 """
     PROBLEM_REGISTRY::Vector{ProblemDef}
 
-Vector of 7 canonical FEM problems from the Kattan textbook.
+Vector of 14 canonical FEM problems from the Kattan textbook.
 """
 const PROBLEM_REGISTRY = Vector{ProblemDef}([
     ProblemDef(

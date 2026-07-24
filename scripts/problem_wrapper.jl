@@ -105,9 +105,24 @@ function build_problem_wrapper(mfile_path::String, output_vars::Vector{String})
     script = replace(script, r"\s*clear\s*;.*" => "", count=1)
     script = replace(script, r"\s*clc\s*;.*" => "", count=1)
 
-    # Suppress diagram/plot output — some scripts call diagram functions
-    # that would produce gnuplot warnings. We add a brief comment.
-    script = script * "\n\n"
+    # Suppress diagram/plot output — override diagram functions as no-ops
+    # to avoid failing when gnuplot is not available (CI with --no-install-recommends).
+    diagram_overrides = """
+% Override diagram functions to prevent graphics toolkit errors on headless CI
+function y = BeamElementMomentDiagram(f, L) y = [0; 0]; end
+function y = BeamElementShearDiagram(f, L) y = [0; 0]; end
+function y = PlaneFrameElementAxialDiagram(f, L) y = [0; 0]; end
+function y = PlaneFrameElementMomentDiagram(f, L) y = [0; 0]; end
+function y = PlaneFrameElementShearDiagram(f, L) y = [0; 0]; end
+function y = SpaceFrameElementAxialDiagram(f, L) y = [0; 0]; end
+function y = SpaceFrameElementShearYDiagram(f, L) y = [0; 0]; end
+function y = SpaceFrameElementShearZDiagram(f, L) y = [0; 0]; end
+function y = SpaceFrameElementMomentYDiagram(f, L) y = [0; 0]; end
+function y = SpaceFrameElementMomentZDiagram(f, L) y = [0; 0]; end
+function y = SpaceFrameElementTorsionDiagram(f, L) y = [0; 0]; end
+
+"""
+    script = diagram_overrides * script * "\n\n"
 
     # Build the capture struct call
     # Octave struct('key1', val1, 'key2', val2, ...)

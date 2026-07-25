@@ -121,3 +121,56 @@ function _d3_spaceframe_kprime(
         0    w3   0    0    0    w5   0   -w3   0    0    0    w4
     ]
 end
+
+"""
+    _spaceframe_transform(x1, y1, z1, x2, y2, z2)
+
+Compute the transformation (rotation) matrices for a 3-D space frame element.
+
+Given the nodal coordinates `(x1, y1, z1)` and `(x2, y2, z2)`, returns two matrices:
+- `Lambda`: 3×3 direction cosine matrix (global → local transformation of vectors).
+- `R`: 12×12 block-diagonal rotation matrix, with `Lambda` repeated 4 times
+  on the diagonal (for the 6-DOF-per-node, 2-node element).
+
+# Arguments
+- `x1::Real`: x-coordinate of the first node.
+- `y1::Real`: y-coordinate of the first node.
+- `z1::Real`: z-coordinate of the first node.
+- `x2::Real`: x-coordinate of the second node.
+- `y2::Real`: y-coordinate of the second node.
+- `z2::Real`: z-coordinate of the second node.
+
+# Returns
+A tuple `(Lambda, R)`.
+"""
+function _spaceframe_transform(x1::Real, y1::Real, z1::Real, x2::Real, y2::Real, z2::Real)
+    L = sqrt((x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2)
+    Cx = (x2 - x1) / L
+    Cy = (y2 - y1) / L
+    Cz = (z2 - z1) / L
+
+    if hypot(Cx, Cy) < 1e-12
+        # Vertical element — standard formula breaks (D = 0)
+        if z2 > z1
+            Lambda = [0 0 1; 0 1 0; -1 0 0]
+        else
+            Lambda = [0 0 -1; 0 1 0; 1 0 0]
+        end
+    else
+        D = sqrt(Cx^2 + Cy^2)
+        Lambda = [
+            Cx       Cy       Cz
+            -Cy / D   Cx / D   0
+            -Cx * Cz / D  -Cy * Cz / D  D
+        ]
+    end
+
+    Z33 = zeros(3, 3)
+    R = [
+        Lambda Z33    Z33    Z33
+        Z33    Lambda Z33    Z33
+        Z33    Z33    Lambda Z33
+        Z33    Z33    Z33    Lambda
+    ]
+    return (Lambda, R)
+end

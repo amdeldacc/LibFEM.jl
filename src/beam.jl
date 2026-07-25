@@ -265,33 +265,7 @@ function d3_spaceframe_elementstiffness(
     validate_positive(A, "A")
     kprime = _d3_spaceframe_kprime(E, G, A, Iy, Iz, J, L)
 
-    Cx = (x2 - x1) / L
-    Cy = (y2 - y1) / L
-    Cz = (z2 - z1) / L
-
-    if hypot(Cx, Cy) < 1e-12
-        # Vertical element — standard formula breaks (D = 0)
-        if z2 > z1
-            Lambda = [0 0 1; 0 1 0; -1 0 0]
-        else
-            Lambda = [0 0 -1; 0 1 0; 1 0 0]
-        end
-    else
-        D = sqrt(Cx^2 + Cy^2)
-        Lambda = [
-            Cx       Cy       Cz
-            -Cy / D   Cx / D   0
-            -Cx * Cz / D  -Cy * Cz / D  D
-        ]
-    end
-
-    Z33 = zeros(3, 3)
-    R = [
-        Lambda Z33    Z33    Z33
-        Z33    Lambda Z33    Z33
-        Z33    Z33    Lambda Z33
-        Z33    Z33    Z33    Lambda
-    ]
+    (Lambda, R) = _spaceframe_transform(x1, y1, z1, x2, y2, z2)
 
     return R' * kprime * R
 end
@@ -363,32 +337,7 @@ function d3_spaceframe_elementforces(
     validate_positive(A, "A")
     kprime = _d3_spaceframe_kprime(E, G, A, Iy, Iz, J, L)
 
-    Cx = (x2 - x1) / L
-    Cy = (y2 - y1) / L
-    Cz = (z2 - z1) / L
-
-    if hypot(Cx, Cy) < 1e-12
-        if z2 > z1
-            Lambda = [0 0 1; 0 1 0; -1 0 0]
-        else
-            Lambda = [0 0 -1; 0 1 0; 1 0 0]
-        end
-    else
-        D = sqrt(Cx^2 + Cy^2)
-        Lambda = [
-            Cx       Cy       Cz
-            -Cy / D   Cx / D   0
-            -Cx * Cz / D  -Cy * Cz / D  D
-        ]
-    end
-
-    Z33 = zeros(3, 3)
-    R = [
-        Lambda Z33    Z33    Z33
-        Z33    Lambda Z33    Z33
-        Z33    Z33    Lambda Z33
-        Z33    Z33    Z33    Lambda
-    ]
+    (Lambda, R) = _spaceframe_transform(x1, y1, z1, x2, y2, z2)
 
     return kprime * R * u
 end

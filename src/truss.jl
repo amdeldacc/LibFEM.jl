@@ -113,7 +113,9 @@ Return the length of the 2-D truss element with nodes (x1, y1) and (x2, y2).
 The element length.
 """
 function d2_truss_elementlength(x1::Real, y1::Real, x2::Real, y2::Real)
-    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
+    L = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
+    validate_positive(L, "L")
+    return L
 end
 
 """

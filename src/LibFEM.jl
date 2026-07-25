@@ -1,7 +1,5 @@
 module LibFEM
 
-using Plots
-
 # ═══════════════════════════════════════════════════════════
 # Includes (order matters: types/errors/utils/assembly first)
 # ═══════════════════════════════════════════════════════════
@@ -14,7 +12,20 @@ include("spring.jl")
 include("truss.jl")
 include("beam.jl")
 include("quadraticbar.jl")
-include("plot.jl")
+
+# ═══════════════════════════════════════════════════════════
+# Stub diagram functions (replaced by extension when Plots loaded)
+# ═══════════════════════════════════════════════════════════
+for f in (:d2_beam_elementsheardiagram, :d2_beam_elementmomentdiagram,
+          :d2_planeframe_elementaxialdiagram, :d2_planeframe_elementsheardiagram, :d2_planeframe_elementmomentdiagram,
+          :d3_spaceframe_elementaxialdiagram, :d3_spaceframe_elementshearydiagram,
+          :d3_spaceframe_elementshearzdiagram, :d3_spaceframe_elementmomentydiagram,
+          :d3_spaceframe_elementmomentzdiagram, :d3_spaceframe_elementtorsiondiagram,
+          :_beamdiagram)
+    @eval function $f(args...)
+        throw(DiagramError("Plots.jl is required for diagram functions. Use `using Plots` along with LibFEM to enable them."))
+    end
+end
 
 # ═══════════════════════════════════════════════════════════
 # Centralized Exports

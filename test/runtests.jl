@@ -1,7 +1,8 @@
 # Pkg setup for direct runs; Pkg.test() handles its own environment
+# When running with --project=. (CI), switch to test/Project.toml for Plots
 if Base.active_project() == joinpath(@__DIR__, "..", "Project.toml")
     using Pkg
-    Pkg.activate(joinpath(@__DIR__, ".."))
+    Pkg.activate(@__DIR__)
     Pkg.instantiate()
 end
 

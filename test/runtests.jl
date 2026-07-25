@@ -1,7 +1,8 @@
 # Pkg setup for direct runs; Pkg.test() handles its own environment
+# When running with --project=. (CI), switch to test/Project.toml for Plots
 if Base.active_project() == joinpath(@__DIR__, "..", "Project.toml")
     using Pkg
-    Pkg.activate(joinpath(@__DIR__, ".."))
+    Pkg.activate(@__DIR__)
     Pkg.instantiate()
 end
 
@@ -70,6 +71,31 @@ end
         @test LibFEM.deg2rad(360) ≈ 2π
         @test LibFEM.deg2rad(45) ≈ π / 4
         @test LibFEM.deg2rad(-180) ≈ -π
+    end
+
+    # ─────────────────────────────────────────────────
+    # _direction_cosines (private utility)
+    # ─────────────────────────────────────────────────
+    @testset "_direction_cosines" begin
+        # Valid unit vector: cos²(30)+cos²(60)+cos²(90) = 0.75+0.25+0 = 1
+        c1 = LibFEM._direction_cosines(30, 60, 90)
+        @test sqrt(sum(x -> x^2, c1)) ≈ 1.0
+        @test c1[1] ≈ cos(LibFEM.deg2rad(30))  # exact values returned unchanged
+
+        # Valid input: (0, 90, 90) → (1, 0, 0) (cos(π/2) ≈ 6e-17 from FP)
+        c2 = LibFEM._direction_cosines(0, 90, 90)
+        @test c2[1] == 1.0
+        @test c2[2] ≈ 0.0 atol = 1e-15
+        @test c2[3] ≈ 0.0 atol = 1e-15
+
+        # Invalid input gets normalized: (45, 45, 45) → nsq = 1.5 → normalized
+        c3 = LibFEM._direction_cosines(45, 45, 45)
+        @test sqrt(sum(x -> x^2, c3)) ≈ 1.0
+        # Expected normalized value: cos(45°)/√1.5 ≈ 0.57735
+        expected = cos(LibFEM.deg2rad(45)) / sqrt(1.5)
+        @test c3[1] ≈ expected
+        # Warns on non-physical input
+        @test_logs (:warn, r"Direction cosines do not form a unit vector") LibFEM._direction_cosines(45, 45, 45)
     end
 
     # ─────────────────────────────────────────────────
@@ -519,7 +545,7 @@ end
     @testset "d2_truss" begin
         @testset "elementlength" begin
             @test d2_truss_elementlength(0, 0, 3, 4) == 5.0
-            @test d2_truss_elementlength(0, 0, 0, 0) == 0.0
+            @test_throws ElementParameterError d2_truss_elementlength(0, 0, 0, 0)
             @test d2_truss_elementlength(1, 2, 4, 6) == 5.0  # 3-4-5 triangle
         end
 
@@ -623,13 +649,14 @@ end
             Ke = d3_spring_elementstiffness(1000, 0, 0, 0)
             @test size(Ke) == (6, 6)
             w_ones = ones(3, 3)
-            @test Ke ≈ 1000 * [w_ones -w_ones; -w_ones w_ones]
+            # (0,0,0) invalid: C² = 3 → normalized to (1/√3, 1/√3, 1/√3), factor 1/3
+            @test Ke ≈ (1000/3) * [w_ones -w_ones; -w_ones w_ones]
             # Physical invariants (translational DOFs)
             @test_translational_invariants Ke
-            # thetax=0, thetay=90, thetaz=0 → Cy=0
+            # thetax=0, thetay=90, thetaz=0 → Cy=0, C² = 2 → normalized to (1/√2, 0, 1/√2)
             Ke2 = d3_spring_elementstiffness(1000, 0, 90, 0)
             w2 = [1 0 1; 0 0 0; 1 0 1]
-            @test Ke2 ≈ 1000 * [w2 -w2; -w2 w2]
+            @test Ke2 ≈ 500 * [w2 -w2; -w2 w2]
             @test_translational_invariants Ke2
             # Zero stiffness
             @test d3_spring_elementstiffness(0, 0, 0, 0) == zeros(6, 6)
@@ -637,9 +664,9 @@ end
 
         @testset "elementforce" begin
             k = 1000.0
-            # Unit displacement in x at node 1, all direction cosines = 1
+            # Unit displacement in x at node 1, (0,0,0) → normalized Cx=1/√3
             f = d3_spring_elementforce(k, 0, 0, 0, [1.0; 0.0; 0.0; 0.0; 0.0; 0.0])
-            @test f[1] ≈ -1000.0  # -k * Cx
+            @test f[1] ≈ -1000.0 / sqrt(3)  # -k * Cx
             # Zero displacement
             @test d3_spring_elementforce(k, 0, 0, 0, zeros(6))[1] ≈ 0.0
         end
@@ -657,9 +684,9 @@ end
         @testset "negative/zero parameter behavior" begin
             # Zero stiffness → zero matrix
             @test d3_spring_elementstiffness(0, 0, 0, 0) == zeros(6, 6)
-            # Negative stiffness → negated matrix
+            # Negative stiffness → negated matrix (with normalization)
             w_ones = ones(3, 3)
-            @test d3_spring_elementstiffness(-1000, 0, 0, 0) == -1000 * [w_ones -w_ones; -w_ones w_ones]
+            @test d3_spring_elementstiffness(-1000, 0, 0, 0) ≈ (-1000/3) * [w_ones -w_ones; -w_ones w_ones]
         end
     end
 
@@ -679,13 +706,14 @@ end
             Ke = d3_truss_elementstiffness(E, A, L, 0, 0, 0)
             @test size(Ke) == (6, 6)
             w_ones = ones(3, 3)
-            @test Ke ≈ [w_ones -w_ones; -w_ones w_ones]
+            # (0,0,0) invalid: C² = 3 → normalized to (1/√3, 1/√3, 1/√3), factor 1/3
+            @test Ke ≈ (1/3) * [w_ones -w_ones; -w_ones w_ones]
             # Physical invariants (translational DOFs)
             @test_translational_invariants Ke
-            # thetax=0, thetay=90, thetaz=0
+            # thetax=0, thetay=90, thetaz=0 → normalized to (1/√2, 0, 1/√2)
             Ke2 = d3_truss_elementstiffness(E, A, L, 0, 90, 0)
             w2 = [1 0 1; 0 0 0; 1 0 1]
-            @test Ke2 ≈ [w2 -w2; -w2 w2]
+            @test Ke2 ≈ 0.5 * [w2 -w2; -w2 w2]
             @test_translational_invariants Ke2
         end
 
@@ -693,7 +721,7 @@ end
             E, A, L = 1.0, 1.0, 1.0
             u = [1.0; 0.0; 0.0; 0.0; 0.0; 0.0]
             f = d3_truss_elementforces(E, A, L, 0, 0, 0, u)
-            @test f[1] ≈ -1.0
+            @test f[1] ≈ -1.0 / sqrt(3)
             # zero displacement
             @test d3_truss_elementforces(E, A, L, 0, 0, 0, zeros(6))[1] ≈ 0.0
         end
@@ -702,7 +730,7 @@ end
             L = 1.0
             u = [1.0; 0.0; 0.0; 0.0; 0.0; 0.0]
             eps = d3_truss_elementstrain(L, 0, 0, 0, u)
-            @test eps[1] ≈ -1.0
+            @test eps[1] ≈ -1.0 / sqrt(3)
         end
 
         @testset "elementstress" begin
@@ -710,7 +738,7 @@ end
             L = 1.0
             u = [1.0; 0.0; 0.0; 0.0; 0.0; 0.0]
             sigma = d3_truss_elementstress(E, L, 0, 0, 0, u)
-            @test sigma[1] ≈ -1.0
+            @test sigma[1] ≈ -1.0 / sqrt(3)
         end
 
         @testset "assemble" begin
@@ -742,7 +770,7 @@ end
             # Zero modulus → zero matrix (not validated)
             @test d3_truss_elementstiffness(0.0, 1.0, 1.0, 0, 0, 0) == zeros(6, 6)
             # Negative modulus → negated matrix (not validated)
-            @test d3_truss_elementstiffness(-1.0, 1.0, 1.0, 0, 0, 0) == -[ones(3,3) -ones(3,3); -ones(3,3) ones(3,3)]
+            @test d3_truss_elementstiffness(-1.0, 1.0, 1.0, 0, 0, 0) ≈ (-1/3) * [ones(3,3) -ones(3,3); -ones(3,3) ones(3,3)]
         end
 
         # A validation for force functions
@@ -984,3 +1012,6 @@ end
 
 # Golden regression tests — compare current function outputs against stored snapshots
 include("golden_regression.jl")
+
+# Property-based tests — random parameter invariants
+include("property_tests.jl")

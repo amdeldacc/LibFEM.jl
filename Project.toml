@@ -5,7 +5,12 @@ authors = ["amdeldacc <amdeldacc@gmail.com>"]
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[weakdeps]
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+
+[extensions]
+LibFEMPlotsExt = ["Plots"]
 
 [compat]
 LinearAlgebra = "1.12.0"
@@ -14,10 +19,12 @@ julia = "1"
 
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+PropCheck = "ca382230-33be-11e9-0059-d981d03070e4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["BenchmarkTools", "Test"]
+test = ["BenchmarkTools", "Plots", "PropCheck", "Test"]
 
 [workspace]
 projects = ["test"]

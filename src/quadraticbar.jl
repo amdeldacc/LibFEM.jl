@@ -89,6 +89,14 @@ function d1_quadraticbar_assemble(
     j::Integer,
     m::Integer,
 )
+    n = size(K, 1)
+    # Validate indices are within bounds
+    (1 ≤ i ≤ n && 1 ≤ j ≤ n && 1 ≤ m ≤ n) || throw(BoundsError(K))
+    # Validate indices are distinct
+    (i == j || i == m || j == m) && throw(
+        ArgumentError("Node indices ($i, $j, $m) must be distinct for quadratic bar assembly"),
+    )
+
     K[i, i] += k[1, 1]
     K[i, j] += k[1, 2]
     K[i, m] += k[1, 3]

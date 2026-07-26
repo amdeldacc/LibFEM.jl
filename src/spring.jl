@@ -70,6 +70,7 @@ Return the 4×4 element stiffness matrix for a 2-D spring element.
 A 4×4 element stiffness matrix.
 """
 function d2_spring_elementstiffness(k::Real, theta::Real)
+    validate_positive(k, "k")
     (C, S) = _direction_cosines(theta)
     return k * [
         C * C C * S -C * C -C * S
@@ -135,6 +136,7 @@ Return the 6×6 element stiffness matrix for a 3-D spring element.
 A 6×6 element stiffness matrix.
 """
 function d3_spring_elementstiffness(k::Real, thetax::Real, thetay::Real, thetaz::Real)
+    validate_positive(k, "k")
     (Cx, Cy, Cz) = _direction_cosines(thetax, thetay, thetaz)
     w = [
         Cx * Cx Cx * Cy Cx * Cz

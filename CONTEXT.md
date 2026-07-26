@@ -26,7 +26,7 @@ The hand-transcribed MATLAB layer (`comparison.jl`) has been removed due to tran
 
 ### Element Roadmap (2026-07): Current Set Complete, Extensible Later
 
-The current 8 element types (d1/d2/d3 spring, d1/d2/d3 truss, d2_beam, d2_planeframe, d3_spaceframe) are the complete set for now. The architecture is designed for extension (add `src/<family>.jl` + `include` line) but no new element families are actively planned. Future candidates: quadrilateral, triangular, axisymmetric, thermal, plate/shell elements.
+The current 9 element types (d1/d2/d3 spring, d1/d2/d3 truss, d1_quadraticbar, d2_beam, d2_planeframe, d3_spaceframe) are the complete set for now. The architecture is designed for extension (add `src/<family>.jl` + `include` line) but no new element families are actively planned. Future candidates: quadrilateral, triangular, axisymmetric, thermal, plate/shell elements.
 
 ### Thin Solver Helpers Planned (2026-07)
 
@@ -34,11 +34,7 @@ LibFEM will add utility helpers (e.g., `apply_bc!`, `solve`) to reduce boilerpla
 
 ### Plots.jl → Weak Dependency via Julia Extensions (2026-07)
 
-Diagram functions (in `src/plot.jl`) will move to a Julia package extension. Plots.jl becomes a `[weakdeps]` entry; when both LibFEM and Plots are loaded, the diagram functions auto-activate. Core math (stiffness, assembly, forces) works without Plots. This is the planned approach — not yet implemented.
-
-### Spring Elements Must Not Use Truss Helpers (2026-07)
-
-`d2_spring_elementforce` and `d3_spring_elementforce` currently call `_truss_force_component` from `utils.jl`. This is a conceptual leak — springs are not trusses. The spring force functions should get their own projection logic (semantic decoupling), and the `_truss_force_component` helper should become truss-only. Not high priority, but noted as technical debt.
+Diagram functions moved to a Julia package extension (`ext/LibFEMPlotsExt.jl`). Plots.jl is a `[weakdeps]` entry; when both LibFEM and Plots are loaded, the diagram functions auto-activate. Core math (stiffness, assembly, forces) works without Plots. This was implemented in 2026-07.
 
 ### Type Hierarchy Is Documentation Scaffolding (2026-07)
 
@@ -57,6 +53,13 @@ The abstract type hierarchy (`AbstractElement{NDIM}`, `AbstractSpring{NDIM}`, `A
 - **LibFEM prefix**: `d1_truss_*` (1D), `d2_truss_*` (2D), `d3_truss_*` (3D)
 - **Functions**: `*_elementstiffness(E, A, L, ...)`, `*_assemble(K, k, i, j)`, `*_elementforce(E, A, L, ... , u)`, `*_elementstress(...)`, `*_elementstrain(...)`, `*_elementlength(coords...)`
 - **Key mapping**: MATLAB `LinearBarElementStiffness.m` → `d1_truss_elementstiffness`. `PlaneTrussElementForce.m` → `d2_truss_elementforce`. `SpaceTrussElementStress.m` → `d3_truss_elementstress`.
+
+### Quadratic Bar (1D)
+- **MATLAB prefix**: None (original addition, not from Kattan)
+- **LibFEM prefix**: `d1_quadraticbar_*` (1D)
+- **Functions**: `*_elementstiffness(E, A, L)`, `*_assemble(K, k, i, j, m)`, `*_elementforces(Ke, u)`, `*_elementstress(Ke, u, A)`
+- **DOFs**: 3 nodes, 1 DOF/node, 3×3 stiffness matrix. Mid-node enables quadratic shape functions (higher accuracy than linear bar for same element count).
+- **Key feature**: Assembly uses 3-node indices (`i, j, m`) — distinct from the 2-node `_assemble!` helper. Validates distinct indices.
 
 ### Beam (2D Pure Beam, Bending Only)
 - **MATLAB prefix**: `Beam*` (pure beam — bending only, no axial DOF)

@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-24T18:39:54.340Z",
+  "updatedAt": "2026-07-26T15:15:43.015Z",
   "command": "update",
-  "gitHead": "9c7dbbe17958323a77899991135f9cc6407a5936",
+  "gitHead": "4f7582f0fef24371e275d7b11f0759143f964428",
   "model": "nvidia/nemotron-3-ultra-550b-a55b"
 }

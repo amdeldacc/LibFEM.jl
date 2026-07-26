@@ -14,37 +14,49 @@ LibFEM.jl is a single-module library with multi-file source organization. The mo
 
 | File | Contents |
 |------|----------|
-| `src/LibFEM.jl` | Module declaration, `include()` directives, `export` statements |
+| `src/LibFEM.jl` | Module declaration, `include()` directives, `export` statements, stub diagram throwers |
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
-| `src/utils.jl` | `deg2rad` and shared helpers |
+| `src/utils.jl` | `_deg2rad`, internals validation helpers |
 | `src/assembly.jl` | `_assemble!` private helper, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime` |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
 | `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (1-D quadratic bar, 3-node) |
 | `src/beam.jl` | All `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), and `d3_spaceframe_*` (space frame) implementations |
-| `src/plot.jl` | Beam diagram functions (Plots dependency) |
+
+Beam diagram functions used to live in `src/plot.jl`, but with `Plots.jl` moved to a weak dependency (commit 62baa10), they now live in the package extension `ext/LibFEMPlotsExt.jl`. `src/LibFEM.jl` defines stub throwers (`DiagramError`) for every diagram symbol; loading `Plots` activates the extension, which dispatches into the same exported function names and the stubs are replaced.
 
 ```julia
 module LibFEM
-using Plots
 
-# includes (types/errors/utils first, then element families)
+# includes (order matters: types/errors/utils/assembly first)
 include("types.jl")
 include("errors.jl")
 include("utils.jl")
 include("assembly.jl")
 include("spring.jl")
 include("truss.jl")
-include("quadraticbar.jl")
 include("beam.jl")
-include("plot.jl")
+include("quadraticbar.jl")
+
+# Stub diagram functions (replaced by extension when Plots loaded)
+for f in (:d2_beam_elementsheardiagram, :d2_beam_elementmomentdiagram,
+          :d2_planeframe_elementaxialdiagram, :d2_planeframe_elementsheardiagram,
+          :d2_planeframe_elementmomentdiagram,
+          :d3_spaceframe_elementaxialdiagram, :d3_spaceframe_elementshearydiagram,
+          :d3_spaceframe_elementshearzdiagram, :d3_spaceframe_elementmomentydiagram,
+          :d3_spaceframe_elementmomentzdiagram, :d3_spaceframe_elementtorsiondiagram,
+          :_beamdiagram)
+    @eval function $f(args...)
+        throw(DiagramError("Plots.jl is required for diagram functions. Use `using Plots` along with LibFEM to enable them."))
+    end
+end
 
 # grouped exports follow...
 end
 ```
 
-**Exports**: All public functions are exported in grouped blocks. `deg2rad` is exported for external use. The helpers `_assemble!`, `_d2_planeframe_kprime`, and `_d3_spaceframe_kprime` remain private (underscore prefix, not exported).
+**Exports**: All public functions are exported in grouped blocks. `deg2rad` is available from `Base` (Julia 1.10+); the internal helper is `_deg2rad` (underscore prefix, not exported). The helpers `_assemble!`, `_d2_planeframe_kprime`, and `_d3_spaceframe_kprime` remain private (underscore prefix, not exported). Diagram functions (`d2_beam_elementsheardiagram`, etc.) are *also* exported — the extension re-exports them with Plots-backed implementations; without `Plots`, calling them throws `DiagramError`.
 
 ## Naming Convention
 
@@ -99,7 +111,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)
 epsilon = d2_truss_elementstrain(L, theta, u)
 ```
 
-**Validation**: Most stiffness/length functions now validate positive inputs (e.g., `L > 0`, `A > 0`) and throw `ArgumentError` with descriptive messages on violation. See `src/LibFEM.jl` lines with `throw(ArgumentError(...))`.
+**Validation**: Most stiffness/length functions now validate positive inputs (e.g., `L > 0`, `A > 0`, `k > 0`) and throw `ElementParameterError` with descriptive messages on violation. The shared internal helper is `validate_positive(x::Real, name::AbstractString)` in `src/utils.jl`. Functions currently guarded: `d1_truss_elementstiffness`, `d1_quadraticbar_elementstiffness`, `d2_truss_elementstiffness`/`elementstrain`, `d2_beam_elementstiffness`, `d2_planeframe_elementstiffness`, `d3_spring_elementstiffness`, `d3_truss_elementstiffness`/`elementstrain`/`elementlength`, `d3_spaceframe_elementstiffness`/`elementlength`, plus force/stress variants.
 
 Additional helpers exist per domain:
 - **Length**: `_elementlength(...)` — Euclidean distance between node coordinates (2D/3D truss, beam)
@@ -116,6 +128,10 @@ deg2rad(theta::Real) = theta * pi / 180
 
 - 2D elements: single `theta` parameter (angle from positive x-axis)
 - 3D elements: three parameters `thetax, thetay, thetaz` (direction angles to x, y, z axes)
+
+**3D direction cosine convention** (`src/utils.jl` `_direction_cosines`):
+
+Unlike the spherical (polar + azimuthal) convention, the 3-angle convention defines each angle as the angle between the element axis and the corresponding global axis. The identity `cos²θx + cos²θy + cos²θz = 1` must hold for a valid direction vector. If inputs violate this by more than `1e-12`, the helper warns and normalizes the cosines automatically (degenerate `Cx²+Cy²+Cz² ≈ 0` is returned as-is). In practice, prefer deriving direction cosines from node coordinates via `d2_truss_elementlength`/`d3_truss_elementlength` rather than specifying angles manually.
 
 ## Assembly Helper (`_assemble!`)
 
@@ -225,20 +241,22 @@ The helper is private (underscore prefix, not exported). Adding new element type
 
 ## Dependencies & Runtime Notes
 
-- **`Plots.jl`** v1 — used by all beam diagram functions (`d2_beam_*`, `d2_planeframe_*`, and `d3_spaceframe_*`). Required in `Project.toml`.
-- **`using Plots`** is declared at module level in `src/LibFEM.jl` (though the diagram functions are in `src/plot.jl`).
-- **`deg2rad` is now exported** — users can call `LibFEM.deg2rad(theta)` for degree-to-radian conversion.
-- **No `ModelingToolkit`** — listed as a dependency in `CLAUDE.md`'s older version note, but the `Project.toml` has been updated to `Plots` only. The scripts in `scripts/` use MTK independently.
+- **`Plots.jl`** v1 — a **weak dependency** via the Julia package extension `ext/LibFEMPlotsExt.jl`. `Project.toml` declares it under `[weakdeps]` (not `[deps]`) and the extension block `LibFEMPlotsExt = ["Plots"]`. Loading LibFEM alone installs stub throwers for every diagram symbol that raise `DiagramError`; loading `Plots` in the same session activates the extension and replaces the stubs with Plots-backed implementations (same exported names, no API change for callers).
+- **`LinearAlgebra`** — declared as a hard dep in `[deps]` (Julia 1.12.0 compat). The module does not `using LinearAlgebra` explicitly because the relevant operations (transpose, conjugates) are reached via `LinearAlgebra`'s methods on AbstractMatrix, but the dep is declared so downstream code that does `using LinearAlgebra` after `using LibFEM` gets the correct version.
+- **`deg2rad` is from `Base`** (Julia 1.10+) — the internal helper is `_deg2rad`, not exported. Users call `deg2rad(theta)` directly from `Base`.
 
 ## Testing
 
 Tests are in `test/`:
-- **`runtests.jl`** — Main test suite (~900 lines). Uses `Test` standard library. Covers all 8 element types (including `d3_spaceframe` and `d1_quadraticbar`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, and MATLAB reference comparison for Problem 10.1. Includes golden regression tests against `test/golden/v1/` binary reference files.
+- **`runtests.jl`** — Main test suite (~900+ lines). Uses `Test` standard library plus `LinearAlgebra`. Covers all 8 element types (including `d3_spaceframe` and `d1_quadraticbar`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, and MATLAB reference comparison for Problem 10.1. Includes an `include` of `property_tests.jl` and `golden_regression.jl`. The new validation contracts (zero `k`, zero `L`) are asserted via `@test_throws ElementParameterError` (e.g. `d2_spring_elementstiffness(0, 30)`, `d3_truss_elementlength(0,0,0,0,0,0)`, `d3_spaceframe_elementlength(0,0,0,0,0,0)`). Several testsets wrap bodies in `Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(stderr, Base.CoreLogging.Error)) do ... end` to suppress the `@warn` emitted by `_direction_cosines` for valid-but-non-unit random triples.
+- **`property_tests.jl`** — Property-based tests using `PropCheck.jl` (added to test `[extras]` in commit fea71d7). Asserts symmetry, translational invariance, and zero-stiffness behavior across randomized inputs. The 3D spring/truss section uses a `_rand_3d_angles()` helper that generates spherical-polar samples on the unit sphere (so `Cx²+Cy²+Cz² = 1` by construction) rather than independent uniform angles, because the validation logic auto-normalizes off-unit triples.
 - **`comparison.jl`** — Side-by-side MATLAB reference implementations transcribed from `Doc/Kattan/M-Files/`. Not run as independent tests; included from `runtests.jl`.
 - **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (12 benchmarks). Covers stiffness construction (8 element types), assembly (500-element d2_truss chain + 500-element d3_spaceframe chain), solve (random SPD system), and d3_spaceframe element forces. Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
-- **`golden_regression.jl`** — Regression test runner that diffs current outputs against `test/golden/v1/`.
+- **`golden_regression.jl`** — Regression test runner that diffs current outputs against `test/golden/v1/`. Binary fixtures in `test/golden/v1/d{2,3}_{spring,truss,spaceframe}_*.bin` are paired with a `manifests.toml` specifying parameters and tolerances; the binary content was regenerated in commit 4f7582f after the 3D direction-cosine normalization fix to track the new (mathematically correct) outputs.
 - **`octave_runner.jl`** — Octave runner module for MATLAB validation (used by `scripts/validate_matlab.jl`).
 - **`matlab_adapters.jl`** — MATLAB↔Julia argument/result adapters used by the Octave verification harness.
+
+Test-only deps (`Project.toml` `[extras]` `[targets].test`): `BenchmarkTools`, `PropCheck`, `Test`. The `test/Project.toml` workspace holds the test project.
 
 To run tests:
 ```julia
@@ -262,33 +280,15 @@ When adding a new element type:
 5. Add tests in `test/runtests.jl`
 
 Key invariants to maintain:
-- All angles in degrees (use `deg2rad`)
+- All angles in degrees (use `_deg2rad` internally)
 - Stiffness matrices must be symmetric
 - Assembly uses `.+=` (in-place addition) to allow building up the global matrix from multiple elements
+- Positive material/geometric parameters (e.g. `L > 0`, `A > 0`, `k > 0`) must be enforced via `validate_positive`; inputs that violate them should throw `ElementParameterError`, not silently produce a zero matrix
 
-## Known Issues
+## Limitations & Watch-outs
 
-See the repository's issue tracker for the full list. The **`ToDo.md`** file at the repository root is the merged code review backlog from two independent AI reviews. The cross-verified review (`ToDo_Promethus_inkling.md`) identified **false positives** in the merged list:
+- **No built-in boundary condition or solver functions**, users supply their own `K·U = F` solver (PartitionedArrays-style partitioning, prescribed-DOF stripping, etc. is out of scope).
+- **Diagram functions raise `DiagramError` unless `Plots` is loaded** in the same Julia session. CI scripts (e.g. `scripts/problem_wrapper.jl` headless Octave path) override the exported diagram functions in a wrapper module with no-ops so they don't fail on import-time resolution. If you hit `DiagramError` in a script, make sure `using Plots` precedes the call.
+- **3D direction cosine inputs** that violate `Cx²+Cy²+Cz² = 1` by more than `1e-12` emit a `@warn` and are auto-normalized; degenerate triples (`Cx²+Cy²+Cz² ≈ 0`) cannot be normalized and pass through unchanged. Prefer deriving angles from node coordinates via `d3_*_elementlength`.
+- **No `ModelingToolkit` integration in the library itself.** The example scripts in `scripts/` (`linear_truss_mtk*.jl`) use MTK independently of this project; they are not part of the public API.
 
-**⚠️ False Positives (NOT bugs — mathematically correct per MATLAB reference):**
-- **C1**: `d3_spaceframe_elementforces` uses `R` not `R'` — MATLAB `SpaceFrameElementForces.m:57` uses `kprime * R * u` (identical to Julia). Standard FEM: stiffness uses `R' * k_local * R` (global), forces use `k_local * R * u` (local).
-- **C2**: `d2_planeframe_elementforces` "inverted transformation" — MATLAB `PlaneFrameElementForces.m:21` uses `kprime * T * u` (identical to Julia).
-
-**✅ Verified Real Issues (from cross-verified review):**
-
-| ID | Severity | Issue | Location |
-|---|---|---|---|
-| **H1** | HIGH | Duplicated rotation matrix (Λ/R) in 3D beam stiffness & force (~30 lines each) | `src/beam.jl:200-228`, `297-322` |
-| **H2** | HIGH | Inconsistent force return types: 1D returns 2-element Vector, 2D/3D return scalar | `src/truss.jl:161, 313, 339, 366` |
-| **H3** | HIGH | `_d3_spaceframe_kprime` misplaced in `assembly.jl` (belongs in `beam.jl`) | `src/assembly.jl:32-87` |
-| **H4** | MEDIUM | `_assemble!` missing bounds checks on `K` size vs indices | `src/assembly.jl:21-27` |
-| **H5** | HIGH | `LinearAlgebra` not declared in `Project.toml` deps | `Project.toml` |
-| **M1** | MEDIUM | `d3_truss` angle variable naming: `u` vs `w` for `thetay` | `src/truss.jl:282-284` vs `315+` |
-| **M2** | MEDIUM | No arbitrary-orientation test for 3D beam forces (all tests use θ=0) | `test/runtests.jl` |
-| **M3** | LOW | `ElementDimensionError` exported but never thrown/tested | `test/runtests.jl` |
-| **M4** | MEDIUM | Benchmark suite not in CI | `.github/workflows/ci.yml` |
-| **M5** | LOW | `plot.jl` docstrings contain spurious `export` keyword | `src/plot.jl` |
-
-Notable items beyond the verified issues:
-- No boundary condition or solver functions yet (users must solve `K·U = F` themselves)
-- `Project.toml` has `[extras]`/`[targets]` for `BenchmarkTools` (test-only), but `Test` stdlib is not declared there

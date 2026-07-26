@@ -61,15 +61,15 @@ end
 @testset "LibFEM" begin
 
     # ─────────────────────────────────────────────────
-    # Helper: deg2rad (module-internal, use qualified)
+    # Helper: _deg2rad (module-internal, use qualified)
     # ─────────────────────────────────────────────────
-    @testset "deg2rad helper" begin
-        @test LibFEM.deg2rad(0) == 0.0
-        @test LibFEM.deg2rad(180) ≈ π
-        @test LibFEM.deg2rad(90) ≈ π / 2
-        @test LibFEM.deg2rad(360) ≈ 2π
-        @test LibFEM.deg2rad(45) ≈ π / 4
-        @test LibFEM.deg2rad(-180) ≈ -π
+    @testset "_deg2rad helper" begin
+        @test LibFEM._deg2rad(0) == 0.0
+        @test LibFEM._deg2rad(180) ≈ π
+        @test LibFEM._deg2rad(90) ≈ π / 2
+        @test LibFEM._deg2rad(360) ≈ 2π
+        @test LibFEM._deg2rad(45) ≈ π / 4
+        @test LibFEM._deg2rad(-180) ≈ -π
     end
 
     # ─────────────────────────────────────────────────
@@ -79,7 +79,7 @@ end
         # Valid unit vector: cos²(30)+cos²(60)+cos²(90) = 0.75+0.25+0 = 1
         c1 = LibFEM._direction_cosines(30, 60, 90)
         @test sqrt(sum(x -> x^2, c1)) ≈ 1.0
-        @test c1[1] ≈ cos(LibFEM.deg2rad(30))  # exact values returned unchanged
+        @test c1[1] ≈ cos(LibFEM._deg2rad(30))  # exact values returned unchanged
 
         # Valid input: (0, 90, 90) → (1, 0, 0) (cos(π/2) ≈ 6e-17 from FP)
         c2 = LibFEM._direction_cosines(0, 90, 90)
@@ -91,7 +91,7 @@ end
         c3 = LibFEM._direction_cosines(45, 45, 45)
         @test sqrt(sum(x -> x^2, c3)) ≈ 1.0
         # Expected normalized value: cos(45°)/√1.5 ≈ 0.57735
-        expected = cos(LibFEM.deg2rad(45)) / sqrt(1.5)
+        expected = cos(LibFEM._deg2rad(45)) / sqrt(1.5)
         @test c3[1] ≈ expected
         # Warns on non-physical input
         @test_logs (:warn, r"Direction cosines do not form a unit vector") LibFEM._direction_cosines(45, 45, 45)
@@ -499,7 +499,7 @@ end
             @test Ke90 ≈ 1000 * [0 0 0 0; 0 1 0 -1; 0 0 0 0; 0 -1 0 1]
             @test_translational_invariants Ke90
             # Zero stiffness
-            @test d2_spring_elementstiffness(0, 30) == zeros(4, 4)
+            @test_throws ElementParameterError d2_spring_elementstiffness(0, 30)
         end
 
         @testset "elementforce" begin
@@ -531,10 +531,10 @@ end
         end
 
         @testset "negative/zero parameter behavior" begin
-            # Zero stiffness → zero matrix
-            @test d2_spring_elementstiffness(0, 30) == zeros(4, 4)
-            # Negative stiffness → negated matrix
-            @test d2_spring_elementstiffness(-100, 0) == -100 * [1 0 -1 0; 0 0 0 0; -1 0 1 0; 0 0 0 0]
+            # Zero stiffness → throws
+            @test_throws ElementParameterError d2_spring_elementstiffness(0, 30)
+            # Negative stiffness → throws
+            @test_throws ElementParameterError d2_spring_elementstiffness(-100, 0)
         end
     end
 
@@ -643,6 +643,7 @@ end
     # 3-D Spring (d3_spring)
     # ─────────────────────────────────────────────────
     @testset "d3_spring" begin
+        Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(stderr, Base.CoreLogging.Error)) do
         @testset "elementstiffness" begin
             # All direction cosines = 1
             Ke = d3_spring_elementstiffness(1000, 0, 0, 0)
@@ -658,7 +659,7 @@ end
             @test Ke2 ≈ 500 * [w2 -w2; -w2 w2]
             @test_translational_invariants Ke2
             # Zero stiffness
-            @test d3_spring_elementstiffness(0, 0, 0, 0) == zeros(6, 6)
+            @test_throws ElementParameterError d3_spring_elementstiffness(0, 0, 0, 0)
         end
 
         @testset "elementforce" begin
@@ -681,11 +682,16 @@ end
         end
 
         @testset "negative/zero parameter behavior" begin
-            # Zero stiffness → zero matrix
-            @test d3_spring_elementstiffness(0, 0, 0, 0) == zeros(6, 6)
-            # Negative stiffness → negated matrix (with normalization)
-            w_ones = ones(3, 3)
-            @test d3_spring_elementstiffness(-1000, 0, 0, 0) ≈ (-1000/3) * [w_ones -w_ones; -w_ones w_ones]
+            # Zero stiffness → throws
+            @test_throws ElementParameterError d3_spring_elementstiffness(0, 0, 0, 0)
+            # Negative stiffness → throws
+            @test_throws ElementParameterError d3_spring_elementstiffness(-1000, 0, 0, 0)
+        end
+    end # Test.collected_logs()
+
+        @testset "warning on invalid direction cosines" begin
+            # (45,45,45) produces cos²(45°)=0.707 each → Cx²+Cy²+Cz² ≈ 1.5 ≠ 1, triggers warning
+            @test_logs (:warn, r"Direction cosines do not form a unit vector") d3_spring_elementstiffness(1000, 45, 45, 45)
         end
     end
 
@@ -693,9 +699,10 @@ end
     # 3-D Truss / Space Truss (d3_truss)
     # ─────────────────────────────────────────────────
     @testset "d3_truss" begin
+        Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(stderr, Base.CoreLogging.Error)) do
         @testset "elementlength" begin
             @test d3_truss_elementlength(0, 0, 0, 1, 1, 1) ≈ sqrt(3)
-            @test d3_truss_elementlength(0, 0, 0, 0, 0, 0) == 0.0
+            @test_throws ElementParameterError d3_truss_elementlength(0, 0, 0, 0, 0, 0)
             @test d3_truss_elementlength(1, 0, 0, 4, 0, 0) == 3.0
         end
 
@@ -775,6 +782,7 @@ end
         # A validation for force functions
         @test_throws ElementParameterError d3_truss_elementforces(1.0, 0.0, 1.0, 0, 0, 0, ones(6))
         @test_throws ElementParameterError d3_truss_elementforces(1.0, -1.0, 1.0, 0, 0, 0, ones(6))
+    end # Test.collected_logs()
     end
 
     # ─────────────────────────────────────────────────
@@ -783,7 +791,7 @@ end
     @testset "d3_spaceframe" begin
         @testset "elementlength" begin
             @test d3_spaceframe_elementlength(0,0,0, 3,4,12) ≈ 13.0  # 5-12-13 triangle
-            @test d3_spaceframe_elementlength(0,0,0, 0,0,0) == 0.0
+            @test_throws ElementParameterError d3_spaceframe_elementlength(0,0,0, 0,0,0)
             @test d3_spaceframe_elementlength(1,0,0, 5,0,0) == 4.0
             @test d3_spaceframe_elementlength(0,0,0, 1,1,1) ≈ sqrt(3)
         end
@@ -907,6 +915,7 @@ end
         # ═══════════════════════════════════════════════════
 
         @testset "element property tests" begin
+            Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(stderr, Base.CoreLogging.Error)) do
             k1 = d1_truss_elementstiffness(1, 1, 1)
             @test_translational_invariants(k1, 1e-15)
 
@@ -927,6 +936,7 @@ end
 
             k3b = d3_spaceframe_elementstiffness(1, 1, 1, 1, 1, 1, 0,0,0, 4,0,0)
             @test_physical_invariants(k3b)
+        end # Test.collected_logs()
         end
 
         @testset "negative path tests" begin
@@ -963,6 +973,7 @@ end
 
 
         @testset "assembly edge cases" begin
+            Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(stderr, Base.CoreLogging.Error)) do
             K6 = zeros(6, 6)
             k = d2_truss_elementstiffness(1, 1, 1, 0)
             K6 = d2_truss_assemble(K6, k, 1, 3)
@@ -977,6 +988,21 @@ end
             @test d2_spring_elementstiffness(100, 30) ≈ d2_truss_elementstiffness(100, 1, 1, 30)
             # 3D identity
             @test d3_spring_elementstiffness(100, 30, 45, 60) ≈ d3_truss_elementstiffness(100, 1, 1, 30, 45, 60)
+        end # Test.collected_logs()
+        end
+
+        @testset "vertical beam edge case" begin
+            E, G, A, Iy, Iz, J = 200e9, 80e9, 0.01, 1e-4, 2e-4, 1e-5
+            # Vertical beam along Z: (0,0,0)→(0,0,4) — covers z2 > z1 branch
+            Ke = d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, 0,0,0, 0,0,4)
+            @test size(Ke) == (12, 12)
+            @test Ke ≈ Ke'
+            @test all(isfinite, Ke)
+            # Vertical beam along Z (negative direction): (0,0,4)→(0,0,0) — covers z1 > z2 branch
+            Ke2 = d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, 0,0,4, 0,0,0)
+            @test size(Ke2) == (12, 12)
+            @test Ke2 ≈ Ke2'
+            @test all(isfinite, Ke2)
         end
     end
 
@@ -995,7 +1021,7 @@ end  # @testset "LibFEM"
         :d2_beam_elementstiffness,
         :d2_planeframe_elementstiffness,
         :d3_spaceframe_elementstiffness,
-        :deg2rad,
+        :_deg2rad,
         :AbstractSpring,
         :Spring,
         :AbstractTruss,

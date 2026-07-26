@@ -31,6 +31,7 @@ function _deserialize_binary(path::String)
 end
 
 @testset "Golden Regression" begin
+    Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(stderr, Base.CoreLogging.Error)) do
     manifest_path = joinpath(@__DIR__, "golden", "manifests.toml")
     if !isfile(manifest_path)
         @warn "Golden manifest not found at $manifest_path — skipping golden regression tests"
@@ -109,4 +110,5 @@ end
             end
         end
     end
+    end # collected_logs
 end

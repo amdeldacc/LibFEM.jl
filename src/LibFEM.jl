@@ -13,6 +13,10 @@ include("truss.jl")
 include("beam.jl")
 include("quadraticbar.jl")
 
+# Import Base.deg2rad for Julia < 1.10 compat (ensures deg2rad
+# is available in the module namespace on all Julia 1.x versions)
+import Base: deg2rad
+
 # ═══════════════════════════════════════════════════════════
 # Stub diagram functions (replaced by extension when Plots loaded)
 # ═══════════════════════════════════════════════════════════

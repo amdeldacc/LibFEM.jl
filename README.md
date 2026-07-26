@@ -157,7 +157,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 
 ## Conventions
 
-- **Angle units**: All angle parameters are in **degrees** (converted internally via `_deg2rad`).
+- **Angle units**: All angle parameters are in **degrees** (converted internally via `deg2rad`, imported from `Base`).
 - **Dimension prefixes**:
   - `d1_` — 1 DOF/node (1D spring, linear bar)
   - `d2_` — 2 DOF/node (2D spring, plane truss, pure beam); 3 DOF/node for plane frame
@@ -177,7 +177,7 @@ LibFEM.jl/
 │   ├── LibFEM.jl          # Module declaration, includes, exports
 │   ├── types.jl           # Abstract type hierarchy, @kwdef element structs
 │   ├── errors.jl          # Custom error types (ElementDimensionError, etc.)
-│   ├── utils.jl           # _deg2rad and shared helpers
+│   ├── utils.jl           # deg2rad and shared helpers
 │   ├── assembly.jl        # _assemble! helper, _d3_spaceframe_kprime
 │   ├── spring.jl          # d1/d2/d3_spring_* implementations
 │   ├── truss.jl           # d1/d2/d3_truss_* implementations
@@ -423,7 +423,7 @@ To add a new element type:
 
 **Key invariants**:
 
-- All angles in degrees (use `_deg2rad` internally)
+- All angles in degrees (use `deg2rad` internally, imported from `Base`)
 - Stiffness matrices must be symmetric
 - Assembly uses `.+=` (in-place addition) to accumulate multiple elements
 

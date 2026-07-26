@@ -17,7 +17,7 @@ LibFEM.jl is a single-module library with multi-file source organization. The mo
 | `src/LibFEM.jl` | Module declaration, `include()` directives, `export` statements, stub diagram throwers |
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
-| `src/utils.jl` | `_deg2rad`, internals validation helpers |
+| `src/utils.jl` | `deg2rad`, internals validation helpers |
 | `src/assembly.jl` | `_assemble!` private helper, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime` |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
@@ -57,7 +57,7 @@ end
 end
 ```
 
-**Exports**: All public functions are exported in grouped blocks. `deg2rad` is available from `Base` (Julia 1.10+); the internal helper is `_deg2rad` (underscore prefix, not exported). The helpers `_assemble!`, `_d2_planeframe_kprime`, and `_d3_spaceframe_kprime` remain private (underscore prefix, not exported). Diagram functions (`d2_beam_elementsheardiagram`, etc.) are *also* exported — the extension re-exports them with Plots-backed implementations; without `Plots`, calling them throws `DiagramError`.
+**Exports**: All public functions are exported in grouped blocks. `deg2rad` is imported from `Base` into the module namespace (`import Base: deg2rad` in `src/LibFEM.jl`). The helpers `_assemble!`, `_d2_planeframe_kprime`, and `_d3_spaceframe_kprime` remain private (underscore prefix, not exported). Diagram functions (`d2_beam_elementsheardiagram`, etc.) are *also* exported — the extension re-exports them with Plots-backed implementations; without `Plots`, calling them throws `DiagramError`.
 
 ## Naming Convention
 
@@ -244,7 +244,7 @@ The helper is private (underscore prefix, not exported). Adding new element type
 
 - **`Plots.jl`** v1 — a **weak dependency** via the Julia package extension `ext/LibFEMPlotsExt.jl`. `Project.toml` declares it under `[weakdeps]` (not `[deps]`) and the extension block `LibFEMPlotsExt = ["Plots"]`. Loading LibFEM alone installs stub throwers for every diagram symbol that raise `DiagramError`; loading `Plots` in the same session activates the extension and replaces the stubs with Plots-backed implementations (same exported names, no API change for callers).
 - **`LinearAlgebra`** — declared as a hard dep in `[deps]` (Julia 1.12.0 compat). The module does not `using LinearAlgebra` explicitly because the relevant operations (transpose, conjugates) are reached via `LinearAlgebra`'s methods on AbstractMatrix, but the dep is declared so downstream code that does `using LinearAlgebra` after `using LibFEM` gets the correct version.
-- **`deg2rad` is from `Base`** (Julia 1.10+) — the internal helper is `_deg2rad`, not exported. Users call `deg2rad(theta)` directly from `Base`.
+- **`deg2rad` is imported from `Base`** via `import Base: deg2rad` in `src/LibFEM.jl`, making it available in the module namespace on all Julia 1.x versions. It is not re-exported — users call `deg2rad(theta)` directly from `Base`.
 
 ## Testing
 
@@ -281,7 +281,7 @@ When adding a new element type:
 5. Add tests in `test/runtests.jl`
 
 Key invariants to maintain:
-- All angles in degrees (use `_deg2rad` internally)
+- All angles in degrees (use `deg2rad` internally, imported from `Base`)
 - Stiffness matrices must be symmetric
 - Assembly uses `.+=` (in-place addition) to allow building up the global matrix from multiple elements
 - Positive material/geometric parameters (e.g. `L > 0`, `A > 0`, `k > 0`) must be enforced via `validate_positive`; inputs that violate them should throw `ElementParameterError`, not silently produce a zero matrix

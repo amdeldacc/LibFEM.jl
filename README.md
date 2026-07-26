@@ -177,7 +177,7 @@ LibFEM.jl/
 │   ├── LibFEM.jl          # Module declaration, includes, exports
 │   ├── types.jl           # Abstract type hierarchy, @kwdef element structs
 │   ├── errors.jl          # Custom error types (ElementDimensionError, etc.)
-│   ├── utils.jl           # _deg2rad and shared helpers
+│   ├── utils.jl           # deg2rad and shared helpers
 │   ├── assembly.jl        # _assemble! helper, _d3_spaceframe_kprime
 │   ├── spring.jl          # d1/d2/d3_spring_* implementations
 │   ├── truss.jl           # d1/d2/d3_truss_* implementations

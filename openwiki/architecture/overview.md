@@ -225,29 +225,39 @@ The helper is private (underscore prefix, not exported). Adding new element type
 
 ## Dependencies & Runtime Notes
 
-- **`Plots.jl`** v1 — used by all beam diagram functions (`d2_beam_*`, `d2_planeframe_*`, and `d3_spaceframe_*`). Required in `Project.toml`.
-- **`using Plots`** is declared at module level in `src/LibFEM.jl` (though the diagram functions are in `src/plot.jl`).
-- **`deg2rad` is now exported** — users can call `LibFEM.deg2rad(theta)` for degree-to-radian conversion.
-- **No `ModelingToolkit`** — listed as a dependency in `CLAUDE.md`'s older version note, but the `Project.toml` has been updated to `Plots` only. The scripts in `scripts/` use MTK independently.
+- **`Plots.jl`** v1 — a **weak dependency** declared under `[weakdeps]` in `Project.toml`. The real beam diagram implementations live in `ext/LibFEMPlotsExt.jl`, a Julia 1.9+ package extension that auto-activates when both LibFEM and Plots are loaded. Core math (stiffness, assembly, forces) works **without** Plots.
+- **`src/plot.jl`** only contains **stub** `DiagramError`-throwing fallbacks so that `using LibFEM` (without Plots) still succeeds. The extension replaces these stubs with real `Plots.jl` implementations when loaded.
+- **`LinearAlgebra`** is declared in `[deps]` in `Project.toml` (compat pinned to `1.12.0`).
+- **`deg2rad` is exported** — users can call `LibFEM.deg2rad(theta)` for degree-to-radian conversion.
+- **No `ModelingToolkit`** — listed as a dependency in `CLAUDE.md`'s older version note, but the `Project.toml` has Plots only (as a weakdep). The scripts in `scripts/` use MTK independently.
 
 ## Testing
 
-Tests are in `test/`:
-- **`runtests.jl`** — Main test suite (~900 lines). Uses `Test` standard library. Covers all 8 element types (including `d3_spaceframe` and `d1_quadraticbar`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, and MATLAB reference comparison for Problem 10.1. Includes golden regression tests against `test/golden/v1/` binary reference files.
-- **`comparison.jl`** — Side-by-side MATLAB reference implementations transcribed from `Doc/Kattan/M-Files/`. Not run as independent tests; included from `runtests.jl`.
-- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (12 benchmarks). Covers stiffness construction (8 element types), assembly (500-element d2_truss chain + 500-element d3_spaceframe chain), solve (random SPD system), and d3_spaceframe element forces. Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
-- **`golden_regression.jl`** — Regression test runner that diffs current outputs against `test/golden/v1/`.
-- **`octave_runner.jl`** — Octave runner module for MATLAB validation (used by `scripts/validate_matlab.jl`).
-- **`matlab_adapters.jl`** — MATLAB↔Julia argument/result adapters used by the Octave verification harness.
+Tests are in `test/` and in a dedicated `test/Project.toml` (a Julia 1.12 workspace project so the test environment can resolve `Plots`, `BenchmarkTools`, `PropCheck`, and `Test` as test-only deps):
+- **`runtests.jl`** — Main test suite (~1000 lines). Uses `Test` standard library. Covers all 8 element types (including `d3_spaceframe` and `d1_quadraticbar`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, and MATLAB reference comparison. Includes golden regression tests against `test/golden/v1/` binary reference files.
+- **`property_tests.jl`** — Property-based tests using `PropCheck.jl` for invariant coverage beyond the example-based checks in `runtests.jl`.
+- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (12 benchmarks). Covers stiffness construction, assembly (long chain stress tests), solve, and element-force computation. Run from the dedicated `test/` environment: `julia --project=test test/benchmark.jl`.
+- **`golden_regression.jl`** — Regression test runner that diffs current outputs against `test/golden/v1/` binary files (`test/golden/manifests.toml` and `params_common.jl` define the corpus; `test/golden/generate_golden.jl` regenerates snapshots).
+- **`octave_runner.jl`** — Module that drives Octave (installed with `apt-get install --no-install-recommends`) for MATLAB reference execution, used by `scripts/validate_matlab.jl`.
+- **`matlab_adapters.jl`** — MATLAB↔Julia argument/result adapters (handles MATLAB's 1-based vs Julia's 1-based indexing quirks, vector/matrix orientation differences, and the `element_r`/`element_t` naming for the Kattan reference output).
 
 To run tests:
 ```julia
 julia --project=. -e 'using Pkg; Pkg.test()'
-# or manually:
-# julia --project=. test/runtests.jl
+# or directly against the test environment:
+# julia --project=test test/runtests.jl
 ```
 
-**CI**: There is no automated test runner workflow currently. The test suite is run manually. Benchmarks are not automated — they run standalone due to noise and slowness in automated environments.
+**CI** (`.github/workflows/`):
+- **`ci.yml`** — runs the test suite and Octave validation on every push/PR.
+- **`benchmarks.yml`** — runs `test/benchmark.jl` and reports timing as a workflow artifact.
+- **`ocr-review.yml`** — OpenCodeReview agent review of staged changes.
+- **`opencode.yml`** — runs the OpenCode AI assistant on issue/PR comments containing `/oc` or `/opencode`, using an NVIDIA NIM backend.
+- **`openwiki-update.yml`** — scheduled daily OpenWiki documentation refresh that opens a PR with any changes.
+- **`openwiki-stale-check.yml`** — flags stale OpenWiki sections.
+- **`super-linter.yml`** — runs the GitHub Super-Linter pre-merge.
+
+Per `scripts/pre-commit-check.sh` and `scripts/pre-commit-ocr.sh`, the project also ships pre-commit hooks that lint the Julia sources and run the OCR review.
 
 **GitHub Actions workflows**: `.github/workflows/opencode.yml` runs the OpenCode AI assistant on issue/PR comments containing `/oc` or `/opencode`, using an NVIDIA NIM backend. `.github/workflows/openwiki-update.yml` runs a scheduled daily OpenWiki documentation refresh and opens a PR with any changes.
 
@@ -266,29 +276,23 @@ Key invariants to maintain:
 - Stiffness matrices must be symmetric
 - Assembly uses `.+=` (in-place addition) to allow building up the global matrix from multiple elements
 
-## Known Issues
+## Verification Stack
 
-See the repository's issue tracker for the full list. The **`ToDo.md`** file at the repository root is the merged code review backlog from two independent AI reviews. The cross-verified review (`ToDo_Promethus_inkling.md`) identified **false positives** in the merged list:
+Three independent verification layers back the math (see `CONTEXT.md` "Verification Strategy (2026-07)"):
 
-**⚠️ False Positives (NOT bugs — mathematically correct per MATLAB reference):**
-- **C1**: `d3_spaceframe_elementforces` uses `R` not `R'` — MATLAB `SpaceFrameElementForces.m:57` uses `kprime * R * u` (identical to Julia). Standard FEM: stiffness uses `R' * k_local * R` (global), forces use `k_local * R * u` (local).
-- **C2**: `d2_planeframe_elementforces` "inverted transformation" — MATLAB `PlaneFrameElementForces.m:21` uses `kprime * T * u` (identical to Julia).
+1. **Unit tests** — `test/runtests.jl` provides per-element correctness using the `Test` stdlib.
+2. **Octave validation** — `scripts/validate_matlab.jl` runs the actual Kattan `.m` files through Octave (via `test/octave_runner.jl` and the adapters in `test/matlab_adapters.jl`) so Julia results are diffed against the real MATLAB outputs.
+3. **Golden regression tests** — `test/golden_regression.jl` snapshots binary outputs under `test/golden/v1/` and lets you regenerate them with `test/golden/generate_golden.jl`. This is an additive snapshot layer for refactor regressions — it complements but does not replace the unit tests or Octave validation.
 
-**✅ Verified Real Issues (from cross-verified review):**
+A previous hand-transcribed MATLAB layer (`test/comparison.jl`) was removed (per `CONTEXT.md`): the transcription drift, overlap with Octave validation, and maintenance burden were not worth keeping it alongside the live-Octave layer.
 
-| ID | Severity | Issue | Location |
-|---|---|---|---|
-| **H1** | HIGH | Duplicated rotation matrix (Λ/R) in 3D beam stiffness & force (~30 lines each) | `src/beam.jl:200-228`, `297-322` |
-| **H2** | HIGH | Inconsistent force return types: 1D returns 2-element Vector, 2D/3D return scalar | `src/truss.jl:161, 313, 339, 366` |
-| **H3** | HIGH | `_d3_spaceframe_kprime` misplaced in `assembly.jl` (belongs in `beam.jl`) | `src/assembly.jl:32-87` |
-| **H4** | MEDIUM | `_assemble!` missing bounds checks on `K` size vs indices | `src/assembly.jl:21-27` |
-| **H5** | HIGH | `LinearAlgebra` not declared in `Project.toml` deps | `Project.toml` |
-| **M1** | MEDIUM | `d3_truss` angle variable naming: `u` vs `w` for `thetay` | `src/truss.jl:282-284` vs `315+` |
-| **M2** | MEDIUM | No arbitrary-orientation test for 3D beam forces (all tests use θ=0) | `test/runtests.jl` |
-| **M3** | LOW | `ElementDimensionError` exported but never thrown/tested | `test/runtests.jl` |
-| **M4** | MEDIUM | Benchmark suite not in CI | `.github/workflows/ci.yml` |
-| **M5** | LOW | `plot.jl` docstrings contain spurious `export` keyword | `src/plot.jl` |
+## Property & Boundary-Condition Tests
 
-Notable items beyond the verified issues:
-- No boundary condition or solver functions yet (users must solve `K·U = F` themselves)
-- `Project.toml` has `[extras]`/`[targets]` for `BenchmarkTools` (test-only), but `Test` stdlib is not declared there
+`test/property_tests.jl` uses `PropCheck.jl` to assert invariants the example-based tests in `runtests.jl` cannot cover — symmetric position matrices, sign conventions, etc. Run via the standard `Pkg.test()` pipeline.
+
+## Cross-Cutting Conventions
+
+- No boundary condition or solver functions yet — users still solve `K·U = F` themselves with `LinearAlgebra`. Per `CONTEXT.md`, thin wrapper helpers (`apply_bc!`, `solve`) are planned but not implemented.
+- Direction cosines are normalized to unit length by `_direction_cosines` (see commit `ffac82c`: "fix: use valid direction cosines in 3D truss validation test (`θx=0°, θy=90°, θz=90° → (1,0,0)`)").
+- Spring stiffness `k` is validated as `k > 0` everywhere (was previously silently allowing zero/negative values).
+- Quadratic bar `assemble` has its own bounds-checked implementation that does **not** use `_assemble!` because the 3-node element shape doesn't fit the generic 2-node block layout.

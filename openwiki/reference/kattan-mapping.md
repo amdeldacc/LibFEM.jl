@@ -138,16 +138,18 @@ Kattan covers additional element types beyond springs/trusses/beams. These MATLA
 
 These represent 2D/3D continuum elements (plane stress/strain, solid mechanics), grid structures, and fluid flow — natural extension areas for the library.
 
-## Verification: `test/comparison.jl`
+## Verification: Octave-backed Kattan Reference
 
-The file `test/comparison.jl` contains Julia transcriptions of selected MATLAB functions using the original PascalCase naming. This enables side-by-side verification that the Julia implementations produce identical results. Transcribed functions include:
+Rather than transcribing the Kattan `.m` files into Julia (which previously lived in a now-removed `test/comparison.jl`), the library validates against the **actual MATLAB files**: Octave is invoked via `test/octave_runner.jl`, which is invoked from `scripts/validate_matlab.jl` and orchestrated in `.github/workflows/ci.yml`. The adapters in `test/matlab_adapters.jl` translate between MATLAB and Julia argument conventions:
 
-- `SpringElementStiffness`, `SpringElementForces`, `SpringAssemble`
-- `LinearBarElementStiffness`, `LinearBarElementForces`, `LinearBarElementStresses`, `LinearBarAssemble`
-- `PlaneTrussElementLength`, `PlaneTrussElementStiffness`, `PlaneTrussElementForce`, `PlaneTrussElementStress`, `PlaneTrussAssemble`
-- `PlaneFrameElementLength`, `PlaneFrameElementStiffness`, `PlaneFrameElementForces`, `PlaneFrameAssemble` (and diagram functions)
+- MATLAB 1-based vs. Julia 1-based indexing (otherwise fine) — but MATLAB's column-major vs Julia's column-major agree, so vector/matrix shapes usually translate cleanly.
+- MATLAB cell arrays / structs returned from `problem_*.m` are flattened to scalar or matrix results expected by Julia assertions.
+- Returned variable names from the Kattan solution scripts (`element_r`, `element_t`, etc.) are mapped to Julia fields (`sigma`, `forces`).
 
-Note: these transcriptions use MATLAB-style explicit index assignment (16 lines per 4×4 assemble) rather than the refactored `_assemble!` helper — they serve as algorithmic ground truth, not as reusable code.
+This is the ground-truth layer. On top of it:
+
+- `test/runtests.jl` runs per-element unit assertions (shape, symmetry, sign of entries), and
+- `test/golden_regression.jl` snapshots binary outputs in `test/golden/v1/` for refactor-regression detection.
 
 ## Doc/ Directory Structure
 

@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-24T18:39:54.340Z",
+  "updatedAt": "2026-07-26T10:18:15.782Z",
   "command": "update",
-  "gitHead": "9c7dbbe17958323a77899991135f9cc6407a5936",
-  "model": "nvidia/nemotron-3-ultra-550b-a55b"
+  "gitHead": "ffac82cf225e358a6fc48351be03ad86b98ddbe8",
+  "model": "minimaxai/minimax-m3"
 }

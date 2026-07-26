@@ -356,7 +356,7 @@ function test_truss()
 
     # ── 3D Truss / SpaceTruss ──
     E3, A3, L3 = 1.0, 1.0, 1.0
-    θx, θy, θz = 0.0, 0.0, 0.0
+    θx, θy, θz = 0.0, 90.0, 90.0
     u3 = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
     # Length

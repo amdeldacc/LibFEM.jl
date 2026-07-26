@@ -36,6 +36,7 @@ include("utils.jl")
 include("assembly.jl")
 include("spring.jl")
 include("truss.jl")
+include("quadraticbar.jl")
 include("beam.jl")
 include("quadraticbar.jl")
 

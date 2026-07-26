@@ -1,0 +1,18 @@
+{
+  "disabled_skills": [
+    "using-superpowers",
+    "brainstorming",
+    "writing-plans",
+    "using-git-worktrees",
+    "subagent-driven-development",
+    "executing-plans",
+    "test-driven-development",
+    "requesting-code-review",
+    "receiving-code-review",
+    "systematic-debugging",
+    "verification-before-completion",
+    "finishing-a-development-branch",
+    "writing-skills",
+    "note-taking"
+  ]
+}

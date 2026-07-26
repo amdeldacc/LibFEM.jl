@@ -21,7 +21,7 @@ julia --project=.
 using Pkg; Pkg.activate("."); using LibFEM
 ```
 
-**Dependencies**: `Plots.jl` v1 (`Project.toml`).
+**Dependencies**: `LinearAlgebra` (declared in `[deps]`); `Plots.jl` v1 is a **weak dependency** activated via the Julia extension `ext/LibFEMPlotsExt.jl`. Beam diagram functions throw `DiagramError` unless `using Plots` is loaded in the same session.
 
 ## Element Types at a Glance
 
@@ -105,10 +105,11 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 
 ## Conventions
 
-- **Angle units**: all angle parameters are in **degrees**; converted to radians internally via `deg2rad`.
+- **Angle units**: all angle parameters are in **degrees**; converted to radians internally via `_deg2rad`. The 3D convention is the **cosine-of-axis-angle** form: identity `cos²θx + cos²θy + cos²θz = 1` must hold; off-unit inputs are auto-normalized with a `@warn`. Derive angles from node coordinates via `d2_truss_elementlength`/`d3_truss_elementlength` rather than passing angles manually when possible.
 - **Dimension prefixes**: `d1_` (1 DOF/node), `d2_` (2 DOF/node for spring/truss; 3 for `d2_planeframe`), `d3_` (3 DOF/node for spring/truss; **6** for `d3_spaceframe`).
-- **Multi-file module**: source code is organized into `src/LibFEM.jl` (declaration + includes) + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/plot.jl`.
+- **Multi-file module**: source code is organized into `src/LibFEM.jl` (declaration + includes + diagram stubs) + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/quadraticbar.jl`. Beam diagram functions live in the package extension `ext/LibFEMPlotsExt.jl` (loaded only when `Plots.jl` is present).
 - **Assembly refactored**: all 7 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
+- **Parameter validation**: `L`, `A`, `E`, `k > 0` are enforced at function entry via `validate_positive`; invalid inputs throw `ElementParameterError`.
 
 ## Repository Map
 
@@ -117,13 +118,13 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `src/LibFEM.jl` | Module declaration, includes, exports |
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
-| `src/utils.jl` | `deg2rad` and shared helpers |
+| `src/utils.jl` | `_deg2rad` and shared helpers |
 | `src/assembly.jl` | `_assemble!` private helper, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime` |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
 | `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (3-node quadratic bar) |
 | `src/beam.jl` | All `d2_beam_*`, `d2_planeframe_*`, and `d3_spaceframe_*` implementations |
-| `src/plot.jl` | Beam diagram functions (Plots dependency) |
+| `ext/LibFEMPlotsExt.jl` | Beam diagram functions (Plots weak dependency via extension) |
 | `test/runtests.jl` | Main test suite (~900 lines, covers all 8 element types, includes golden regression) |
 | `test/matlab_adapters.jl` | MATLAB↔Julia argument/result adapters used by the Octave verification harness |
 | `test/golden/` | Binary golden files (`v1/*.bin`) + `manifests.toml` + `params_common.jl` for regression testing |

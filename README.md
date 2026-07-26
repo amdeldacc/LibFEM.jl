@@ -151,18 +151,18 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 
 | Function         | Description                              |
 | ---------------- | ---------------------------------------- |
-| `deg2rad(theta)` | Degrees to radians conversion (exported) |
+| `deg2rad(theta)` | Degrees to radians conversion (built-in `Base.deg2rad`) |
 
 ---
 
 ## Conventions
 
-- **Angle units**: All angle parameters are in **degrees** (converted internally via `deg2rad`).
+- **Angle units**: All angle parameters are in **degrees** (converted internally via `_deg2rad`).
 - **Dimension prefixes**:
   - `d1_` — 1 DOF/node (1D spring, linear bar)
   - `d2_` — 2 DOF/node (2D spring, plane truss, pure beam); 3 DOF/node for plane frame
   - `d3_` — 3 DOF/node (3D spring, space truss); **6 DOF/node** for 3D beam (space frame)
-- **Multi-file module**: Source organized into `src/LibFEM.jl` + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/plot.jl`.
+- **Multi-file module**: Source organized into `src/LibFEM.jl` + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`.
 - **Assembly refactored**: All 7 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
 - **Validation**: All stiffness/length functions validate positive inputs (`L > 0`, `A > 0`).
 - **Type hierarchy**: Abstract types `AbstractElement{NDIM}`, `AbstractSpring{NDIM}`, `AbstractTruss{NDIM}`, `AbstractBeam{NDIM}` with concrete `@kwdef` structs `Spring{NDIM}`, `Truss{NDIM}`, `Beam{NDIM}`.
@@ -177,12 +177,12 @@ LibFEM.jl/
 │   ├── LibFEM.jl          # Module declaration, includes, exports
 │   ├── types.jl           # Abstract type hierarchy, @kwdef element structs
 │   ├── errors.jl          # Custom error types (ElementDimensionError, etc.)
-│   ├── utils.jl           # deg2rad and shared helpers
+│   ├── utils.jl           # _deg2rad and shared helpers
 │   ├── assembly.jl        # _assemble! helper, _d3_spaceframe_kprime
 │   ├── spring.jl          # d1/d2/d3_spring_* implementations
 │   ├── truss.jl           # d1/d2/d3_truss_* implementations
 │   ├── beam.jl            # d2/d3_spaceframe_* implementations
-│   └── plot.jl            # Beam diagram functions (Plots dependency)
+│   └── ...
 ├── test/
 │   ├── runtests.jl        # Main test suite (~668 lines, covers all 8 element types)
 │   └── benchmark.jl       # BenchmarkTools.jl suite (12 benchmarks)
@@ -423,7 +423,7 @@ To add a new element type:
 
 **Key invariants**:
 
-- All angles in degrees (use `deg2rad`)
+- All angles in degrees (use `_deg2rad` internally)
 - Stiffness matrices must be symmetric
 - Assembly uses `.+=` (in-place addition) to accumulate multiple elements
 

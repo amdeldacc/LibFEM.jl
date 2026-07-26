@@ -40,9 +40,6 @@ export Spring, Truss, Beam
 # Error types
 export ElementDimensionError, ElementParameterError, AssemblyError, DiagramError
 
-# Utility
-export deg2rad
-
 # 1-D Spring
 export d1_spring_elementstiffness, d1_spring_elementforce, d1_spring_assemble
 
@@ -71,6 +68,6 @@ export d2_planeframe_elementlength, d2_planeframe_elementstiffness, d2_planefram
 export d3_spaceframe_elementlength, d3_spaceframe_elementstiffness, d3_spaceframe_assemble, d3_spaceframe_elementforces, d3_spaceframe_elementaxialdiagram, d3_spaceframe_elementshearydiagram, d3_spaceframe_elementshearzdiagram, d3_spaceframe_elementmomentydiagram, d3_spaceframe_elementmomentzdiagram, d3_spaceframe_elementtorsiondiagram
 
 # 1-D Quadratic Bar (3-node element, 1 DOF/node)
-export d1_quadraticbar_elementstiffness, d1_quadraticbar_elementforces, d1_quadraticbar_elementstress, d1_quadraticbar_assemble
+export d1_quadraticbar_elementlength, d1_quadraticbar_elementstiffness, d1_quadraticbar_elementforces, d1_quadraticbar_elementstress, d1_quadraticbar_assemble
 
 end # module

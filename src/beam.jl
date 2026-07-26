@@ -77,7 +77,7 @@ end
 # Superposition of truss bar (axial) + beam (bending).
 # Based on Kattan's PlaneFrame* functions.
 # ═══════════════════════════════════════════════════════════
-# Diagram functions for 2-D and 3-D beams are defined in plot.jl
+# Diagram functions for 2-D and 3-D beams are defined in the Plots extension
 # and re-exported from LibFEM.jl.
 # ═══════════════════════════════════════════════════════════
 
@@ -216,9 +216,11 @@ function d3_spaceframe_elementlength(
     y2::Real,
     z2::Real,
 )
-    return sqrt(
+    L = sqrt(
         (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1),
     )
+    validate_positive(L, "L")
+    return L
 end
 
 """

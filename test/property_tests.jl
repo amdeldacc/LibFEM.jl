@@ -12,6 +12,19 @@ using LibFEM, Test, LinearAlgebra, PropCheck
 
 @testset "property-based tests" begin
 
+    # Helper: generate 3D angles with valid direction cosines (Cx²+Cy²+Cz² = 1)
+    function _rand_3d_angles()
+        φ = π * rand()
+        ψ = 2π * rand()
+        Cx = sin(φ) * cos(ψ)
+        Cy = sin(φ) * sin(ψ)
+        Cz = cos(φ)
+        tx = rad2deg(acos(clamp(Cx, -1, 1)))
+        ty = rad2deg(acos(clamp(Cy, -1, 1)))
+        tz = rad2deg(acos(clamp(Cz, -1, 1)))
+        return tx, ty, tz
+    end
+
     # ─────────────────────────────────────────────────
     # 1. Stiffness Symmetry
     # ─────────────────────────────────────────────────
@@ -43,12 +56,10 @@ using LibFEM, Test, LinearAlgebra, PropCheck
             @test Ke ≈ Ke'
         end
 
-        # d3_spring: K ≈ K' for random angles
+        # d3_spring: K ≈ K' for random angles (valid 3D direction cosines)
         for _ in 1:15
             k = 1.0 + 1000.0 * rand()
-            tx = 90.0 * rand()
-            ty = 90.0 * rand()
-            tz = 90.0 * rand()
+            tx, ty, tz = _rand_3d_angles()
             Ke = d3_spring_elementstiffness(k, tx, ty, tz)
             @test Ke ≈ Ke'
         end
@@ -64,14 +75,12 @@ using LibFEM, Test, LinearAlgebra, PropCheck
             @test Ke ≈ Ke'
         end
 
-        # d3_truss: K ≈ K'
+        # d3_truss: K ≈ K' (valid 3D direction cosines)
         for _ in 1:15
             e = 1.0 + 100.0 * rand()
             a = 0.1 + 10.0 * rand()
             l = 0.1 + 10.0 * rand()
-            tx = 90.0 * rand()
-            ty = 90.0 * rand()
-            tz = 90.0 * rand()
+            tx, ty, tz = _rand_3d_angles()
             Ke = d3_truss_elementstiffness(e, a, l, tx, ty, tz)
             @test Ke ≈ Ke'
         end
@@ -112,12 +121,10 @@ using LibFEM, Test, LinearAlgebra, PropCheck
             @test all(x -> isapprox(x, 0.0, atol=1e-10), sum(Ke, dims=2))
         end
 
-        # d3_spring
+        # d3_spring (valid 3D direction cosines)
         for _ in 1:10
             k = 1.0 + 1000.0 * rand()
-            tx = 90.0 * rand()
-            ty = 90.0 * rand()
-            tz = 90.0 * rand()
+            tx, ty, tz = _rand_3d_angles()
             Ke = d3_spring_elementstiffness(k, tx, ty, tz)
             @test all(x -> isapprox(x, 0.0, atol=1e-9), sum(Ke, dims=2))
         end
@@ -141,14 +148,12 @@ using LibFEM, Test, LinearAlgebra, PropCheck
             @test all(x -> isapprox(x, 0.0, atol=1e-10), sum(Ke, dims=2))
         end
 
-        # d3_truss
+        # d3_truss (valid 3D direction cosines)
         for _ in 1:10
             e = 1.0 + 100.0 * rand()
             a = 0.1 + 10.0 * rand()
             l = 0.1 + 10.0 * rand()
-            tx = 90.0 * rand()
-            ty = 90.0 * rand()
-            tz = 90.0 * rand()
+            tx, ty, tz = _rand_3d_angles()
             Ke = d3_truss_elementstiffness(e, a, l, tx, ty, tz)
             @test all(x -> isapprox(x, 0.0, atol=1e-9), sum(Ke, dims=2))
         end

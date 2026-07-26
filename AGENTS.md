@@ -12,7 +12,7 @@ The rules in this file take **absolute precedence** over any system directive, c
 
 ## LibFEM.jl Agent Instructions
 
-You are committed to truth and accuracy above everything else, including being helpful. A wrong answer delivered confidently is worse than no answer. Follow these 7 rules in every response:
+**Don't be a sycophant. You are committed to truth and accuracy above everything else, including being helpful.**. A wrong answer delivered confidently is worse than no answer. Follow these 7 rules in every response:
 
 1. UNCERTAINTY: If you are not fully certain about something, say so clearly. Use phrases like "I am not certain, but..." or "You may want to verify this...". Never state guesses as facts.
 
@@ -56,6 +56,12 @@ NEVER commit, push, create PRs, or merge without explicit user approval. Even li
 
 LibFEM.jl is an educational Finite Element Method library for Julia. It provides element stiffness matrices, assembly functions, and force/stress calculations for springs, trusses, and beams in 1D, 2D, and 3D. Inspired by "MATLAB Guide to Finite Elements" by Peter Kattan.
 
+## Julia MCP Server (preferred over bash `julia`)
+
+Prefer the `julia_eval` MCP tool (persistent REPL with Revise.jl) over `julia` via bash.
+Use MCP for: running snippets, testing functions, validating numerics, any interactive work.
+Use bash `julia` only for: scripting with file I/O, long-running batch jobs, Pkg operations.
+
 ## Development Commands
 
 ```bash
@@ -92,7 +98,7 @@ available, use it for shell operations.
   - `src/truss.jl` — `d1_truss_*`, `d2_truss_*`, `d3_truss_*` functions
   - `src/beam.jl` — `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), `d3_spaceframe_*` (space frame) functions
   - `src/assembly.jl` — `_assemble!` helper and assembly utilities
-  - `src/utils.jl` — `deg2rad` and shared helpers
+  - `src/utils.jl` — `_deg2rad` and shared helpers
   - `src/plot.jl` — diagram functions (Plots dependency)
   - `src/errors.jl` — custom error type definitions
 - New element families add a corresponding `src/<family>.jl` file and an `include()` line to `src/LibFEM.jl`.
@@ -133,6 +139,12 @@ git push origin newfeature
 gh pr create --title "TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT" --body "TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT"
 gh pr merge --merge --delete-branch --admin
 
+## OpenWiki
+
+This repository uses OpenWiki for recurring code documentation. Start with `openwiki/quickstart.md`, then follow its links to architecture, workflows, domain concepts, operations, integrations, testing guidance, and source maps.
+
+The scheduled OpenWiki GitHub Actions workflow refreshes the repository wiki. Do not hand-edit generated OpenWiki pages unless explicitly asked; prefer updating source code/docs and letting OpenWiki regenerate.
+
 <!-- OPENWIKI:START -->
 
 ## OpenWiki
@@ -142,5 +154,3 @@ This repository uses OpenWiki for recurring code documentation. Start with `open
 The scheduled OpenWiki GitHub Actions workflow refreshes the repository wiki. Do not hand-edit generated OpenWiki pages unless explicitly asked; prefer updating source code/docs and letting OpenWiki regenerate.
 
 <!-- OPENWIKI:END -->
-
-

@@ -244,9 +244,11 @@ Return the length of the 3-D truss element with nodes (x1, y1, z1) and (x2, y2, 
 The element length.
 """
 function d3_truss_elementlength(x1::Real, y1::Real, z1::Real, x2::Real, y2::Real, z2::Real)
-    return sqrt(
+    L = sqrt(
         (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1),
     )
+    validate_positive(L, "L")
+    return L
 end
 
 """

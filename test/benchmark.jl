@@ -21,6 +21,9 @@ STIFF["d3_spring"] = @benchmarkable d3_spring_elementstiffness(1000, 30, 45, 60)
 # d1_truss: E = 200e9 Pa, A = 0.01 m², L = 2.0 m
 STIFF["d1_truss"] = @benchmarkable d1_truss_elementstiffness(200e9, 0.01, 2.0)
 
+# d1_quadraticbar: E = 200e9 Pa, A = 0.01 m², L = 2.0 m (3×3 stiffness)
+STIFF["d1_quadraticbar"] = @benchmarkable d1_quadraticbar_elementstiffness(200e9, 0.01, 2.0)
+
 # d2_truss: E = 200e9, A = 0.01, L = 2.0, theta = 30 degrees
 STIFF["d2_truss"] = @benchmarkable d2_truss_elementstiffness(200e9, 0.01, 2.0, 30)
 
@@ -169,6 +172,11 @@ FORCES["d3_spring"] = @benchmarkable d3_spring_elementforce(1000, 30, 45, 60, $u
 const Ke_t1 = d1_truss_elementstiffness(200e9, 0.01, 2.0)
 const u_t1 = [0.001; 0.0]
 FORCES["d1_truss"] = @benchmarkable d1_truss_elementforces($Ke_t1, $u_t1)
+
+# d1_quadraticbar: Ke = d1_quadraticbar_elementstiffness(200e9, 0.01, 2.0), u = [0.001; zeros(2)]
+const Ke_qb1 = d1_quadraticbar_elementstiffness(200e9, 0.01, 2.0)
+const u_qb1 = [0.001; zeros(2)]
+FORCES["d1_quadraticbar"] = @benchmarkable d1_quadraticbar_elementforces($Ke_qb1, $u_qb1)
 
 # d2_truss: E = 200e9, A = 0.01, L = 2.0, theta = 30, u (4-element)
 const u_t2 = [0.001; zeros(3)]

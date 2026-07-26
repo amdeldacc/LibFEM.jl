@@ -3,6 +3,28 @@
 # ═══════════════════════════════════════════════════════════
 
 """
+    d1_quadraticbar_elementlength(x1, x2)
+
+Return the length of the 1-D quadratic bar element with nodes at `x1` and `x2`.
+
+# Arguments
+- `x1::Real`: x-coordinate of the first node.
+- `x2::Real`: x-coordinate of the second node (the element runs from `x1` to `x2`,
+  with the mid-node at `(x1 + x2) / 2`).
+
+# Returns
+The element length (`abs(x2 - x1)`).
+
+# Notes
+The length is used to compute the element stiffness matrix via
+[`d1_quadraticbar_elementstiffness`](@ref). The mid-node is located at the midpoint
+of the element.
+"""
+function d1_quadraticbar_elementlength(x1::Real, x2::Real)
+    return abs(x2 - x1)
+end
+
+"""
     d1_quadraticbar_elementstiffness(E, A, L)
 
 Return the 3×3 element stiffness matrix for a 1-D quadratic bar element

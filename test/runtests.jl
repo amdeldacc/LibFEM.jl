@@ -61,25 +61,13 @@ end
 @testset "LibFEM" begin
 
     # ─────────────────────────────────────────────────
-    # Helper: _deg2rad (module-internal, use qualified)
-    # ─────────────────────────────────────────────────
-    @testset "_deg2rad helper" begin
-        @test LibFEM._deg2rad(0) == 0.0
-        @test LibFEM._deg2rad(180) ≈ π
-        @test LibFEM._deg2rad(90) ≈ π / 2
-        @test LibFEM._deg2rad(360) ≈ 2π
-        @test LibFEM._deg2rad(45) ≈ π / 4
-        @test LibFEM._deg2rad(-180) ≈ -π
-    end
-
-    # ─────────────────────────────────────────────────
     # _direction_cosines (private utility)
     # ─────────────────────────────────────────────────
     @testset "_direction_cosines" begin
         # Valid unit vector: cos²(30)+cos²(60)+cos²(90) = 0.75+0.25+0 = 1
         c1 = LibFEM._direction_cosines(30, 60, 90)
         @test sqrt(sum(x -> x^2, c1)) ≈ 1.0
-        @test c1[1] ≈ cos(LibFEM._deg2rad(30))  # exact values returned unchanged
+        @test c1[1] ≈ cos(LibFEM.deg2rad(30))  # exact values returned unchanged
 
         # Valid input: (0, 90, 90) → (1, 0, 0) (cos(π/2) ≈ 6e-17 from FP)
         c2 = LibFEM._direction_cosines(0, 90, 90)
@@ -91,7 +79,7 @@ end
         c3 = LibFEM._direction_cosines(45, 45, 45)
         @test sqrt(sum(x -> x^2, c3)) ≈ 1.0
         # Expected normalized value: cos(45°)/√1.5 ≈ 0.57735
-        expected = cos(LibFEM._deg2rad(45)) / sqrt(1.5)
+        expected = cos(LibFEM.deg2rad(45)) / sqrt(1.5)
         @test c3[1] ≈ expected
         # Warns on non-physical input
         @test_logs (:warn, r"Direction cosines do not form a unit vector") LibFEM._direction_cosines(45, 45, 45)
@@ -1046,7 +1034,6 @@ end  # @testset "LibFEM"
         :d2_beam_elementstiffness,
         :d2_planeframe_elementstiffness,
         :d3_spaceframe_elementstiffness,
-        :_deg2rad,
         :AbstractSpring,
         :Spring,
         :AbstractTruss,

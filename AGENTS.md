@@ -98,7 +98,7 @@ available, use it for shell operations.
   - `src/truss.jl` — `d1_truss_*`, `d2_truss_*`, `d3_truss_*` functions
   - `src/beam.jl` — `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), `d3_spaceframe_*` (space frame) functions
   - `src/assembly.jl` — `_assemble!` helper and assembly utilities
-  - `src/utils.jl` — `_deg2rad` and shared helpers
+   - `src/utils.jl` — `deg2rad` and shared helpers
   - `src/plot.jl` — diagram functions (Plots dependency)
   - `src/errors.jl` — custom error type definitions
 - New element families add a corresponding `src/<family>.jl` file and an `include()` line to `src/LibFEM.jl`.

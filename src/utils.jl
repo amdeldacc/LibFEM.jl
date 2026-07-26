@@ -5,7 +5,7 @@ Compute direction cosines from a 2D angle theta in degrees.
 Returns `(C, S) = (cos, sin)`.
 """
 @inline function _direction_cosines(theta_deg::Real)
-    x = deg2rad(theta_deg)
+    x = _deg2rad(theta_deg)
     return (cos(x), sin(x))
 end
 
@@ -33,9 +33,9 @@ from node coordinates via `d2_truss_elementlength` or
 `d3_truss_elementlength` rather than specifying angles manually.
 """
 @inline function _direction_cosines(thetax_deg::Real, thetay_deg::Real, thetaz_deg::Real)
-    x = deg2rad(thetax_deg)
-    y = deg2rad(thetay_deg)
-    z = deg2rad(thetaz_deg)
+    x = _deg2rad(thetax_deg)
+    y = _deg2rad(thetay_deg)
+    z = _deg2rad(thetaz_deg)
     Cx = cos(x)
     Cy = cos(y)
     Cz = cos(z)

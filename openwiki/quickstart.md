@@ -118,7 +118,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `src/LibFEM.jl` | Module declaration, includes, exports |
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
-| `src/utils.jl` | `deg2rad` and shared helpers |
+| `src/utils.jl` | `_deg2rad` and shared helpers |
 | `src/assembly.jl` | `_assemble!` private helper, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime` |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |

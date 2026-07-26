@@ -75,6 +75,14 @@ Prefer the `julia_eval` MCP tool (persistent REPL with Revise.jl) over `julia` v
 Use MCP for: running snippets, testing functions, validating numerics, any interactive work.
 Use bash `julia` only for: scripting with file I/O, long-running batch jobs, Pkg operations.
 
+## Tool Selection: Julia MCP is for Julia code ONLY
+
+Do NOT use `julia_eval` MCP to run git, shell, or filesystem commands (git diff,
+git log, ls, cat, etc.). Those belong in the `bash` tool (prefixed with `rtk`).
+Julia MCP is a persistent Julia REPL — using it for shell commands wastes
+resources, complicates error handling, and is slower than bash. If bash is
+available, use it for shell operations.
+
 ## Constraints & Workflow
 
 - **Source Organization**: The module is organized into multiple files via `include()` in a single `module LibFEM`:

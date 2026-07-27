@@ -1,0 +1,9 @@
+/home/piou/LibFEM.jl/.agents/rules/antigravity-rtk-rules.md
+/home/piou/LibFEM.jl/.github/workflows/benchmarks.yml
+/home/piou/LibFEM.jl/.github/workflows/ci.yml
+/home/piou/LibFEM.jl/.github/workflows/ocr-review.yml
+/home/piou/LibFEM.jl/.github/workflows/opencode.yml
+/home/piou/LibFEM.jl/.github/workflows/openwiki-stale-check.yml
+/home/piou/LibFEM.jl/.github/workflows/openwiki-update.yml
+/home/piou/LibFEM.jl/.github/workflows/super-linter.yml
+/home/piou/LibFEM.jl/.opencode/plans/libfem-enhancement-plan.md

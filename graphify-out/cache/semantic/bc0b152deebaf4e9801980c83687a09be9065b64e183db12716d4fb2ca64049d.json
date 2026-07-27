@@ -1,0 +1,1 @@
+{"nodes": [{"id": "file:README-caveman", "type": "file", "label": "README.md (caveman)", "source_file": ".opencode/skills/caveman/README.md", "confidence": "EXTRACTED", "properties": {"role": "human-readable overview", "format": "Markdown"}}], "edges": [], "hyperedges": []}

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LibFEM.jl — graphify tree viewer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      margin: 20px 0 0 24px;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #1e3a56;
+    }
+    .controls {
+      margin: 20px 0 15px 24px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 8px 18px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:active {
+      background: #004085;
+    }
+    #tree-container {
+      width: calc(100vw - 48px); /* Adjust for body margin/padding */
+      height: 85vh;
+      overflow: auto;
+      border-radius: 8px;
+      background: #fff;
+      margin-left: 24px;
+      margin-right: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid #ddd;
+    }
+    svg {
+      background: #fff;
+      border-radius: 8px;
+      display: block; /* Important for D3 */
+    }
+    .node circle {
+      stroke-width: 2.5px;
+    }
+    .node text { /* Base style for the <text> container */
+      font: 13px 'Segoe UI', sans-serif;
+      paint-order: stroke fill; /* Ensures text is readable over lines */
+      stroke: #fff; /* White halo */
+      stroke-width: 3px; /* Halo thickness */
+      stroke-linejoin: round;
+      stroke-opacity: 0.85; /* Halo opacity */
+    }
+    .link {
+      fill: none;
+      stroke-opacity: 0.7;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>LibFEM.jl — Knowledge Graph</h1>
+  <div class="controls">
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+    <button onclick="resetView()">Reset View</button>
+  </div>
+  <div id="tree-container">
+    <svg id="tree-svg" width="6000" height="8000"></svg>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const initialJsonData = {"name":"LibFEM.jl","total_count":468,"children":[{"name":".agents","total_count":2,"children":[{"name":"rules","total_count":2,"children":[{"name":"antigravity-rtk-rules.md","total_count":2,"children":[{"name":"Antigravity RTK Rules","total_count":1,"children":[]},{"name":"RTK Token Compression Proxy","total_count":1,"children":[]}]}]}]},{"name":".github","total_count":17,"children":[{"name":"scripts","total_count":2,"children":[{"name":"configure-opencode.py","total_count":2,"children":[{"name":"Generate OpenCode configuration for NVIDIA NIM provider.","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]}]}]},{"name":"workflows","total_count":15,"children":[{"name":"benchmarks.yml","total_count":2,"children":[{"name":"Benchmark Suite Job","total_count":1,"children":[]},{"name":"Nightly Benchmark Workflow","total_count":1,"children":[]}]},{"name":"ci.yml","total_count":3,"children":[{"name":"CI Julia Test Job","total_count":1,"children":[]},{"name":"CI Workflow","total_count":1,"children":[]},{"name":"Octave MATLAB Validation Pipeline","total_count":1,"children":[]}]},{"name":"ocr-review.yml","total_count":3,"children":[{"name":"alibaba/open-code-review Action","total_count":1,"children":[]},{"name":"Conditional Concurrency Group Pattern","total_count":1,"children":[]},{"name":"OpenCodeReview PR Review Workflow","total_count":1,"children":[]}]},{"name":"opencode.yml","total_count":2,"children":[{"name":"NVIDIA NIM Agent Pipeline","total_count":1,"children":[]},{"name":"OpenCode NVIDIA NIM Workflow","total_count":1,"children":[]}]},{"name":"openwiki-stale-check.yml","total_count":1,"children":[{"name":"OpenWiki Stale Check Workflow","total_count":1,"children":[]}]},{"name":"openwiki-update.yml","total_count":2,"children":[{"name":"OpenWiki Documentation Generator","total_count":1,"children":[]},{"name":"OpenWiki Update Workflow","total_count":1,"children":[]}]},{"name":"super-linter.yml","total_count":2,"children":[{"name":"Code Lint Job","total_count":1,"children":[]},{"name":"Super-Linter Workflow","total_count":1,"children":[]}]}]}]},{"name":".opencode","total_count":144,"children":[{"name":"opencode.json","total_count":19,"children":[{"name":"$schema","total_count":1,"children":[]},{"name":"brainstorming","total_count":1,"children":[]},{"name":"disable","total_count":1,"children":[]},{"name":"executing-plans","total_count":1,"children":[]},{"name":"finishing-a-development-branch","total_count":1,"children":[]},{"name":"note-taking","total_count":1,"children":[]},{"name":"oh-my-openagent@latest","total_count":1,"children":[]},{"name":"plugin","total_count":1,"children":[]},{"name":"receiving-code-review","total_count":1,"children":[]},{"name":"requesting-code-review","total_count":1,"children":[]},{"name":"skills","total_count":1,"children":[]},{"name":"subagent-driven-development","total_count":1,"children":[]},{"name":"systematic-debugging","total_count":1,"children":[]},{"name":"test-driven-development","total_count":1,"children":[]},{"name":"using-git-worktrees","total_count":1,"children":[]},{"name":"using-superpowers","total_count":1,"children":[]},{"name":"verification-before-completion","total_count":1,"children":[]},{"name":"writing-plans","total_count":1,"children":[]},{"name":"writing-skills","total_count":1,"children":[]}]},{"name":"plans","total_count":14,"children":[{"name":"libfem-enhancement-plan.md","total_count":14,"children":[{"name":"_beamdiagram Helper Extraction","total_count":1,"children":[]},{"name":"Commit Strategy","total_count":1,"children":[]},{"name":"d1_truss_elementstrain Scalar Fix (C1)","total_count":1,"children":[]},{"name":"i=j Assembly Guard (C8)","total_count":1,"children":[]},{"name":"LibFEM Enhancement Plan","total_count":1,"children":[]},{"name":"Near-Vertical Beam Tolerance Fix (C3)","total_count":1,"children":[]},{"name":"Parallelization Wave Map","total_count":1,"children":[]},{"name":"Shared Helper Functions","total_count":1,"children":[]},{"name":"Sprint 0: Assembly Safety Net","total_count":1,"children":[]},{"name":"Sprint 1: Correctness Fixes","total_count":1,"children":[]},{"name":"Sprint 2: UX and Shared Helpers","total_count":1,"children":[]},{"name":"Sprint 3: Test Infrastructure","total_count":1,"children":[]},{"name":"Sprint 4: Documentation Visibility","total_count":1,"children":[]},{"name":"Verification Gates","total_count":1,"children":[]}]}]},{"name":"plugins","total_count":2,"children":[{"name":"graphify.js","total_count":2,"children":[{"name":"GraphifyPlugin()","total_count":1,"children":[]},{"name":"IMPORTANT: keep the reminder string free of backticks and $(...) constructs.","total_count":1,"children":[]}]}]},{"name":"skills","total_count":109,"children":[{"name":"cavecrew","total_count":7,"children":[{"name":"README.md","total_count":1,"children":[{"name":"README.md (cavecrew)","total_count":1,"children":[]}]},{"name":"SKILL.md","total_count":6,"children":[{"name":"cavecrew","total_count":1,"children":[]},{"name":"cavecrew-builder","total_count":1,"children":[]},{"name":"cavecrew-investigator","total_count":1,"children":[]},{"name":"cavecrew-reviewer","total_count":1,"children":[]},{"name":"Subagent Delegation","total_count":1,"children":[]},{"name":"Subagent Output Contracts","total_count":1,"children":[]}]}]},{"name":"caveman","total_count":6,"children":[{"name":"README.md","total_count":1,"children":[{"name":"README.md (caveman)","total_count":1,"children":[]}]},{"name":"SKILL.md","total_count":5,"children":[{"name":"Auto-Clarity Rule","total_count":1,"children":[]},{"name":"caveman","total_count":1,"children":[]},{"name":"Caveman Communication Mode","total_count":1,"children":[]},{"name":"Caveman Intensity Levels","total_count":1,"children":[]},{"name":"Wenyan (Classical Chinese) Modes","total_count":1,"children":[]}]}]},{"name":"caveman-commit","total_count":3,"children":[{"name":"README.md","total_count":1,"children":[{"name":"README.md (caveman-commit)","total_count":1,"children":[]}]},{"name":"SKILL.md","total_count":2,"children":[{"name":"caveman-commit","total_count":1,"children":[]},{"name":"Conventional Commits Format","total_count":1,"children":[]}]}]},{"name":"caveman-compress","total_count":55,"children":[{"name":"README.md","total_count":1,"children":[{"name":"README.md (caveman-compress)","total_count":1,"children":[]}]},{"name":"scripts","total_count":50,"children":[{"name":"__init__.py","total_count":1,"children":[{"name":"Caveman compress scripts.  This package provides tools to compress natural langu","total_count":1,"children":[]}]},{"name":"benchmark.py","total_count":4,"children":[{"name":"benchmark_pair()","total_count":1,"children":[]},{"name":"count_tokens()","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]},{"name":"print_table()","total_count":1,"children":[]}]},{"name":"cli.py","total_count":2,"children":[{"name":"main()","total_count":1,"children":[]},{"name":"print_usage()","total_count":1,"children":[]}]},{"name":"compress.py","total_count":13,"children":[{"name":"backup_dir_for()","total_count":1,"children":[]},{"name":"build_compress_prompt()","total_count":1,"children":[]},{"name":"build_fix_prompt()","total_count":1,"children":[]},{"name":"call_claude()","total_count":1,"children":[]},{"name":"compress_file()","total_count":1,"children":[]},{"name":"Heuristic denylist for files that must never be shipped to a third-party API.","total_count":1,"children":[]},{"name":"is_sensitive_path()","total_count":1,"children":[]},{"name":"Resolve the out-of-tree backup directory for a given source file.      Backups m","total_count":1,"children":[]},{"name":"Send a prompt to Claude.      Prefers the Anthropic SDK when ANTHROPIC_API_KEY i","total_count":1,"children":[]},{"name":"Split YAML frontmatter from body. Returns (frontmatter, body).      Memory files","total_count":1,"children":[]},{"name":"split_frontmatter()","total_count":1,"children":[]},{"name":"Strip outer ```markdown ... ``` fence when it wraps the entire output.","total_count":1,"children":[]},{"name":"strip_llm_wrapper()","total_count":1,"children":[]}]},{"name":"detect.py","total_count":10,"children":[{"name":"_is_code_line()","total_count":1,"children":[]},{"name":"_is_json_content()","total_count":1,"children":[]},{"name":"_is_yaml_content()","total_count":1,"children":[]},{"name":"Check if a line looks like code.","total_count":1,"children":[]},{"name":"Check if content is valid JSON.","total_count":1,"children":[]},{"name":"Classify a file as 'natural_language', 'code', 'config', or 'unknown'.      Retu","total_count":1,"children":[]},{"name":"detect_file_type()","total_count":1,"children":[]},{"name":"Heuristic: check if content looks like YAML.","total_count":1,"children":[]},{"name":"Return True if the file is natural language and should be compressed.","total_count":1,"children":[]},{"name":"should_compress()","total_count":1,"children":[]}]},{"name":"validate.py","total_count":19,"children":[{"name":".__init__()","total_count":1,"children":[]},{"name":".add_error()","total_count":1,"children":[]},{"name":".add_warning()","total_count":1,"children":[]},{"name":"count_bullets()","total_count":1,"children":[]},{"name":"extract_code_blocks()","total_count":1,"children":[]},{"name":"extract_headings()","total_count":1,"children":[]},{"name":"extract_inline_codes()","total_count":1,"children":[]},{"name":"extract_paths()","total_count":1,"children":[]},{"name":"extract_urls()","total_count":1,"children":[]},{"name":"Line-based fenced code block extractor.      Handles ``` and ~~~ fences with var","total_count":1,"children":[]},{"name":"read_file()","total_count":1,"children":[]},{"name":"validate()","total_count":1,"children":[]},{"name":"validate_bullets()","total_count":1,"children":[]},{"name":"validate_code_blocks()","total_count":1,"children":[]},{"name":"validate_headings()","total_count":1,"children":[]},{"name":"validate_inline_codes()","total_count":1,"children":[]},{"name":"validate_paths()","total_count":1,"children":[]},{"name":"validate_urls()","total_count":1,"children":[]},{"name":"ValidationResult","total_count":1,"children":[]}]},{"name":"__main__.py","total_count":1,"children":[]}]},{"name":"SECURITY.md","total_count":2,"children":[{"name":"caveman-compress Security Model","total_count":1,"children":[]},{"name":"SECURITY.md (caveman-compress)","total_count":1,"children":[]}]},{"name":"SKILL.md","total_count":2,"children":[{"name":"caveman-compress","total_count":1,"children":[]},{"name":"Memory File Compression","total_count":1,"children":[]}]}]},{"name":"caveman-help","total_count":2,"children":[{"name":"README.md","total_count":1,"children":[{"name":"README.md (caveman-help)","total_count":1,"children":[]}]},{"name":"SKILL.md","total_count":1,"children":[{"name":"caveman-help","total_count":1,"children":[]}]}]},{"name":"caveman-review","total_count":2,"children":[{"name":"README.md","total_count":1,"children":[{"name":"README.md (caveman-review)","total_count":1,"children":[]}]},{"name":"SKILL.md","total_count":1,"children":[{"name":"caveman-review","total_count":1,"children":[]}]}]},{"name":"caveman-stats","total_count":3,"children":[{"name":"README.md","total_count":1,"children":[{"name":"README.md (caveman-stats)","total_count":1,"children":[]}]},{"name":"SKILL.md","total_count":2,"children":[{"name":"caveman-stats","total_count":1,"children":[]},{"name":"Token Savings Metrics","total_count":1,"children":[]}]}]},{"name":"code-reviewer","total_count":2,"children":[{"name":"SKILL.md","total_count":2,"children":[{"name":"Code Review Workflow","total_count":1,"children":[]},{"name":"Code Reviewer","total_count":1,"children":[]}]}]},{"name":"find-skills","total_count":2,"children":[{"name":"SKILL.md","total_count":2,"children":[{"name":"Find Skills","total_count":1,"children":[]},{"name":"Skills CLI","total_count":1,"children":[]}]}]},{"name":"graphify","total_count":16,"children":[{"name":"references","total_count":10,"children":[{"name":"add-watch.md","total_count":1,"children":[{"name":"Add Watch Reference","total_count":1,"children":[]}]},{"name":"exports.md","total_count":1,"children":[{"name":"Exports Reference","total_count":1,"children":[]}]},{"name":"extraction-spec.md","total_count":3,"children":[{"name":"Extraction Spec Reference","total_count":1,"children":[]},{"name":"Graphify Confidence Score Rubric","total_count":1,"children":[]},{"name":"Graphify Node ID Format","total_count":1,"children":[]}]},{"name":"github-and-merge.md","total_count":1,"children":[{"name":"GitHub and Merge Reference","total_count":1,"children":[]}]},{"name":"hooks.md","total_count":1,"children":[{"name":"Hooks Reference","total_count":1,"children":[]}]},{"name":"query.md","total_count":1,"children":[{"name":"Query Reference","total_count":1,"children":[]}]},{"name":"transcribe.md","total_count":1,"children":[{"name":"Transcribe Reference","total_count":1,"children":[]}]},{"name":"update.md","total_count":1,"children":[{"name":"Update Reference","total_count":1,"children":[]}]}]},{"name":"SKILL.md","total_count":6,"children":[{"name":"AST Extraction","total_count":1,"children":[]},{"name":"Community Clustering","total_count":1,"children":[]},{"name":"Graph Visualization","total_count":1,"children":[]},{"name":"Graphify","total_count":1,"children":[]},{"name":"Graphify Pipeline","total_count":1,"children":[]},{"name":"Semantic Extraction","total_count":1,"children":[]}]}]},{"name":"julia","total_count":2,"children":[{"name":"SKILL.md","total_count":2,"children":[{"name":"Julia Development","total_count":1,"children":[]},{"name":"Julia Programming Guidelines","total_count":1,"children":[]}]}]},{"name":"tdd","total_count":9,"children":[{"name":"agents","total_count":1,"children":[{"name":"openai.yaml","total_count":1,"children":[{"name":"TDD OpenAI Agent","total_count":1,"children":[]}]}]},{"name":"mocking.md","total_count":2,"children":[{"name":"Mock at System Boundaries","total_count":1,"children":[]},{"name":"Mocking Guidelines","total_count":1,"children":[]}]},{"name":"SKILL.md","total_count":4,"children":[{"name":"Red-Green Refactor Loop","total_count":1,"children":[]},{"name":"TDD Anti-Patterns","total_count":1,"children":[]},{"name":"Test-Driven Development","total_count":1,"children":[]},{"name":"Testing Seams","total_count":1,"children":[]}]},{"name":"tests.md","total_count":2,"children":[{"name":"Good and Bad Tests","total_count":1,"children":[]},{"name":"Test Behavior Not Implementation","total_count":1,"children":[]}]}]}]}]},{"name":"AGENTS.md","total_count":7,"children":[{"name":"AGENTS.md \u2014 Agent Instructions & Workflow Rules","total_count":1,"children":[]},{"name":"AI Context Files (PRD, ARCHITECTURE, RULES, PHASES, MEMORY, TESTING, DECISIONS)","total_count":1,"children":[]},{"name":"Git/GitHub Workflow \u2014 Branch\u2192Commit\u2192PR\u2192Merge","total_count":1,"children":[]},{"name":"Hard Denylist of Shell Commands","total_count":1,"children":[]},{"name":"Julia MCP Server Preference over bash julia","total_count":1,"children":[]},{"name":"Never Commit Without Approval Rule","total_count":1,"children":[]},{"name":"PR Review Before Merge (Hard Rule)","total_count":1,"children":[]}]},{"name":"CONTEXT.md","total_count":12,"children":[{"name":"3-Function Pattern (elementstiffness, assemble, elementforce/stress/strain)","total_count":1,"children":[]},{"name":"CONTEXT.md \u2014 Domain Glossary & Design Decisions","total_count":1,"children":[]},{"name":"Design Decision: d3_beam_* \u2192 d3_spaceframe_* Rename","total_count":1,"children":[]},{"name":"Design Decision: Educational-First \u2192 Lightweight FEM Toolkit","total_count":1,"children":[]},{"name":"Design Decision: Element Roadmap \u2014 Current Set Complete, Extensible Later","total_count":1,"children":[]},{"name":"Design Decision: Plots.jl \u2192 Weak Dependency via Julia Extensions","total_count":1,"children":[]},{"name":"Design Decision: Remove A\u22640 Exception, Validate A>0 Everywhere","total_count":1,"children":[]},{"name":"Design Decision: Thin Solver Helpers Planned","total_count":1,"children":[]},{"name":"Design Decision: Three-Layer Verification (Unit Tests, Octave, Golden Regression)","total_count":1,"children":[]},{"name":"Design Decision: Type Hierarchy Is Documentation Scaffolding","total_count":1,"children":[]},{"name":"Dimension System (d1=1 DOF, d2=2/3 DOF, d3=3/6 DOF)","total_count":1,"children":[]},{"name":"Element Types Glossary (Spring, Truss, QuadraticBar, Beam, PlaneFrame, SpaceFrame)","total_count":1,"children":[]}]},{"name":"Doc","total_count":9,"children":[{"name":"Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.md","total_count":8,"children":[{"name":"6-Step FEM Process: Discretize, Element Stiffness, Assemble, BCs, Solve, Post-process","total_count":1,"children":[]},{"name":"Continuum Elements (CST, Q4, T6, Q8, Brick, Tetrahedron) \u2014 not yet implemented in LibFEM","total_count":1,"children":[]},{"name":"Doc/Peter_Kattan_MATLAB_Guide_to_FE_2007_Springer.md \u2014 Textbook Markdown Transcription","total_count":1,"children":[]},{"name":"Kattan Basic Equations (Spring, Linear Bar, Beam, Plane Truss, Space Truss, Frame)","total_count":1,"children":[]},{"name":"Kattan Book Chapters (17 chapters covering 16 element types + fluid flow)","total_count":1,"children":[]},{"name":"Linear Bar Element \u2014 k=EA/L*[[1,-1],[-1,1]], 2 DOF, linear shape functions","total_count":1,"children":[]},{"name":"MATLAB Finite Element Toolbox (84 functions on CD-ROM)","total_count":1,"children":[]},{"name":"Spring Element \u2014 k=[[k,-k],[-k,k]], 2 DOF, simplest FE","total_count":1,"children":[]}]},{"name":"Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.pdf","total_count":1,"children":[{"name":"MATLAB Guide to Finite Elements \u2014 2nd Ed, Springer 2007","total_count":1,"children":[]}]}]},{"name":"examples","total_count":4,"children":[{"name":"hello_world.py","total_count":4,"children":[{"name":"Execute Julia code via command line and return stdout.","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]},{"name":"Run the LibFEM.jl hello world example by executing Julia code.","total_count":1,"children":[]},{"name":"run_via_julia_cmd()","total_count":1,"children":[]}]}]},{"name":"ext","total_count":3,"children":[{"name":"LibFEMPlotsExt.jl","total_count":3,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LibFEMPlotsExt","total_count":1,"children":[]},{"name":"Plots","total_count":1,"children":[]}]}]},{"name":"OCR_Usage.md","total_count":3,"children":[{"name":"Julia-Specific OCR Review Focus (Type Stability, Dispatch, Naming, Assembly)","total_count":1,"children":[]},{"name":"OCR Use Cases (Pre-commit, Branch Review, Commit Review, MATLAB Translation, Assembly Changes)","total_count":1,"children":[]},{"name":"OCR_Usage.md \u2014 OpenCodeReview Usage Guide for LibFEM.jl","total_count":1,"children":[]}]},{"name":"OpenCodeReviewCLI.md","total_count":1,"children":[{"name":"OpenCodeReviewCLI.md \u2014 OCR CLI Full Reference","total_count":1,"children":[]}]},{"name":"openwiki","total_count":18,"children":[{"name":"architecture","total_count":8,"children":[{"name":"overview.md","total_count":8,"children":[{"name":"Architecture: _assemble! private helper, @views, 4-block DOF mapping","total_count":1,"children":[]},{"name":"Architecture: Angle Convention \u2014 degrees in, direction cosines for 3D","total_count":1,"children":[]},{"name":"Architecture: Complete Function Inventory (1D Spring, Truss, QuadraticBar, 2D Beam/PlaneFrame, 3D Spring/Truss/SpaceFrame)","total_count":1,"children":[]},{"name":"Architecture: Extension Points for New Element Types","total_count":1,"children":[]},{"name":"Architecture: Limitations (no BC/solver helpers, diagram requires Plots, direction cosine auto-normalize)","total_count":1,"children":[]},{"name":"Architecture: Multi-file module via include(), diagram stubs via extension","total_count":1,"children":[]},{"name":"Architecture: Testing (runtests.jl ~900 lines, property_tests.jl, golden_regression.jl, Octave validation)","total_count":1,"children":[]},{"name":"openwiki/architecture/overview.md \u2014 Architecture Overview","total_count":1,"children":[]}]}]},{"name":"INSTRUCTIONS.md","total_count":1,"children":[{"name":"openwiki/INSTRUCTIONS.md \u2014 Wiki Generation Instructions","total_count":1,"children":[]}]},{"name":"quickstart.md","total_count":3,"children":[{"name":"openwiki/quickstart.md \u2014 Quickstart Guide","total_count":1,"children":[]},{"name":"Quickstart: Core 3-Function Pattern Workflow Examples","total_count":1,"children":[]},{"name":"Quickstart: Element Types at a Glance Table","total_count":1,"children":[]}]},{"name":"reference","total_count":6,"children":[{"name":"kattan-mapping.md","total_count":6,"children":[{"name":"Doc/ Directory Structure (80 M-files in 16 categories)","total_count":1,"children":[]},{"name":"MATLAB\u2192Julia: Beam/PlaneFrame/SpaceFrame Mapping","total_count":1,"children":[]},{"name":"MATLAB\u2192Julia: Continuum Elements Not Yet Implemented (CST, Q4, T6, Q8, Brick, Tetrahedron, Grid, FluidFlow)","total_count":1,"children":[]},{"name":"MATLAB\u2192Julia: Spring Element Mapping (SpringElementStiffness \u2192 d1_spring_elementstiffness)","total_count":1,"children":[]},{"name":"MATLAB\u2192Julia: Truss/Bar Mapping (LinearBar, PlaneTruss, SpaceTruss \u2192 d1/d2/d3_truss)","total_count":1,"children":[]},{"name":"openwiki/reference/kattan-mapping.md \u2014 Full MATLAB\u2192Julia Mapping","total_count":1,"children":[]}]}]}]},{"name":"problems","total_count":28,"children":[{"name":"problem_2_1.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_2_2.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_3_1.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_3_3.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_4_2.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_5_1.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_5_2.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_6_1.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_7_1.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_7_2.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_7_3.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_8_1.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_8_2.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"problem_8_3.jl","total_count":2,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]}]},{"name":"README.md","total_count":8,"children":[{"name":"Examples (3D Space Frame Workflow, 2D Truss Workflow)","total_count":1,"children":[]},{"name":"Extension Pattern for New Element Types","total_count":1,"children":[]},{"name":"Function Naming Convention: d{N}_{domain}_{operation}","total_count":1,"children":[]},{"name":"Known Issues & Backlog","total_count":1,"children":[]},{"name":"MATLAB Reference Validation via Octave Pipeline","total_count":1,"children":[]},{"name":"Octave Validation CLI (spring/truss/beam/all)","total_count":1,"children":[]},{"name":"Project Directory Structure","total_count":1,"children":[]},{"name":"README.md \u2014 Project Homepage, Element Reference, Testing, Validation","total_count":1,"children":[]}]},{"name":"scripts","total_count":73,"children":[{"name":"dev","total_count":5,"children":[{"name":"setup.jl","total_count":5,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]},{"name":"Pkg","total_count":1,"children":[]},{"name":"Plots","total_count":1,"children":[]},{"name":"Revise","total_count":1,"children":[]}]}]},{"name":"linear_truss_mtk.jl","total_count":6,"children":[{"name":"element_length()","total_count":1,"children":[]},{"name":"k_e()","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]},{"name":"ModelingToolkit","total_count":1,"children":[]},{"name":"truss_force()","total_count":1,"children":[]},{"name":"truss_strain()","total_count":1,"children":[]}]},{"name":"linear_truss_mtk_2.jl","total_count":8,"children":[{"name":"assemble()","total_count":1,"children":[]},{"name":"element_length()","total_count":1,"children":[]},{"name":"k_e()","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]},{"name":"Plots","total_count":1,"children":[]},{"name":"truss_force()","total_count":1,"children":[]},{"name":"truss_strain()","total_count":1,"children":[]},{"name":"truss_stress()","total_count":1,"children":[]}]},{"name":"pre-commit-check.sh","total_count":1,"children":[{"name":"pre-commit-check.sh script","total_count":1,"children":[]}]},{"name":"pre-commit-ocr.sh","total_count":1,"children":[{"name":"pre-commit-ocr.sh script","total_count":1,"children":[]}]},{"name":"problem_wrapper.jl","total_count":30,"children":[{"name":"_compute_errors()","total_count":1,"children":[]},{"name":"_extract_last_json()","total_count":1,"children":[]},{"name":"_normalize_val()","total_count":1,"children":[]},{"name":"_problem_2_1_julia()","total_count":1,"children":[]},{"name":"_problem_2_2_julia()","total_count":1,"children":[]},{"name":"_problem_3_1_julia()","total_count":1,"children":[]},{"name":"_problem_3_3_julia()","total_count":1,"children":[]},{"name":"_problem_4_2_julia()","total_count":1,"children":[]},{"name":"_problem_5_1_julia()","total_count":1,"children":[]},{"name":"_problem_5_2_julia()","total_count":1,"children":[]},{"name":"_problem_6_1_julia()","total_count":1,"children":[]},{"name":"_problem_7_1_julia()","total_count":1,"children":[]},{"name":"_problem_7_2_julia()","total_count":1,"children":[]},{"name":"_problem_7_3_julia()","total_count":1,"children":[]},{"name":"_problem_8_1_julia()","total_count":1,"children":[]},{"name":"_problem_8_2_julia()","total_count":1,"children":[]},{"name":"_problem_8_3_julia()","total_count":1,"children":[]},{"name":"_val_summary()","total_count":1,"children":[]},{"name":"build_problem_wrapper()","total_count":1,"children":[]},{"name":"fmt_sci()","total_count":1,"children":[]},{"name":"LibFEM","total_count":1,"children":[]},{"name":"OctaveRunner","total_count":1,"children":[]},{"name":"Printf","total_count":1,"children":[]},{"name":"problem_mfile_path()","total_count":1,"children":[]},{"name":"problem_variables()","total_count":1,"children":[]},{"name":"ProblemWrapper","total_count":1,"children":[]},{"name":"run_julia_problem()","total_count":1,"children":[]},{"name":"run_problem_via_octave()","total_count":1,"children":[]},{"name":"validate_problem()","total_count":1,"children":[]},{"name":"ValidateResult","total_count":1,"children":[]}]},{"name":"problems","total_count":1,"children":[{"name":"problem_definitions.jl","total_count":1,"children":[{"name":"ProblemDef","total_count":1,"children":[]}]}]},{"name":"validate_matlab.jl","total_count":21,"children":[{"name":"_normalize_val()","total_count":1,"children":[]},{"name":"compute_errors()","total_count":1,"children":[]},{"name":"fmt_sci()","total_count":1,"children":[]},{"name":"LibFEM","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]},{"name":"OctaveRunner","total_count":1,"children":[]},{"name":"print_centered()","total_count":1,"children":[]},{"name":"print_results()","total_count":1,"children":[]},{"name":"print_separator()","total_count":1,"children":[]},{"name":"print_summary()","total_count":1,"children":[]},{"name":"print_usage()","total_count":1,"children":[]},{"name":"Printf","total_count":1,"children":[]},{"name":"ProblemWrapper","total_count":1,"children":[]},{"name":"run_validation()","total_count":1,"children":[]},{"name":"status_str()","total_count":1,"children":[]},{"name":"Test","total_count":1,"children":[]},{"name":"test_beam()","total_count":1,"children":[]},{"name":"test_problems()","total_count":1,"children":[]},{"name":"test_spring()","total_count":1,"children":[]},{"name":"test_truss()","total_count":1,"children":[]},{"name":"ValidateResult","total_count":1,"children":[]}]}]},{"name":"src","total_count":56,"children":[{"name":"assembly.jl","total_count":4,"children":[{"name":"_assemble!()","total_count":1,"children":[]},{"name":"_d2_planeframe_kprime()","total_count":1,"children":[]},{"name":"_d3_spaceframe_kprime()","total_count":1,"children":[]},{"name":"_spaceframe_transform()","total_count":1,"children":[]}]},{"name":"beam.jl","total_count":11,"children":[{"name":"d2_beam_assemble()","total_count":1,"children":[]},{"name":"d2_beam_elementforces()","total_count":1,"children":[]},{"name":"d2_beam_elementstiffness()","total_count":1,"children":[]},{"name":"d2_planeframe_assemble()","total_count":1,"children":[]},{"name":"d2_planeframe_elementforces()","total_count":1,"children":[]},{"name":"d2_planeframe_elementlength()","total_count":1,"children":[]},{"name":"d2_planeframe_elementstiffness()","total_count":1,"children":[]},{"name":"d3_spaceframe_assemble()","total_count":1,"children":[]},{"name":"d3_spaceframe_elementforces()","total_count":1,"children":[]},{"name":"d3_spaceframe_elementlength()","total_count":1,"children":[]},{"name":"d3_spaceframe_elementstiffness()","total_count":1,"children":[]}]},{"name":"errors.jl","total_count":4,"children":[{"name":"AssemblyError","total_count":1,"children":[]},{"name":"DiagramError","total_count":1,"children":[]},{"name":"ElementDimensionError","total_count":1,"children":[]},{"name":"ElementParameterError","total_count":1,"children":[]}]},{"name":"LibFEM.jl","total_count":2,"children":[{"name":"Base","total_count":1,"children":[]},{"name":"LibFEM","total_count":1,"children":[]}]},{"name":"quadraticbar.jl","total_count":5,"children":[{"name":"d1_quadraticbar_assemble()","total_count":1,"children":[]},{"name":"d1_quadraticbar_elementforces()","total_count":1,"children":[]},{"name":"d1_quadraticbar_elementlength()","total_count":1,"children":[]},{"name":"d1_quadraticbar_elementstiffness()","total_count":1,"children":[]},{"name":"d1_quadraticbar_elementstress()","total_count":1,"children":[]}]},{"name":"spring.jl","total_count":9,"children":[{"name":"d1_spring_assemble()","total_count":1,"children":[]},{"name":"d1_spring_elementforce()","total_count":1,"children":[]},{"name":"d1_spring_elementstiffness()","total_count":1,"children":[]},{"name":"d2_spring_assemble()","total_count":1,"children":[]},{"name":"d2_spring_elementforce()","total_count":1,"children":[]},{"name":"d2_spring_elementstiffness()","total_count":1,"children":[]},{"name":"d3_spring_assemble()","total_count":1,"children":[]},{"name":"d3_spring_elementforce()","total_count":1,"children":[]},{"name":"d3_spring_elementstiffness()","total_count":1,"children":[]}]},{"name":"truss.jl","total_count":17,"children":[{"name":"d1_truss_assemble()","total_count":1,"children":[]},{"name":"d1_truss_elementforces()","total_count":1,"children":[]},{"name":"d1_truss_elementstiffness()","total_count":1,"children":[]},{"name":"d1_truss_elementstrain()","total_count":1,"children":[]},{"name":"d1_truss_elementstress()","total_count":1,"children":[]},{"name":"d2_truss_assemble()","total_count":1,"children":[]},{"name":"d2_truss_elementforces()","total_count":1,"children":[]},{"name":"d2_truss_elementlength()","total_count":1,"children":[]},{"name":"d2_truss_elementstiffness()","total_count":1,"children":[]},{"name":"d2_truss_elementstrain()","total_count":1,"children":[]},{"name":"d2_truss_elementstress()","total_count":1,"children":[]},{"name":"d3_truss_assemble()","total_count":1,"children":[]},{"name":"d3_truss_elementforces()","total_count":1,"children":[]},{"name":"d3_truss_elementlength()","total_count":1,"children":[]},{"name":"d3_truss_elementstiffness()","total_count":1,"children":[]},{"name":"d3_truss_elementstrain()","total_count":1,"children":[]},{"name":"d3_truss_elementstress()","total_count":1,"children":[]}]},{"name":"types.jl","total_count":1,"children":[{"name":"Base","total_count":1,"children":[]}]},{"name":"utils.jl","total_count":3,"children":[{"name":"_direction_cosines()","total_count":1,"children":[]},{"name":"_truss_force_component()","total_count":1,"children":[]},{"name":"validate_positive()","total_count":1,"children":[]}]}]},{"name":"test","total_count":60,"children":[{"name":"benchmark.jl","total_count":3,"children":[{"name":"BenchmarkTools","total_count":1,"children":[]},{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]}]},{"name":"golden","total_count":9,"children":[{"name":"generate_golden.jl","total_count":7,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]},{"name":"resolve_func()","total_count":1,"children":[]},{"name":"serialize_matrix()","total_count":1,"children":[]},{"name":"TOML","total_count":1,"children":[]},{"name":"write_error_marker()","total_count":1,"children":[]}]},{"name":"params_common.jl","total_count":2,"children":[{"name":"ordered_params()","total_count":1,"children":[]},{"name":"ordered_params_tuple()","total_count":1,"children":[]}]}]},{"name":"golden_regression.jl","total_count":4,"children":[{"name":"_deserialize_binary()","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]},{"name":"Test","total_count":1,"children":[]},{"name":"TOML","total_count":1,"children":[]}]},{"name":"matlab_adapters.jl","total_count":11,"children":[{"name":"adapt_beam_args()","total_count":1,"children":[]},{"name":"adapt_beam_result()","total_count":1,"children":[]},{"name":"adapt_result()","total_count":1,"children":[]},{"name":"adapt_space_frame_args()","total_count":1,"children":[]},{"name":"adapt_space_frame_result()","total_count":1,"children":[]},{"name":"adapt_spring_args()","total_count":1,"children":[]},{"name":"adapt_spring_result()","total_count":1,"children":[]},{"name":"adapt_truss_args()","total_count":1,"children":[]},{"name":"adapt_truss_length_args()","total_count":1,"children":[]},{"name":"adapt_truss_result()","total_count":1,"children":[]},{"name":"Test","total_count":1,"children":[]}]},{"name":"octave_runner.jl","total_count":23,"children":[{"name":"_build_script()","total_count":1,"children":[]},{"name":"_julia_to_json()","total_count":1,"children":[]},{"name":"_julia_to_octave_value()","total_count":1,"children":[]},{"name":"_parse_array()","total_count":1,"children":[]},{"name":"_parse_json()","total_count":1,"children":[]},{"name":"_parse_number()","total_count":1,"children":[]},{"name":"_parse_octave_object()","total_count":1,"children":[]},{"name":"_parse_octave_result()","total_count":1,"children":[]},{"name":"_parse_value()","total_count":1,"children":[]},{"name":"_run_with_timeout()","total_count":1,"children":[]},{"name":"_split_key_value()","total_count":1,"children":[]},{"name":"_split_top_level()","total_count":1,"children":[]},{"name":"_split_top_level_object()","total_count":1,"children":[]},{"name":"Base","total_count":1,"children":[]},{"name":"call_function()","total_count":1,"children":[]},{"name":"detect_octave()","total_count":1,"children":[]},{"name":"load_and_call()","total_count":1,"children":[]},{"name":"OctaveError","total_count":1,"children":[]},{"name":"OctaveInfo","total_count":1,"children":[]},{"name":"OctaveResult","total_count":1,"children":[]},{"name":"OctaveRunner","total_count":1,"children":[]},{"name":"run_script()","total_count":1,"children":[]},{"name":"showerror()","total_count":1,"children":[]}]},{"name":"property_tests.jl","total_count":5,"children":[{"name":"_rand_3d_angles()","total_count":1,"children":[]},{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]},{"name":"PropCheck","total_count":1,"children":[]},{"name":"Test","total_count":1,"children":[]}]},{"name":"runtests.jl","total_count":5,"children":[{"name":"LibFEM","total_count":1,"children":[]},{"name":"LinearAlgebra","total_count":1,"children":[]},{"name":"Pkg","total_count":1,"children":[]},{"name":"Plots","total_count":1,"children":[]},{"name":"Test","total_count":1,"children":[]}]}]},{"name":"ToDo_21072026.md","total_count":15,"children":[{"name":"_assemble! mutates AND returns K \u2014 bang convention leak (M6)","total_count":1,"children":[]},{"name":"BenchmarkTools in both deps and extras (M1)","total_count":1,"children":[]},{"name":"C1: d1_truss_elementstrain sign error","total_count":1,"children":[]},{"name":"C2: 3D angle semantics confusion (direction cosines vs Euler angles)","total_count":1,"children":[]},{"name":"C3: Near-vertical 3D beam catastrophic precision loss","total_count":1,"children":[]},{"name":"C4: Local vs global frame mismatch in element forces","total_count":1,"children":[]},{"name":"C5: API inconsistency d1 returns vectors, d2/d3 returns scalars","total_count":1,"children":[]},{"name":"C6: Type hierarchy is decorative \u2014 structs never dispatched on","total_count":1,"children":[]},{"name":"Dead error types (H7): ElementDimensionError, AssemblyError, DiagramError never thrown","total_count":1,"children":[]},{"name":"Diagram functions copy-paste pattern \u2014 8 near-identical functions (M5)","total_count":1,"children":[]},{"name":"Direction cosine computation repeated 15+ times (H4)","total_count":1,"children":[]},{"name":"Missing E>0, G>0, I>0, J>0, k>0 validation (H1)","total_count":1,"children":[]},{"name":"Plots heavy dependency overhead (M2)","total_count":1,"children":[]},{"name":"Rotation matrix duplication (d3 beam, d2 beam) \u2014 H3, M15","total_count":1,"children":[]},{"name":"ToDo_21072026.md \u2014 Adversarial Code Review v1 (36 Findings)","total_count":1,"children":[]}]},{"name":"ToDo_21072026_2.md","total_count":8,"children":[{"name":"C7 (v2): Diagram sign convention wrong (cos vs -sin projection)","total_count":1,"children":[]},{"name":"C8 (v2): _assemble! silently skips out-of-bounds DOF indices","total_count":1,"children":[]},{"name":"H10 (v2): Sign convention completely undocumented","total_count":1,"children":[]},{"name":"H8 (v2): README falsely claims A>0 validation exists","total_count":1,"children":[]},{"name":"H9 (v2): d3_beam no G/J/Iy/Iz sanity check (singular NaN)","total_count":1,"children":[]},{"name":"L10 (v2): ROTATION_MATRIX constant defined but never used (dead code)","total_count":1,"children":[]},{"name":"M16 (v2): _d3_beam_kprime defined inside function body (inner function)","total_count":1,"children":[]},{"name":"ToDo_21072026_2.md \u2014 Adversarial Code Review v2 (49 Findings)","total_count":1,"children":[]}]}]};
+
+    function transformData(jsonData) {
+        // Helper function to recursively build the children structure
+        function processNode(node, parentL1StageName) {
+            let displayName = node.name;
+            // Append total_count if it exists and is not already in the name
+            if (node.total_count !== undefined) {
+                if (!/\(Total Count: \d+\)$/.test(displayName)) {
+                    displayName += ` (Total Count: ${node.total_count})`;
+                }
+            }
+
+            const newNode = { name: displayName };
+
+            if (parentL1StageName === "Root") {
+                 newNode.originalStageName = node.name;
+            } else {
+                newNode.originalStageName = parentL1StageName;
+            }
+
+            if (node.children && node.children.length > 0) {
+                const stageNameToPass = (parentL1StageName === "Root") ? node.name : parentL1StageName;
+                newNode.children = node.children.map(child => processNode(child, stageNameToPass));
+            }
+
+            return newNode;
+        }
+
+        let rootDisplayName = jsonData.name;
+        if (jsonData.total_count !== undefined && !/\(Total Count: \d+\)$/.test(rootDisplayName)) {
+            rootDisplayName += ` (Total Count: ${jsonData.total_count})`;
+        }
+
+        return {
+            name: rootDisplayName,
+            originalStageName: "Root",
+            children: (jsonData.children || []).map(child => processNode(child, "Root"))
+        };
+    }
+
+    const treeData = transformData(initialJsonData);
+
+    // Auto-populated phaseColors: every depth-1 child of the root gets
+    // a stable colour from a bigger palette so all top-level dirs are
+    // distinguishable.
+    const PALETTE = [
+      ["#3498DB","#2980B9","#AED6F1"], ["#2ECC71","#27AE60","#A9DFBF"],
+      ["#E74C3C","#C0392B","#F5B7B1"], ["#9B59B6","#8E44AD","#D7BDE2"],
+      ["#F39C12","#D68910","#FAD7A0"], ["#1ABC9C","#117864","#A2D9CE"],
+      ["#34495E","#1B2631","#ABB2B9"], ["#E67E22","#BA4A00","#F5CBA7"],
+      ["#16A085","#0E6655","#A2D9CE"], ["#D35400","#A04000","#EDBB99"],
+      ["#7F8C8D","#566573","#D5DBDB"], ["#C0392B","#7B241C","#F5B7B1"],
+      ["#2E86C1","#1B4F72","#A9CCE3"], ["#28B463","#196F3D","#A9DFBF"],
+      ["#AF7AC5","#6C3483","#D2B4DE"],
+    ];
+    const phaseColors = { "Root": { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+                          "Default": { fill: "#BDC3C7", stroke: "#95A5A6", collapsedFill: "#ECF0F1" } };
+    (initialJsonData.children || []).forEach((c, i) => {
+      const pal = PALETTE[i % PALETTE.length];
+      phaseColors[c.name] = { fill: pal[0], stroke: pal[1], collapsedFill: pal[2] };
+    });
+
+    const levelSpecificPalettes = {
+      0: { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+      2: { fill: "#6ab04c", stroke: "#508a38", collapsedFill: "#a3d391" },
+      3: { fill: "#f0932b", stroke: "#d0730f", collapsedFill: "#f6c07e" },
+      4: { fill: "#be2edd", stroke: "#a01cb3", collapsedFill: "#e08bf2" },
+      5: { fill: "#00a8ff", stroke: "#007ac1", collapsedFill: "#74d2ff" },
+      6: { fill: "#e55039", stroke: "#c23620", collapsedFill: "#f09a8d" },
+      default: { fill: "#747d8c", stroke: "#57606f", collapsedFill: "#a4b0be" }
+    };
+
+    const svgElement = d3.select("#tree-svg");
+    const initialSvgWidth = +svgElement.attr("width");
+    const initialSvgHeight = +svgElement.attr("height");
+    const margin = { top: 40, right: 120, bottom: 80, left: 450 };
+    let width = initialSvgWidth - margin.left - margin.right;
+    let height = initialSvgHeight - margin.top - margin.bottom;
+    const duration = 500;
+    let nodeCounter = 0;
+    const g = svgElement.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const treemap = d3.tree().nodeSize([40, 0]);
+    let rootNode = d3.hierarchy(treeData, d => d.children);
+    rootNode.x0 = 0;
+    rootNode.y0 = 0;
+
+    if (rootNode.children) {
+      rootNode.children.forEach(d_child => {
+        if (d_child.children) { collapseBranch(d_child); }
+      });
+    }
+    updateTree(rootNode);
+
+    function collapseBranch(d) { if (d.children) { d._children = d.children; d._children.forEach(collapseBranch); d.children = null; } }
+    function expandBranch(d) { if (d._children) { d.children = d._children; d._children = null; } if (d.children) { d.children.forEach(expandBranch); } }
+    window.expandAll = () => { expandBranch(rootNode); updateTree(rootNode); };
+    window.collapseAll = () => { if (rootNode.children) { rootNode.children.forEach(collapseBranch); } updateTree(rootNode); };
+    window.resetView = () => { if (rootNode.children) { rootNode.children.forEach(d_child => { if (d_child.children || d_child._children) { collapseBranch(d_child); } }); } if (rootNode._children && !rootNode.children) { rootNode.children = rootNode._children; rootNode._children = null; } updateTree(rootNode); };
+
+    function updateTree(source) {
+      const treeLayoutData = treemap(rootNode);
+      let nodes = treeLayoutData.descendants();
+      let links = treeLayoutData.descendants().slice(1);
+
+      let minX = 0;
+      let maxX = 0;
+      if (nodes.length > 0) {
+        minX = d3.min(nodes, d => d.x);
+        maxX = d3.max(nodes, d => d.x);
+      }
+
+      let neededHeight = Math.max(initialSvgHeight, maxX - minX + margin.top + margin.bottom + 100);
+      svgElement.transition().duration(duration / 2).attr("height", neededHeight);
+      g.transition().duration(duration / 2).attr("transform", `translate(${margin.left},${margin.top - minX + 40})`);
+
+      nodes.forEach(d => { d.y = d.depth * 400; }); // Adjust horizontal separation if needed
+
+      const node = g.selectAll('g.node').data(nodes, d => d.id || (d.id = ++nodeCounter));
+      const nodeEnter = node.enter().append('g')
+        .attr('class', d => "node" + (d.children || d._children ? " node--internal" : " node--leaf") + (d._children ? " _children" : ""))
+        .attr('transform', d => `translate(${source.y0},${source.x0})`)
+        .on('click', (event, d) => { if (d.children) { d._children = d.children; d.children = null; } else if (d._children) { d.children = d._children; d._children = null; } updateTree(d); })
+        .style('cursor', d => (d.children || d._children) ? 'pointer' : 'default');
+
+      nodeEnter.append('circle').attr('r', 1e-6);
+
+      nodeEnter.append('text')
+        .attr('dy', '.35em')
+        .attr('x', d => d.children || d._children ? -14 : 14)
+        .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+        .style("fill-opacity", 1e-6)
+        .call(wrapText, 380);
+
+      const nodeUpdate = nodeEnter.merge(node);
+      nodeUpdate.transition().duration(duration)
+        .attr('transform', d => `translate(${d.y},${d.x})`)
+        .attr('class', d => "node" + (d.children ? " node--internal" : " node--leaf") + (d._children ? " node--internal _children" : ""));
+
+      nodeUpdate.select('circle').attr('r', 8.5)
+        .style('fill', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            if (d._children) return palette.collapsedFill;
+            if (d.children) return palette.fill;
+            return "#fff";
+        })
+        .style('stroke', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            return palette.stroke;
+        });
+      nodeUpdate.select('text').style("fill-opacity", 1).call(wrapText, 380);
+
+      const nodeExit = node.exit().transition().duration(duration).attr('transform', d => `translate(${source.y},${source.x})`).remove();
+      nodeExit.select('circle').attr('r', 1e-6);
+      nodeExit.select('text').style('fill-opacity', 1e-6);
+
+      const link = g.selectAll('path.link').data(links, d => d.id);
+      const linkEnter = link.enter().insert('path', "g").attr('class', 'link').attr('d', d => { const o = { x: source.x0, y: source.y0 }; return diagonal(o, o); });
+
+      linkEnter.merge(link).transition().duration(duration).attr('d', d => diagonal(d, d.parent))
+        .style('stroke', d => {
+            const sourceNode = d.parent;
+            if (!sourceNode) return phaseColors.Default.stroke;
+            const l1AncestorName = sourceNode.data.originalStageName;
+            const colorPalette = phaseColors[l1AncestorName] || phaseColors.Default;
+            return colorPalette.stroke;
+        });
+      link.exit().transition().duration(duration).attr('d', d => { const o = { x: source.x, y: source.y }; return diagonal(o, o); }).remove();
+      nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
+    }
+
+    function diagonal(s, d) { return `M ${s.y} ${s.x} C ${(s.y + d.y) / 2} ${s.x}, ${(s.y + d.y) / 2} ${d.x}, ${d.y} ${d.x}`; }
+
+    function wrapText(textElements, maxWidth) {
+        const textPartColors = {
+            name: '#343a40',
+            count: '#0056b3'
+        };
+        const countRegex = /(\s\(Total Count: \d+\))$/;
+
+        textElements.each(function () {
+            const textD3 = d3.select(this);
+            const originalNodeText = textD3.datum().data.name;
+            const x = parseFloat(textD3.attr("x") || 0);
+            const initialDy = textD3.attr("dy");
+            const textAnchor = textD3.attr("text-anchor");
+            const lineHeight = 1.1;
+
+            textD3.text(null);
+
+            let namePart = originalNodeText;
+            let countPartText = "";
+
+            const countMatch = originalNodeText.match(countRegex);
+            if (countMatch && originalNodeText.endsWith(countMatch[0])) {
+                namePart = originalNodeText.substring(0, originalNodeText.length - countMatch[0].length).trim();
+                countPartText = countMatch[0].trim();
+            }
+
+            const tokens = [];
+            namePart.split(/\s+/).filter(Boolean).forEach(word => {
+                tokens.push({ text: word, type: 'name' });
+            });
+            if (countPartText) {
+                tokens.push({ text: countPartText, type: 'count' });
+            }
+
+            if (tokens.length === 0 && originalNodeText) {
+                tokens.push({ text: originalNodeText, type: 'name' });
+            }
+
+            let currentTspan = textD3.append("tspan").attr("x", x).attr("dy", initialDy);
+            if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+
+            let lineTokens = [];
+
+            for (let i = 0; i < tokens.length; i++) {
+                const tokenObj = tokens[i];
+
+                lineTokens.push(tokenObj);
+                currentTspan.text(lineTokens.map(t => t.text).join(" "));
+
+                if (currentTspan.node().getComputedTextLength() > maxWidth && lineTokens.length > 1) {
+                    lineTokens.pop();
+
+                    currentTspan.text(null);
+                    lineTokens.forEach((prevToken, idx) => {
+                        currentTspan.append("tspan")
+                            .text((idx > 0 ? " " : "") + prevToken.text)
+                            .style("fill", textPartColors[prevToken.type] || textPartColors.name)
+                            .style("font-weight", prevToken.type === 'count' ? "bold" : "normal");
+                    });
+
+                    lineTokens = [tokenObj];
+                    currentTspan = textD3.append("tspan").attr("x", x).attr("dy", lineHeight + "em");
+                    if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+                }
+            }
+
+            currentTspan.text(null);
+            lineTokens.forEach((token, idx) => {
+                currentTspan.append("tspan")
+                    .text((idx > 0 ? " " : "") + token.text)
+                    .style("fill", textPartColors[token.type] || textPartColors.name)
+                    .style("font-weight", token.type === 'count' ? "bold" : "normal");
+            });
+
+            if (textD3.selectAll("tspan > tspan").empty() && textD3.select("tspan").text().length === 0 && originalNodeText) {
+                let t = textD3.select("tspan");
+                let displayText = originalNodeText;
+                t.text(displayText).style("fill", textPartColors.name);
+                if (t.node() && t.node().getComputedTextLength() > maxWidth && displayText.length > 20) {
+                    let estimatedChars = Math.floor(maxWidth / (t.node().getComputedTextLength()/displayText.length) );
+                    displayText = displayText.substring(0, Math.max(0, estimatedChars - 3)) + "...";
+                    t.text(displayText);
+                }
+            }
+        });
+    }
+  </script>
+</body>
+</html>

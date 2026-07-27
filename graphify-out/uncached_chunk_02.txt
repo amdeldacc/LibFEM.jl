@@ -1,0 +1,15 @@
+/home/piou/LibFEM.jl/.opencode/skills/cavecrew/README.md
+/home/piou/LibFEM.jl/.opencode/skills/cavecrew/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman/README.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-commit/README.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-commit/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-compress/README.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-compress/SECURITY.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-compress/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-help/README.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-help/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-review/README.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-review/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-stats/README.md
+/home/piou/LibFEM.jl/.opencode/skills/caveman-stats/SKILL.md

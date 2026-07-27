@@ -1,0 +1,1 @@
+{"nodes": [{"id": "skill:caveman-help", "type": "skill", "label": "caveman-help", "source_file": ".opencode/skills/caveman-help/SKILL.md", "confidence": "EXTRACTED", "properties": {"description": "Quick-reference card for caveman modes, skills, and commands", "trigger": "/caveman-help", "behavior": "one-shot display, no mode change"}}], "edges": [], "hyperedges": []}

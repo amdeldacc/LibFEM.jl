@@ -17,12 +17,13 @@ LibFEM.jl is a single-module library with multi-file source organization. The mo
 | `src/LibFEM.jl` | Module declaration, `include()` directives, `export` statements, stub diagram throwers |
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
-| `src/utils.jl` | `deg2rad`, internals validation helpers |
+| `src/utils.jl` | `_direction_cosines`, validation helpers (`validate_positive`) |
 | `src/assembly.jl` | `_assemble!` private helper, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime` |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
 | `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (1-D quadratic bar, 3-node) |
 | `src/beam.jl` | All `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), and `d3_spaceframe_*` (space frame) implementations |
+| `src/solver.jl` | `apply_bc!` — Dirichlet boundary condition application |
 
 Beam diagram functions used to live in `src/plot.jl`, but with `Plots.jl` moved to a weak dependency (commit 62baa10), they now live in the package extension `ext/LibFEMPlotsExt.jl`. `src/LibFEM.jl` defines stub throwers (`DiagramError`) for every diagram symbol; loading `Plots` activates the extension, which dispatches into the same exported function names and the stubs are replaced.
 
@@ -38,7 +39,11 @@ include("spring.jl")
 include("truss.jl")
 include("quadraticbar.jl")
 include("beam.jl")
-include("quadraticbar.jl")
+include("solver.jl")
+
+# Import Base.deg2rad for Julia < 1.10 compat (ensures deg2rad
+# is available in the module namespace on all Julia 1.x versions)
+import Base: deg2rad
 
 # Stub diagram functions (replaced by extension when Plots loaded)
 for f in (:d2_beam_elementsheardiagram, :d2_beam_elementmomentdiagram,
@@ -57,7 +62,7 @@ end
 end
 ```
 
-**Exports**: All public functions are exported in grouped blocks. `deg2rad` is imported from `Base` into the module namespace (`import Base: deg2rad` in `src/LibFEM.jl`). The helpers `_assemble!`, `_d2_planeframe_kprime`, and `_d3_spaceframe_kprime` remain private (underscore prefix, not exported). Diagram functions (`d2_beam_elementsheardiagram`, etc.) are *also* exported — the extension re-exports them with Plots-backed implementations; without `Plots`, calling them throws `DiagramError`.
+**Exports**: All public functions are exported in grouped blocks. `deg2rad` is imported from `Base` into the module namespace (`import Base: deg2rad` in `src/LibFEM.jl`). The helpers `_assemble!`, `_d2_planeframe_kprime`, and `_d3_spaceframe_kprime` remain private (underscore prefix, not exported). Diagram functions (`d2_beam_elementsheardiagram`, etc.) are *also* exported — the extension re-exports them with Plots-backed implementations; without `Plots`, calling them throws `DiagramError`. The new solver helper `apply_bc!` is exported for applying Dirichlet boundary conditions.
 
 ## Naming Convention
 
@@ -172,6 +177,7 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d1_spring_elementforce(k, u)` — 2-element vector
 
 ### 1D Quadratic Bar (`d1_quadraticbar`)
+- `d1_quadraticbar_elementlength(x1, x2)` — element length (absolute difference)
 - `d1_quadraticbar_elementstiffness(E, A, L)` — 3×3 matrix (validates `L > 0`, `A > 0`)
 - `d1_quadraticbar_assemble(K, k, i, j, m)` — custom assembly for 3-node element (DOF mapping: 1)
 - `d1_quadraticbar_elementforces(Ke, u)` — 3-element vector
@@ -227,10 +233,8 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)` — element length
 
 ### 3D Space Frame (`d3_spaceframe`)
+- `d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)` — 3D Euclidean distance (validates `L > 0`)
 - `d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` — 12×12 matrix (validates `L > 0`)
-- `d3_spaceframe_assemble(K, k, i, j)` — DOF mapping: **6**
-- `d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` — 12-element vector (local frame) (validates `L > 0`)
-- `d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)` — 3D Euclidean distance
 - `d3_spaceframe_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
 - `d3_spaceframe_elementshearydiagram(f, L)` — Plots.jl shear force (Y) diagram
 - `d3_spaceframe_elementshearzdiagram(f, L)` — Plots.jl shear force (Z) diagram
@@ -249,10 +253,10 @@ The helper is private (underscore prefix, not exported). Adding new element type
 ## Testing
 
 Tests are in `test/`:
-- **`runtests.jl`** — Main test suite (~900+ lines). Uses `Test` standard library plus `LinearAlgebra`. Covers all 8 element types (including `d3_spaceframe` and `d1_quadraticbar`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, and MATLAB reference comparison for Problem 10.1. Includes an `include` of `property_tests.jl` and `golden_regression.jl`. The new validation contracts (zero `k`, zero `L`) are asserted via `@test_throws ElementParameterError` (e.g. `d2_spring_elementstiffness(0, 30)`, `d3_truss_elementlength(0,0,0,0,0,0)`, `d3_spaceframe_elementlength(0,0,0,0,0,0)`). Several testsets wrap bodies in `Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(stderr, Base.CoreLogging.Error)) do ... end` to suppress the `@warn` emitted by `_direction_cosines` for valid-but-non-unit random triples.
+- **`runtests.jl`** — Main test suite (~1054 lines). Uses `Test` standard library plus `LinearAlgebra`. Covers all 10 element types (including `d3_spaceframe` and `d1_quadraticbar`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, and MATLAB reference comparison for Problem 10.1. Includes `include` of `property_tests.jl` and `golden_regression.jl`. The new validation contracts (zero `k`, zero `L`) are asserted via `@test_throws ElementParameterError` (e.g. `d2_spring_elementstiffness(0, 30)`, `d3_truss_elementlength(0,0,0,0,0,0)`, `d3_spaceframe_elementlength(0,0,0,0,0,0)`). Several testsets wrap bodies in `Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(stderr, Base.CoreLogging.Error)) do ... end` to suppress the `@warn` emitted by `_direction_cosines` for valid-but-non-unit random triples.
 - **`property_tests.jl`** — Property-based tests using `PropCheck.jl` (added to test `[extras]` in commit fea71d7). Asserts symmetry, translational invariance, and zero-stiffness behavior across randomized inputs. The 3D spring/truss section uses a `_rand_3d_angles()` helper that generates spherical-polar samples on the unit sphere (so `Cx²+Cy²+Cz² = 1` by construction) rather than independent uniform angles, because the validation logic auto-normalizes off-unit triples.
 - **`comparison.jl`** — Side-by-side MATLAB reference implementations transcribed from `Doc/Kattan/M-Files/`. Not run as independent tests; included from `runtests.jl`.
-- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (12 benchmarks). Covers stiffness construction (8 element types), assembly (500-element d2_truss chain + 500-element d3_spaceframe chain), solve (random SPD system), and d3_spaceframe element forces. Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
+- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (12 benchmarks). Covers stiffness construction (10 element types), assembly (500-element d2_truss chain + 500-element d3_spaceframe chain), solve (random SPD system), and d3_spaceframe element forces. Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
 - **`golden_regression.jl`** — Regression test runner that diffs current outputs against `test/golden/v1/`. Binary fixtures in `test/golden/v1/d{2,3}_{spring,truss,spaceframe}_*.bin` are paired with a `manifests.toml` specifying parameters and tolerances; the binary content was regenerated in commit 4f7582f after the 3D direction-cosine normalization fix to track the new (mathematically correct) outputs.
 - **`octave_runner.jl`** — Octave runner module for MATLAB validation (used by `scripts/validate_matlab.jl`).
 - **`matlab_adapters.jl`** — MATLAB↔Julia argument/result adapters used by the Octave verification harness.
@@ -266,9 +270,7 @@ julia --project=. -e 'using Pkg; Pkg.test()'
 # julia --project=. test/runtests.jl
 ```
 
-**CI**: There is no automated test runner workflow currently. The test suite is run manually. Benchmarks are not automated — they run standalone due to noise and slowness in automated environments.
-
-**GitHub Actions workflows**: `.github/workflows/opencode.yml` runs the OpenCode AI assistant on issue/PR comments containing `/oc` or `/opencode`, using an NVIDIA NIM backend. `.github/workflows/openwiki-update.yml` runs a scheduled daily OpenWiki documentation refresh and opens a PR with any changes.
+**CI**: GitHub Actions (`.github/workflows/ci.yml`) has two jobs: `test` runs unit tests, property tests, and golden regression on Julia 1.12; `validate` runs Octave validation. Other workflows: `benchmarks.yml`, `ocr-review.yml`, `openwiki-update.yml`, `super-linter.yml`.
 
 ## Extension Points
 
@@ -288,7 +290,7 @@ Key invariants to maintain:
 
 ## Limitations & Watch-outs
 
-- **No built-in boundary condition or solver functions**, users supply their own `K·U = F` solver (PartitionedArrays-style partitioning, prescribed-DOF stripping, etc. is out of scope).
+- **No built-in boundary condition or solver functions** — users supply their own `K·U = F` solver (PartitionedArrays-style partitioning, prescribed-DOF stripping, etc. is out of scope). The new `apply_bc!` helper in `src/solver.jl` provides Dirichlet boundary condition application by zeroing rows/columns and setting diagonal to 1, but it's a helper, not a full solver.
 - **Diagram functions raise `DiagramError` unless `Plots` is loaded** in the same Julia session. CI scripts (e.g. `scripts/problem_wrapper.jl` headless Octave path) override the exported diagram functions in a wrapper module with no-ops so they don't fail on import-time resolution. If you hit `DiagramError` in a script, make sure `using Plots` precedes the call.
 - **3D direction cosine inputs** that violate `Cx²+Cy²+Cz² = 1` by more than `1e-12` emit a `@warn` and are auto-normalized; degenerate triples (`Cx²+Cy²+Cz² ≈ 0`) cannot be normalized and pass through unchanged. Prefer deriving angles from node coordinates via `d3_*_elementlength`.
 - **No `ModelingToolkit` integration in the library itself.** The example scripts in `scripts/` (`linear_truss_mtk*.jl`) use MTK independently of this project; they are not part of the public API.

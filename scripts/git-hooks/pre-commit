@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Pre-commit hook: guards against unauthorized commits.
+# Requires GIT_APPROVED=<message-id> to proceed.
+# This prevents the agent from committing by setting a static ALLOW_COMMIT=1.
+
+if [ -z "${GIT_APPROVED:-}" ]; then
+    echo ""
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    echo "║  COMMIT BLOCKED — No explicit user approval                 ║"
+    echo "║                                                            ║"
+    echo "║  The agent must set GIT_APPROVED=<message-id> to confirm   ║"
+    echo "║  the user explicitly approved this commit. Example:         ║"
+    echo "║    GIT_APPROVED='user said yes' git commit ...              ║"
+    echo "║                                                            ║"
+    echo "║  If you ARE the user and want to commit directly:           ║"
+    echo "║    GIT_APPROVED=manual git commit ...                       ║"
+    echo "╚══════════════════════════════════════════════════════════════╝"
+    echo ""
+    exit 1
+fi
+
+# Log approval for audit
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ): commit with approval: $GIT_APPROVED" >> "$(git rev-parse --git-dir)/commit-approval.log"

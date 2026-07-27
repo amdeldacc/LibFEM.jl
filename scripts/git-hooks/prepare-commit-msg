@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# prepare-commit-msg: Injects "Approved-by:" into commit body when GIT_APPROVED is set.
+# This creates a verifiable chain: pre-commit requires GIT_APPROVED,
+# prepare-commit-msg writes it to the body, and pre-push verifies it.
+
+if [ -n "${GIT_APPROVED:-}" ]; then
+    # Only inject if not already present (avoids duplicates on --amend)
+    if ! grep -q "^Approved-by:" "$1" 2>/dev/null; then
+        echo "" >> "$1"
+        echo "Approved-by: $GIT_APPROVED" >> "$1"
+    fi
+fi

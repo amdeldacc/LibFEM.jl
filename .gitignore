@@ -31,3 +31,10 @@ LibFEM_DS_2020.ipynb
 ToDo/
 node_modules/
 # ci-trigger
+
+# Plan and todo files (local only, not for commit)
+ImplementationPlan_21072029.md
+OCR_Usage.md
+OpenCodeReviewCLI.md
+ToDo_21072026.md
+ToDo_21072026_2.md

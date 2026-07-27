@@ -146,7 +146,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 
 ## Where to Go Next
 
-- **[Architecture Overview](architecture/overview.md)** — Naming conventions, dimension system, `_assemble!` helper, module structure.
+- **[Architecture Overview](architecture/overview.md)** — Naming conventions, dimension system, `_assemble!` helper, module structure, **git hooks & commit workflow**.
 - **[Kattan MATLAB Mapping](reference/kattan-mapping.md)** — Full MATLAB-to-Julia mapping table and reference material index.
 
 ## Backlog

@@ -1,0 +1,16 @@
+/home/piou/LibFEM.jl/.opencode/skills/code-reviewer/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/find-skills/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/graphify/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/graphify/references/add-watch.md
+/home/piou/LibFEM.jl/.opencode/skills/graphify/references/exports.md
+/home/piou/LibFEM.jl/.opencode/skills/graphify/references/extraction-spec.md
+/home/piou/LibFEM.jl/.opencode/skills/graphify/references/github-and-merge.md
+/home/piou/LibFEM.jl/.opencode/skills/graphify/references/hooks.md
+/home/piou/LibFEM.jl/.opencode/skills/graphify/references/query.md
+/home/piou/LibFEM.jl/.opencode/skills/graphify/references/transcribe.md
+/home/piou/LibFEM.jl/.opencode/skills/graphify/references/update.md
+/home/piou/LibFEM.jl/.opencode/skills/julia/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/tdd/SKILL.md
+/home/piou/LibFEM.jl/.opencode/skills/tdd/agents/openai.yaml
+/home/piou/LibFEM.jl/.opencode/skills/tdd/mocking.md
+/home/piou/LibFEM.jl/.opencode/skills/tdd/tests.md

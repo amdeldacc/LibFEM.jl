@@ -1,0 +1,19 @@
+/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.md
+/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt
+/home/piou/LibFEM.jl/openwiki/INSTRUCTIONS.md
+/home/piou/LibFEM.jl/openwiki/architecture/index.md
+/home/piou/LibFEM.jl/openwiki/architecture/overview.md
+/home/piou/LibFEM.jl/openwiki/index.md
+/home/piou/LibFEM.jl/openwiki/quickstart.md
+/home/piou/LibFEM.jl/openwiki/reference/index.md
+/home/piou/LibFEM.jl/openwiki/reference/kattan-mapping.md
+/home/piou/LibFEM.jl/AGENTS.md
+/home/piou/LibFEM.jl/CLAUDE.md
+/home/piou/LibFEM.jl/CONTEXT.md
+/home/piou/LibFEM.jl/OCR_Usage.md
+/home/piou/LibFEM.jl/OpenCodeReviewCLI.md
+/home/piou/LibFEM.jl/README.md
+/home/piou/LibFEM.jl/ToDo_21072026.md
+/home/piou/LibFEM.jl/ToDo_21072026_2.md
+/home/piou/LibFEM.jl/Doc/Peter I. Kattan - MATLAB Guide to Finite Elements_ An Interactive Approach (2007, Springer).pdf
+/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.pdf

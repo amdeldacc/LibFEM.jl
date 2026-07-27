@@ -7,7 +7,7 @@ tags: ["quickstart", "getting-started", "fem", "julia"]
 
 # LibFEM.jl — Quickstart
 
-**LibFEM.jl** is an educational Finite Element Method (FEM) library for Julia. It provides element stiffness matrices, assembly functions, force/stress/strain calculations, and diagram plotting for springs, trusses, and beams in 1D, 2D, and 3D.
+**LibFEM.jl v0.2.0** is an educational Finite Element Method (FEM) library for Julia. It provides element stiffness matrices, assembly functions, force/stress/strain calculations, boundary condition application, and diagram plotting for springs, trusses, and beams in 1D, 2D, and 3D.
 
 Inspired by *"MATLAB Guide to Finite Elements — An Interactive Approach"* by Peter I. Kattan (Springer, 2007). The reference MATLAB code is preserved in `Doc/Kattan/M-Files/` as a read-only verification source.
 
@@ -41,7 +41,10 @@ Every element type follows the same 3-function pattern:
 2. **`<prefix>_assemble(K, k, i, j)`** — assemble element matrix into global stiffness matrix
 3. **One of**: `<prefix>_elementforce(...)`, `<prefix>_elementstress(...)`, `<prefix>_elementstrain(...)` — compute results from displacements
 
-Additional helpers: `_elementlength(...)`, beam diagram functions (2D: `_elementaxialdiagram`, `_elementmomentdiagram`, `_elementsheardiagram`; 3D: `_elementaxialdiagram`, `_elementshearydiagram`, `_elementshearzdiagram`, `_elementmomentydiagram`, `_elementmomentzdiagram`, `_elementtorsiondiagram`).
+Additional helpers: `_elementlength(...)` (including new `d1_quadraticbar_elementlength`), beam diagram functions (2D: `_elementaxialdiagram`, `_elementmomentdiagram`, `_elementsheardiagram`; 3D: `_elementaxialdiagram`, `_elementshearydiagram`, `_elementshearzdiagram`, `_elementmomentydiagram`, `_elementmomentzdiagram`, `_elementtorsiondiagram`).
+
+**Solver helper** (new in v0.2.0):
+- **`apply_bc!(K, F, constraints)`** — apply Dirichlet boundary conditions to global system K·u = F by eliminating constrained DOFs. Takes a vector of `dof => value` pairs.
 
 ### Example: 3D Beam (Space Frame) Workflow
 
@@ -108,7 +111,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 - **Angle units**: all angle parameters are in **degrees**; converted to radians internally via `deg2rad` (imported from `Base`). The 3D convention is the **cosine-of-axis-angle** form: identity `cos²θx + cos²θy + cos²θz = 1` must hold; off-unit inputs are auto-normalized with a `@warn`. Derive angles from node coordinates via `d2_truss_elementlength`/`d3_truss_elementlength` rather than passing angles manually when possible.
 - **Dimension prefixes**: `d1_` (1 DOF/node), `d2_` (2 DOF/node for spring/truss; 3 for `d2_planeframe`), `d3_` (3 DOF/node for spring/truss; **6** for `d3_spaceframe`).
 - **Multi-file module**: source code is organized into `src/LibFEM.jl` (declaration + includes + diagram stubs) + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/quadraticbar.jl`. Beam diagram functions live in the package extension `ext/LibFEMPlotsExt.jl` (loaded only when `Plots.jl` is present).
-- **Assembly refactored**: all 7 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
+- **Assembly refactored**: all 8 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
 - **Parameter validation**: `L`, `A`, `E`, `k > 0` are enforced at function entry via `validate_positive`; invalid inputs throw `ElementParameterError`.
 
 ## Repository Map
@@ -118,18 +121,19 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `src/LibFEM.jl` | Module declaration, includes, exports |
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
-| `src/utils.jl` | `deg2rad` and shared helpers |
+| `src/utils.jl` | Shared helpers (`_direction_cosines`, validation) |
 | `src/assembly.jl` | `_assemble!` private helper, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime` |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
 | `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (3-node quadratic bar) |
 | `src/beam.jl` | All `d2_beam_*`, `d2_planeframe_*`, and `d3_spaceframe_*` implementations |
+| `src/solver.jl` | `apply_bc!` — Dirichlet boundary condition application |
 | `ext/LibFEMPlotsExt.jl` | Beam diagram functions (Plots weak dependency via extension) |
-| `test/runtests.jl` | Main test suite (~900 lines, covers all 8 element types, includes golden regression) |
-| `test/matlab_adapters.jl` | MATLAB↔Julia argument/result adapters used by the Octave verification harness |
-| `test/golden/` | Binary golden files (`v1/*.bin`) + `manifests.toml` + `params_common.jl` for regression testing |
-| `test/golden_regression.jl` | Regression test runner that diffs current outputs against `test/golden/v1/` |
+| `test/runtests.jl` | Main test suite (~1054 lines, covers all 10 element types, property tests, golden regression) |
+| `test/property_tests.jl` | PropCheck.jl property-based tests (symmetry, PSD, translational invariants) |
+| `test/golden_regression.jl` | Binary golden regression test runner |
 | `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (12 benchmarks) |
+| `test/golden/` | Binary golden files (`v1/*.bin`) + `manifests.toml` + `params_common.jl` for regression testing |
 | `scripts/dev/setup.jl` | Loads Revise, instantiates the project, and pre-loads LibFEM for interactive sessions |
 | `scripts/problems/problem_definitions.jl` | `PROBLEM_REGISTRY` — canonical Kattan reference problems with MATLAB file, family, and tolerances |
 | `scripts/validate_matlab.jl` | Octave↔Julia validation driver; runs in CI’s `validate` job |

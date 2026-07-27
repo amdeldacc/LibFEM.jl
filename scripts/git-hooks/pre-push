@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Pre-push hook: blocks push unless every new commit has "Approved-by:" in body.
+# This prevents the agent from pushing commits that bypassed the pre-commit guard.
+set -euo pipefail
+
+REMOTE="$1"
+URL="$2"
+
+# Only enforce on the primary remote
+if [ "$REMOTE" != "origin" ]; then
+    exit 0
+fi
+
+ZEROS="0000000000000000000000000000000000000000"
+REJECTED=false
+
+while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
+    # Deleting a ref — skip
+    if [ "$LOCAL_SHA" = "$ZEROS" ]; then
+        continue
+    fi
+
+    # New branch — check only commits not on origin/master (the new work)
+    if [ "$REMOTE_SHA" = "$ZEROS" ]; then
+        RANGE="origin/master..${LOCAL_SHA}"
+    else
+        RANGE="${REMOTE_SHA}..${LOCAL_SHA}"
+    fi
+
+    # Check every new commit for Approved-by:
+    for COMMIT in $(git rev-list "$RANGE" 2>/dev/null); do
+        APPROVED=$(git log -1 --format="%b" "$COMMIT" | grep -c "^Approved-by:" || true)
+        if [ "$APPROVED" -eq 0 ]; then
+            SHORT=$(git rev-parse --short "$COMMIT")
+            echo ""
+            echo "╔══════════════════════════════════════════════════════════════╗"
+            echo "║  PUSH BLOCKED — Commit missing 'Approved-by:'               ║"
+            echo "║                                                            ║"
+            echo "║  Commit $SHORT lacks Approved-by: in body."
+            echo "║  The agent likely bypassed the pre-commit guard.            ║"
+            echo "║                                                            ║"
+            echo "║  Fix: git commit --amend --no-edit                         ║"
+            echo "║       (pre-commit hook auto-injects it when GIT_APPROVED    ║"
+            echo "║        is set correctly)                                    ║"
+            echo "╚══════════════════════════════════════════════════════════════╝"
+            REJECTED=true
+        fi
+    done
+done
+
+if [ "$REJECTED" = true ]; then
+    exit 1
+fi

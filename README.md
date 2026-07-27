@@ -22,7 +22,7 @@ Or activate the environment in an existing Julia session:
 using Pkg; Pkg.activate("."); using LibFEM
 ```
 
-**Dependencies**: `Plots.jl` v1 (listed in `Project.toml`).
+**Dependencies**: `LinearAlgebra` (stdlib). `Plots.jl` v1 is an optional weak dependency (only needed for diagram functions via the `LibFEMPlotsExt` extension).
 
 ---
 
@@ -162,8 +162,8 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
   - `d1_` — 1 DOF/node (1D spring, linear bar)
   - `d2_` — 2 DOF/node (2D spring, plane truss, pure beam); 3 DOF/node for plane frame
   - `d3_` — 3 DOF/node (3D spring, space truss); **6 DOF/node** for 3D beam (space frame)
-- **Multi-file module**: Source organized into `src/LibFEM.jl` + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`.
-- **Assembly refactored**: All 7 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
+- **Multi-file module**: Source organized into `src/LibFEM.jl` + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/quadraticbar.jl`.
+- **Assembly refactored**: All 8 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
 - **Validation**: All stiffness/length functions validate positive inputs (`L > 0`, `A > 0`).
 - **Type hierarchy**: Abstract types `AbstractElement{NDIM}`, `AbstractSpring{NDIM}`, `AbstractTruss{NDIM}`, `AbstractBeam{NDIM}` with concrete `@kwdef` structs `Spring{NDIM}`, `Truss{NDIM}`, `Beam{NDIM}`.
 
@@ -181,11 +181,14 @@ LibFEM.jl/
 │   ├── assembly.jl        # _assemble! helper, _d3_spaceframe_kprime
 │   ├── spring.jl          # d1/d2/d3_spring_* implementations
 │   ├── truss.jl           # d1/d2/d3_truss_* implementations
-│   ├── beam.jl            # d2/d3_spaceframe_* implementations
+│   ├── beam.jl            # d2_beam_*, d2_planeframe_*, d3_spaceframe_* implementations
+│   ├── quadraticbar.jl    # d1_quadraticbar_* (3-node 1D element)
 │   └── ...
 ├── test/
-│   ├── runtests.jl        # Main test suite (~668 lines, covers all 8 element types)
-│   └── benchmark.jl       # BenchmarkTools.jl suite (12 benchmarks)
+│   ├── runtests.jl        # Main test suite (~1054 lines, covers all 10 element types)
+│   ├── benchmark.jl       # BenchmarkTools.jl suite (12 benchmarks)
+│   ├── property_tests.jl  # PropCheck.jl property-based tests
+│   └── golden_regression.jl  # Binary golden regression tests for Kattan problems
 ├── scripts/
 │   ├── linear_truss_mtk.jl      # ModelingToolkit example
 │   └── linear_truss_mtk_2.jl    # ModelingToolkit example
@@ -196,7 +199,7 @@ LibFEM.jl/
 ├── Doc/
 │   ├── Kattan/M-Files/    # Read-only MATLAB reference (80 .m files)
 │   └── Kattan/Solutions Manual/
-├── Project.toml           # Project metadata, deps (Plots), extras (Test, BenchmarkTools)
+├── Project.toml           # Project metadata, deps (LinearAlgebra), weakdeps (Plots), extras (Test, BenchmarkTools, PropCheck)
 ├── Manifest.toml
 ├── CONTEXT.md             # Domain glossary: MATLAB→Julia mapping
 ├── AGENTS.md              # Agent instructions
@@ -217,10 +220,13 @@ julia -e 'using Pkg; Pkg.test()'
 
 **Test suite includes**:
 
-- **Unit tests** (`runtests.jl`, ~668 lines) — per-element correctness: stiffness matrix shape/symmetry, force/stress/strain numeric validation, assembly correctness.
-- **Benchmarks** (`benchmark.jl`, 12 benchmarks) — Stiffness construction (8 element types), assembly (500-element chains), solve (random SPD), d3_spaceframe forces. Run manually: `julia --project=. test/benchmark.jl`.
+- **Unit tests** (`runtests.jl`, ~1054 lines) — per-element correctness: stiffness matrix shape/symmetry, force/stress/strain numeric validation, assembly correctness.
+- **Property-based tests** (`property_tests.jl`, ~237 lines) — PropCheck.jl random-input invariants (symmetry, positive semi-definiteness).
+- **Golden regression** (`golden_regression.jl`, ~114 lines) — binary snapshot regression for Kattan problems 2.1–8.3.
+- **Octave validation** (`scripts/validate_matlab.jl`) — runs separately from `Pkg.test()`; 20 comparisons (2 spring + 11 truss + 7 beam) against Kattan MATLAB reference. Run manually with `julia --project=. scripts/validate_matlab.jl all`. Octave >= 8.0 required.
+- **Benchmarks** (`benchmark.jl`, 12 benchmarks) — Stiffness construction (10 element types), assembly (500-element chains), solve (random SPD), d3_spaceframe forces. Run manually: `julia --project=. test/benchmark.jl`.
 
-**CI**: GitHub Actions (`.github/workflows/ci.yml`) runs tests on Julia 1 and 1.10. Benchmarks run standalone (not in CI).
+**CI**: GitHub Actions (`.github/workflows/ci.yml`) has two jobs: `test` runs unit tests, property tests, and golden regression on Julia 1.12; `validate` runs Octave validation. Other workflows: `benchmarks.yml`, `ocr-review.yml`, `openwiki-update.yml`, `super-linter.yml`.
 
 ---
 
@@ -338,7 +344,7 @@ Validate every in-scope element function against its original Kattan textbook MA
 
 ### Quick Start
 
-Run the full validation suite (all 6 element families, 20+ comparisons):
+Run the full validation suite (20 comparisons across 3 element families):
 
 ```bash
 julia --project=. scripts/validate_matlab.jl all
@@ -372,7 +378,7 @@ Comparisons use Julia's `isapprox(actual, expected; rtol=1e-8, atol=1e-10)`.
 
 ### CI Behavior
 
-The Octave validation pipeline runs automatically in CI as the `octave-validation` job (`.github/workflows/ci.yml`):
+The Octave validation pipeline runs automatically in CI as the `validate` ("Octave Validation") job (`.github/workflows/ci.yml`):
 
 - **Octave is installed** via `sudo apt-get install -y octave` at the start of the job.
 - **The build fails** if any comparison exceeds tolerance (exit code 1) or if Octave cannot be found (exit code 2). There is no `continue-on-error` flag.
@@ -381,7 +387,7 @@ This is a required check; discrepancies between Julia and MATLAB reference imple
 
 ### Test Suite Integration
 
-The Octave validation is also wired into `Pkg.test()` as the **"Octave validation"** testset in `test/runtests.jl`. It runs 24 comparisons across all 6 element families. If Octave is unavailable, it warns and skips gracefully rather than failing the test suite.
+Octave validation runs as a separate script, not via `Pkg.test()`. To validate before releasing, run `julia --project=. scripts/validate_matlab.jl all` manually.
 
 ### Troubleshooting
 

@@ -14,6 +14,18 @@ Manifest.toml
 .superpowers/
 docs/
 
+# AI context files (agent-only, not for commit)
+PRD.md
+ARCHITECTURE.md
+RULES.md
+PHASES.md
+MEMORY.md
+TESTING.md
+DECISIONS.md
+AGENTS.md
+CLAUDE.md
+OCR_usage.md
+
 # Generated files
 LibFEM_DS_2020.ipynb
 ToDo/

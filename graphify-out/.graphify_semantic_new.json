@@ -1,0 +1,951 @@
+{
+  "nodes": [
+    {
+      "id": "readme_libfem",
+      "label": "LibFEM.jl",
+      "file_type": "code",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_naming_convention",
+      "label": "d{N}_{domain}_{operation} Naming Convention",
+      "file_type": "concept",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_three_function_pattern",
+      "label": "Three-Function Pattern (stiffness, assemble, force/stress/strain)",
+      "file_type": "concept",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_spring_element",
+      "label": "Spring Element Family (d1, d2, d3)",
+      "file_type": "code",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_truss_element",
+      "label": "Truss Element Family (d1, d2, d3)",
+      "file_type": "code",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_beam_element",
+      "label": "Beam Element Family (d2 pure beam)",
+      "file_type": "code",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_quadratic_bar_element",
+      "label": "Quadratic Bar Element (d1, 3-node)",
+      "file_type": "code",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_plane_frame_element",
+      "label": "Plane Frame Element (d2, 3 DOF/node)",
+      "file_type": "code",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_space_frame_element",
+      "label": "Space Frame Element (d3, 6 DOF/node)",
+      "file_type": "code",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_assemble_helper",
+      "label": "_assemble! Private Helper",
+      "file_type": "code",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_three_layer_verification",
+      "label": "Three-Layer Verification Strategy",
+      "file_type": "rationale",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Unit tests (runtests.jl) + Octave validation (validate-matlab.jl) + Golden regression tests. Hand-transcribed MATLAB layer removed due to transcription bugs."
+    },
+    {
+      "id": "context_matlab_julia_mapping",
+      "label": "MATLAB-to-Julia Function Mapping",
+      "file_type": "concept",
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "context_type_hierarchy",
+      "label": "Abstract Type Hierarchy (Documentation Scaffolding)",
+      "file_type": "rationale",
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "AbstractElement/AbstractSpring/AbstractTruss/AbstractBeam + @kwdef structs. NOT used by any function — documentation-only scaffolding (~120 lines). Kept as extension point."
+    },
+    {
+      "id": "context_educational_first_design",
+      "label": "Educational-First Design Philosophy",
+      "file_type": "rationale",
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Textbook-correct implementations verified against Kattan MATLAB. Abstractions serve real use without over-engineering. Balance teaching clarity with practical utility."
+    },
+    {
+      "id": "context_plots_weak_dep",
+      "label": "Plots.jl Weak Dependency via Julia Extensions",
+      "file_type": "rationale",
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Diagram functions moved to ext/LibFEMPlotsExt.jl via Julia extension (auto-activates when both LibFEM and Plots loaded). Core math works without Plots. Implemented 2026-07."
+    },
+    {
+      "id": "context_a_gt_0_validation",
+      "label": "A > 0 Validation Everywhere",
+      "file_type": "rationale",
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Negative A creates unphysical stiffness. Enforce A>0 in all truss/frame functions, consistent with existing L>0 validation."
+    },
+    {
+      "id": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_peter_i_kattan",
+      "label": "Peter I. Kattan",
+      "file_type": "paper",
+      "source_file": "/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt",
+      "source_location": "Author info, P.O. Box 1392 Amman 11118 Jordan",
+      "source_url": null,
+      "captured_at": null,
+      "author": "Peter I. Kattan",
+      "contributor": null
+    },
+    {
+      "id": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "label": "MATLAB Guide to Finite Elements: An Interactive Approach (2nd ed., Springer 2007)",
+      "file_type": "paper",
+      "source_file": "/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Peter I. Kattan",
+      "contributor": "Springer-Verlag Berlin Heidelberg"
+    },
+    {
+      "id": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_six_steps_fem",
+      "label": "Six Steps of the Finite Element Method",
+      "file_type": "concept",
+      "source_file": "/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt",
+      "source_location": "Chapter 1 (Introduction), §1.1",
+      "source_url": null,
+      "captured_at": null,
+      "author": "Peter I. Kattan",
+      "contributor": null
+    },
+    {
+      "id": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_fem_toolbox",
+      "label": "MATLAB Finite Element Toolbox (84 M-files)",
+      "file_type": "concept",
+      "source_file": "/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt",
+      "source_location": "Chapter 1 (Introduction), §1.2",
+      "source_url": null,
+      "captured_at": null,
+      "author": "Peter I. Kattan",
+      "contributor": null
+    },
+    {
+      "id": "doc_peter_i_kattan_matlab_guide_to_finite_elements_an_interactive_approach_2007_springer_pdf",
+      "label": "MATLAB Guide to Finite Elements (PDF)",
+      "file_type": "paper",
+      "source_file": "/home/piou/LibFEM.jl/Doc/Peter I. Kattan - MATLAB Guide to Finite Elements_ An Interactive Approach (2007, Springer).pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Peter I. Kattan",
+      "contributor": null
+    },
+    {
+      "id": "github_workflows_ci_ci_pipeline",
+      "label": "GitHub Actions CI Pipeline",
+      "file_type": "code",
+      "source_file": "/home/piou/LibFEM.jl/.github/workflows/ci.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_enhancement_roadmap_enhancement_roadmap",
+      "label": "Enhancement Roadmap (2026-07-26)",
+      "file_type": "document",
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/enhancement-roadmap.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_2026_07_27_enhancement_execution_plan_execution_plan",
+      "label": "Enhancement Execution Plan (2026-07-27)",
+      "file_type": "document",
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/2026-07-27-enhancement-execution-plan.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_2026_07_27_verified_enhancement_plan_verified_plan",
+      "label": "Verified Enhancement Plan (2026-07-27)",
+      "file_type": "document",
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/2026-07-27-verified-enhancement-plan.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_hyperplan_bundle_hyperplan_bundle",
+      "label": "Hyperplan Bundle (Tiers 0-5)",
+      "file_type": "document",
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/hyperplan-bundle.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reviews_2026_07_25_code_review_review_2026_07_25",
+      "label": "Code Review (2026-07-25)",
+      "file_type": "document",
+      "source_file": "/home/piou/LibFEM.jl/docs/reviews/2026-07-25_code_review.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reviews_2026_07_26_code_review_review_pr_110",
+      "label": "PR #110 Code Review (2026-07-26)",
+      "file_type": "document",
+      "source_file": "/home/piou/LibFEM.jl/docs/reviews/2026-07-26-code-review.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_readme_examples",
+      "label": "Examples Directory",
+      "file_type": "document",
+      "source_file": "/home/piou/LibFEM.jl/examples/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_readme_docs_index",
+      "label": "Documentation Index",
+      "file_type": "document",
+      "source_file": "/home/piou/LibFEM.jl/docs/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_deg2rad_convention",
+      "label": "Degrees-to-Radians Angle Convention",
+      "file_type": "concept",
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "readme_libfem",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_peter_i_kattan",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_fem_toolbox",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt",
+      "source_location": "§1.2",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_six_steps_fem",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt",
+      "source_location": "§1.1",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "target": "doc_peter_i_kattan_matlab_guide_to_finite_elements_an_interactive_approach_2007_springer_pdf",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_naming_convention",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_three_function_pattern",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_spring_element",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_truss_element",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_beam_element",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_quadratic_bar_element",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_plane_frame_element",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_space_frame_element",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_assemble_helper",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_three_layer_verification",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "readme_deg2rad_convention",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "context_matlab_julia_mapping",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": "MATLAB Reference Verification section",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_libfem",
+      "target": "github_workflows_ci_ci_pipeline",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": "CI section",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_spring_element",
+      "target": "readme_three_function_pattern",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_truss_element",
+      "target": "readme_three_function_pattern",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_beam_element",
+      "target": "readme_three_function_pattern",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_quadratic_bar_element",
+      "target": "readme_three_function_pattern",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_plane_frame_element",
+      "target": "readme_three_function_pattern",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_space_frame_element",
+      "target": "readme_three_function_pattern",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_spring_element",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_truss_element",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_beam_element",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_plane_frame_element",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_space_frame_element",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_spring_element",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_fem_toolbox",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_truss_element",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_fem_toolbox",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_quadratic_bar_element",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_fem_toolbox",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_plane_frame_element",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_fem_toolbox",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_space_frame_element",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_fem_toolbox",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_assemble_helper",
+      "target": "readme_three_function_pattern",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_three_layer_verification",
+      "target": "readme_three_function_pattern",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_three_layer_verification",
+      "target": "github_workflows_ci_ci_pipeline",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/piou/LibFEM.jl/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "context_educational_first_design",
+      "target": "readme_libfem",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "context_plots_weak_dep",
+      "target": "readme_libfem",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "context_a_gt_0_validation",
+      "target": "readme_libfem",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "context_type_hierarchy",
+      "target": "readme_libfem",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "context_matlab_julia_mapping",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "context_matlab_julia_mapping",
+      "target": "readme_naming_convention",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/CONTEXT.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "github_workflows_ci_ci_pipeline",
+      "target": "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/.github/workflows/ci.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_enhancement_roadmap_enhancement_roadmap",
+      "target": "docs_reviews_2026_07_25_code_review_review_2026_07_25",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/enhancement-roadmap.md",
+      "source_location": "Input section",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_enhancement_roadmap_enhancement_roadmap",
+      "target": "docs_reviews_2026_07_26_code_review_review_pr_110",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/enhancement-roadmap.md",
+      "source_location": "Input section",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_hyperplan_bundle_hyperplan_bundle",
+      "target": "docs_adr_enhancement_roadmap_enhancement_roadmap",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/hyperplan-bundle.md",
+      "source_location": "Input section",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_hyperplan_bundle_hyperplan_bundle",
+      "target": "docs_adr_2026_07_27_enhancement_execution_plan_execution_plan",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/hyperplan-bundle.md",
+      "source_location": "Input section",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_2026_07_27_verified_enhancement_plan_verified_plan",
+      "target": "docs_adr_2026_07_27_enhancement_execution_plan_execution_plan",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/2026-07-27-verified-enhancement-plan.md",
+      "source_location": "Inputs section",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_2026_07_27_verified_enhancement_plan_verified_plan",
+      "target": "docs_adr_enhancement_roadmap_enhancement_roadmap",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/2026-07-27-verified-enhancement-plan.md",
+      "source_location": "Inputs section",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_2026_07_27_verified_enhancement_plan_verified_plan",
+      "target": "docs_reviews_2026_07_25_code_review_review_2026_07_25",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/2026-07-27-verified-enhancement-plan.md",
+      "source_location": "Inputs section",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_2026_07_27_verified_enhancement_plan_verified_plan",
+      "target": "docs_reviews_2026_07_26_code_review_review_pr_110",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/2026-07-27-verified-enhancement-plan.md",
+      "source_location": "Inputs section",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_2026_07_27_enhancement_execution_plan_execution_plan",
+      "target": "docs_adr_enhancement_roadmap_enhancement_roadmap",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/2026-07-27-enhancement-execution-plan.md",
+      "source_location": "Input section",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_2026_07_27_enhancement_execution_plan_execution_plan",
+      "target": "docs_reviews_2026_07_25_code_review_review_2026_07_25",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/2026-07-27-enhancement-execution-plan.md",
+      "source_location": "Input section",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_2026_07_27_enhancement_execution_plan_execution_plan",
+      "target": "docs_reviews_2026_07_26_code_review_review_pr_110",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/2026-07-27-enhancement-execution-plan.md",
+      "source_location": "Input section",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "libfem_element_system",
+      "label": "LibFEM.jl Element System",
+      "nodes": [
+        "readme_spring_element",
+        "readme_truss_element",
+        "readme_beam_element",
+        "readme_quadratic_bar_element",
+        "readme_plane_frame_element",
+        "readme_space_frame_element"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/README.md"
+    },
+    {
+      "id": "enhancement_planning_chain",
+      "label": "Enhancement Planning Chain",
+      "nodes": [
+        "docs_reviews_2026_07_25_code_review_review_2026_07_25",
+        "docs_reviews_2026_07_26_code_review_review_pr_110",
+        "docs_adr_enhancement_roadmap_enhancement_roadmap",
+        "docs_adr_2026_07_27_enhancement_execution_plan_execution_plan",
+        "docs_adr_2026_07_27_verified_enhancement_plan_verified_plan",
+        "docs_adr_hyperplan_bundle_hyperplan_bundle"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/piou/LibFEM.jl/docs/adr/hyperplan-bundle.md"
+    },
+    {
+      "id": "three_layer_verification_stack",
+      "label": "Three-Layer Verification Stack",
+      "nodes": [
+        "readme_three_layer_verification",
+        "github_workflows_ci_ci_pipeline",
+        "doc_peter_kattan_matlab_guide_to_finite_elements_aninteractiveapproach_2007_springer_matlab_guide_to_finite_elements"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/piou/LibFEM.jl/README.md"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

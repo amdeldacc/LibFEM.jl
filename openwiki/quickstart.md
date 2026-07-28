@@ -134,10 +134,10 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `test/golden_regression.jl` | Binary golden regression test runner |
 | `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (12 benchmarks) |
 | `test/golden/` | Binary golden files (`v1/*.bin`) + `manifests.toml` + `params_common.jl` for regression testing |
-| `scripts/dev/setup.jl` | Loads Revise, instantiates the project, and pre-loads LibFEM for interactive sessions |
+| `scripts/setup-dev.jl` | Loads Revise, instantiates the project, and pre-loads LibFEM for interactive sessions |
 | `lib/problem_definitions.jl` | `PROBLEM_REGISTRY` — canonical Kattan reference problems with MATLAB file, family, and tolerances |
 | `scripts/validate-matlab.jl` | Octave↔Julia validation driver; runs in CI’s `validate` job |
-| `scripts/` (other) | Example scripts using LibFEM and ModelingToolkit |
+| `scripts/` (other) | Example scripts using LibFEM |
 | `Doc/Kattan/M-Files/` | Read-only MATLAB reference (80 `.m` files from Kattan) |
 | `Doc/Kattan/Solutions-Manual/` | `.rtf` and `.doc` problem solutions, plus per-problem MATLAB scripts (`problem_2_1.m` … `problem_8_3.m`, `ocr_m_verify.m`) |
 | `Doc/Peter_Kattan_*` | Book PDF and text/Markdown transcriptions |
@@ -153,5 +153,5 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 
 | Area | Source Anchor | Reason Deferred |
 |------|--------------|-----------------|
-| `scripts/` example walkthrough | `/scripts/linear_truss_mtk.jl`, `linear_truss_mtk_2.jl` | Example scripts; interesting but secondary to API docs |
+| `examples/mtk/` example walkthrough | `/examples/mtk/linear_truss_mtk.jl`, `linear_truss_mtk_2.jl` | Example scripts; interesting but secondary to API docs |
 | Detailed per-MATLAB-file analysis | `/Doc/Kattan/M-Files/` (80 files) | Covered at mapping level; deeper analysis can be added on demand |

@@ -62,7 +62,7 @@ All functions follow the pattern: `d{N}_{domain}_{operation}`
 | Component     | Values                                                                                                                         | Description            |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
 | `{N}`         | `1`, `2`, `3`                                                                                                                  | Spatial dimensionality |
-| `{domain}`    | `spring`, `truss`, `beam`                                                                                                      | Element type           |
+| `{domain}`    | `spring`, `truss`, `beam`, `planeframe`, `spaceframe`, `quadraticbar`                                                          | Element type           |
 | `{operation}` | `elementstiffness`, `assemble`, `elementforce`, `elementstress`, `elementstrain`, `elementlength`, `elementaxialdiagram`, etc. | Operation              |
 
 ### Core Pattern (3 Functions per Element Type)
@@ -79,17 +79,22 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 
 ### 1-D Elements
 
-| Function                             | Description                                                                                  |
-| ------------------------------------ | -------------------------------------------------------------------------------------------- |
-| `d1_spring_elementstiffness(k)`      | 2×2 stiffness matrix for spring with stiffness `k`                                           |
-| `d1_spring_elementforce(Ke, u)`      | Nodal force vector (2×1)                                                                     |
-| ~~`d1_spring_elementstress(Ke, u)`~~ | ~~Stress vector (2×1)~~ _(removed — meaningless for 0D spring, identical to `elementforce`)_ |
-| `d1_spring_assemble(K, k, i, j)`     | Assemble into global matrix (1 DOF/node)                                                     |
-| `d1_truss_elementstiffness(E, A, L)` | 2×2 stiffness for linear bar                                                                 |
-| `d1_truss_elementforces(Ke, u)`      | Nodal force vector (2×1)                                                                     |
-| `d1_truss_elementstress(Ke, u, A)`   | Stress vector (2×1)                                                                          |
-| `d1_truss_elementstrain(L, u)`       | Strain vector (2×1)                                                                          |
-| `d1_truss_assemble(K, k, i, j)`      | Assemble into global matrix (1 DOF/node)                                                     |
+| Function                               | Description                                                                                  |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `d1_spring_elementstiffness(k)`        | 2×2 stiffness matrix for spring with stiffness `k`                                           |
+| `d1_spring_elementforce(Ke, u)`        | Nodal force vector (2×1)                                                                     |
+| ~~`d1_spring_elementstress(Ke, u)`~~   | ~~Stress vector (2×1)~~ _(removed — meaningless for 0D spring, identical to `elementforce`)_ |
+| `d1_spring_assemble(K, k, i, j)`       | Assemble into global matrix (1 DOF/node)                                                     |
+| `d1_truss_elementstiffness(E, A, L)`   | 2×2 stiffness for linear bar                                                                 |
+| `d1_truss_elementforces(Ke, u)`        | Nodal force vector (2×1)                                                                     |
+| `d1_truss_elementstress(Ke, u, A)`     | Stress vector (2×1)                                                                          |
+| `d1_truss_elementstrain(L, u)`         | Strain vector (2×1)                                                                          |
+| `d1_truss_assemble(K, k, i, j)`        | Assemble into global matrix (1 DOF/node)                                                     |
+| `d1_quadraticbar_elementlength(x1, x2)` | Length of 3-node 1D element                                                                  |
+| `d1_quadraticbar_elementstiffness(E, A, L)` | 3×3 stiffness matrix                                                                   |
+| `d1_quadraticbar_elementforces(Ke, u)` | Nodal force vector (3×1)                                                                     |
+| `d1_quadraticbar_elementstress(Ke, u, A)` | Stress vector (3×1)                                                                      |
+| `d1_quadraticbar_assemble(K, k, i, j, m)` | Assemble into global matrix (1 DOF/node, 3 nodes)                                       |
 
 ---
 
@@ -162,8 +167,8 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
   - `d1_` — 1 DOF/node (1D spring, linear bar)
   - `d2_` — 2 DOF/node (2D spring, plane truss, pure beam); 3 DOF/node for plane frame
   - `d3_` — 3 DOF/node (3D spring, space truss); **6 DOF/node** for 3D beam (space frame)
-- **Multi-file module**: Source organized into `src/LibFEM.jl` + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/quadraticbar.jl`.
-- **Assembly refactored**: All 8 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
+- **Multi-file module**: Source organized into `src/LibFEM.jl` + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/quadraticbar.jl`. The `lib/` directory contains problem definitions for Kattan textbook validation.
+- **Assembly refactored**: All 10 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
 - **Validation**: All stiffness/length functions validate positive inputs (`L > 0`, `A > 0`).
 - **Type hierarchy**: Abstract types `AbstractElement{NDIM}`, `AbstractSpring{NDIM}`, `AbstractTruss{NDIM}`, `AbstractBeam{NDIM}` with concrete `@kwdef` structs `Spring{NDIM}`, `Truss{NDIM}`, `Beam{NDIM}`.
 
@@ -173,6 +178,11 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 
 ```text
 LibFEM.jl/
+├── .githooks/             # Git hooks (pre-commit, pre-push, commit-msg)
+│   ├── pre-commit
+│   ├── pre-commit-ocr.sh
+│   ├── prepare-commit-msg
+│   └── pre-push
 ├── src/
 │   ├── LibFEM.jl          # Module declaration, includes, exports
 │   ├── types.jl           # Abstract type hierarchy, @kwdef element structs
@@ -182,14 +192,23 @@ LibFEM.jl/
 │   ├── spring.jl          # d1/d2/d3_spring_* implementations
 │   ├── truss.jl           # d1/d2/d3_truss_* implementations
 │   ├── beam.jl            # d2_beam_*, d2_planeframe_*, d3_spaceframe_* implementations
-│   ├── quadraticbar.jl    # d1_quadraticbar_* (3-node 1D element)
-│   └── ...
+│   └── quadraticbar.jl    # d1_quadraticbar_* (3-node 1D element)
+├── lib/
+│   ├── problem_definitions.jl  # Kattan textbook problem definitions
+│   └── problem_wrapper.jl      # Problem runner wrapper
+├── ext/
+│   └── LibFEMPlotsExt.jl  # Julia extension for Plots.jl diagram functions
 ├── test/
+│   ├── Project.toml       # Test-only dependencies
 │   ├── runtests.jl        # Main test suite (~1054 lines, covers all 10 element types)
 │   ├── benchmark.jl       # BenchmarkTools.jl suite (12 benchmarks)
 │   ├── property_tests.jl  # PropCheck.jl property-based tests
-│   └── golden_regression.jl  # Binary golden regression tests for Kattan problems
+│   ├── golden_regression.jl  # Binary golden regression tests for Kattan problems
+│   ├── golden/            # Golden binary snapshots (v1/)
+│   ├── octave_runner.jl   # Octave execution harness
+│   └── matlab_adapters.jl # MATLAB-to-Julia adapter helpers
 ├── scripts/
+│   ├── validate-matlab.jl # Octave validation pipeline
 │   ├── linear_truss_mtk.jl      # ModelingToolkit example
 │   └── linear_truss_mtk_2.jl    # ModelingToolkit example
 ├── openwiki/              # Generated documentation (OpenWiki)
@@ -223,10 +242,10 @@ julia -e 'using Pkg; Pkg.test()'
 - **Unit tests** (`runtests.jl`, ~1054 lines) — per-element correctness: stiffness matrix shape/symmetry, force/stress/strain numeric validation, assembly correctness.
 - **Property-based tests** (`property_tests.jl`, ~237 lines) — PropCheck.jl random-input invariants (symmetry, positive semi-definiteness).
 - **Golden regression** (`golden_regression.jl`, ~114 lines) — binary snapshot regression for Kattan problems 2.1–8.3.
-- **Octave validation** (`scripts/validate-matlab.jl`) — runs separately from `Pkg.test()`; 20 comparisons (2 spring + 11 truss + 7 beam) against Kattan MATLAB reference. Run manually with `julia --project=. scripts/validate-matlab.jl all`. Octave >= 8.0 required.
-- **Benchmarks** (`benchmark.jl`, 12 benchmarks) — Stiffness construction (10 element types), assembly (500-element chains), solve (random SPD), d3_spaceframe forces. Run manually: `julia --project=. test/benchmark.jl`.
+- **Octave validation** (`scripts/validate-matlab.jl`) — runs separately from `Pkg.test()`; comparisons across 4 test groups (spring, truss, beam, Kattan problems) against Kattan MATLAB reference. Run manually with `julia --project=. scripts/validate-matlab.jl all`. Octave >= 8.0 required.
+- **Benchmarks** (`benchmark.jl`, ~221 lines, 12 benchmarks) — Stiffness construction (10 element types), assembly (500-element chains), solve (random SPD), d3_spaceframe forces. Run manually: `julia --project=. test/benchmark.jl`.
 
-**CI**: GitHub Actions (`.github/workflows/ci.yml`) has two jobs: `test` runs unit tests, property tests, and golden regression on Julia 1.12; `validate` runs Octave validation. Other workflows: `benchmarks.yml`, `ocr-review.yml`, `openwiki-update.yml`, `super-linter.yml`.
+**CI**: GitHub Actions (`.github/workflows/ci.yml`) has two jobs: `test` runs unit tests, property tests, and golden regression on Julia 1.12; `validate` runs Octave validation. Other workflows: `benchmarks.yml`, `ocr-review.yml`, `openwiki-update.yml`, `openwiki-stale-check.yml`, `opencode.yml`, `super-linter.yml`.
 
 ---
 
@@ -344,7 +363,7 @@ Validate every in-scope element function against its original Kattan textbook MA
 
 ### Quick Start
 
-Run the full validation suite (20 comparisons across 3 element families):
+Run the full validation suite (comparisons across 4 test groups: spring, truss, beam, Kattan problems):
 
 ```bash
 julia --project=. scripts/validate-matlab.jl all
@@ -357,6 +376,7 @@ julia --project=. scripts/validate-matlab.jl all
 | `spring` | Validate 1D spring stiffness and forces (2 comparisons) |
 | `truss`  | Validate 1D/2D/3D truss length, stiffness, forces, stress (11 comparisons) |
 | `beam`   | Validate 2D/3D beam length, stiffness, forces (7 comparisons) |
+| `problems` | Validate Kattan textbook solution problems (2.1–8.3) via Octave |
 | `all`    | Run every validation comparison across all families (default) |
 
 **Exit codes:**
@@ -440,8 +460,6 @@ To add a new element type:
 See the repository's issue tracker for the full list. Highlights:
 
 - **Docstring fixes**: Extra `export` keyword in docstrings, PascalCase vs snake_case mismatch
-- **Plotting**: `d2_planeframe_*diagram` functions use MATLAB-style `'k'` color syntax; need Julia `:black`
-- **Dependencies**: `Plots.jl` required; `ModelingToolkit` listed in older docs but not in `Project.toml`
 - **Missing features**: Boundary condition helpers, solver functions, mesh/model builders
 - **Refactoring**: Assembly functions could be unified (already done via `_assemble!`); angle conversion repeated
 

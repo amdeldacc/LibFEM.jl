@@ -1,0 +1,13 @@
+/home/piou/LibFEM.jl/.github/workflows/ci.yml
+/home/piou/LibFEM.jl/CONTEXT.md
+/home/piou/LibFEM.jl/Doc/Peter_Kattan_MATLAB_Guide_to_Finite_Elements_AnInteractiveApproach_2007_Springer.txt
+/home/piou/LibFEM.jl/README.md
+/home/piou/LibFEM.jl/docs/README.md
+/home/piou/LibFEM.jl/docs/adr/2026-07-27-enhancement-execution-plan.md
+/home/piou/LibFEM.jl/docs/adr/2026-07-27-verified-enhancement-plan.md
+/home/piou/LibFEM.jl/docs/adr/enhancement-roadmap.md
+/home/piou/LibFEM.jl/docs/adr/hyperplan-bundle.md
+/home/piou/LibFEM.jl/docs/reviews/2026-07-25_code_review.md
+/home/piou/LibFEM.jl/docs/reviews/2026-07-26-code-review.md
+/home/piou/LibFEM.jl/examples/README.md
+/home/piou/LibFEM.jl/Doc/Peter I. Kattan - MATLAB Guide to Finite Elements_ An Interactive Approach (2007, Springer).pdf

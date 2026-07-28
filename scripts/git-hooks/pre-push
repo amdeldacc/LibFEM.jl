@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Pre-push hook: blocks push unless every new commit has "Approved-by:" in body.
-# This prevents the agent from pushing commits that bypassed the pre-commit guard.
+# Pre-push hook:
+# 1. Blocks non-interactive pushes (agent's bash tool has no TTY — can't bypass).
+# 2. Blocks push unless every new commit has "Approved-by:" in body.
 set -euo pipefail
 
 REMOTE="$1"
@@ -10,6 +11,40 @@ URL="$2"
 if [ "$REMOTE" != "origin" ]; then
     exit 0
 fi
+
+# --- Interactive guard: block agent push (no TTY) ---
+# The agent runs bash via a non-interactive tool with no TTY attached.
+# Only a human at a real terminal can access /dev/tty.
+# CI machines set CI=true (GitHub Actions, GitLab CI, etc.) and bypass this.
+if [ -z "${CI:-}" ] && ! (exec < /dev/tty) 2>/dev/null; then
+    echo ""
+    echo "╔═══════════════════════════════════════════════════════════════════════════════════════╗"
+    echo "║  PUSH BLOCKED — No terminal detected                                                  ║"
+    echo "║                                                                                       ║"
+    echo "║  The agent cannot push without human approval.                                        ║"
+    echo "║  Run this command in your terminal:                                                   ║"
+    echo "║                                                                                       ║"
+    echo "║    git push origin $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '<branch>')" ║"
+    echo "║                                                                                       ║"
+    echo "║  Then type 'yes' when prompted.                                                       ║"
+    echo "╚═══════════════════════════════════════════════════════════════════════════════════════╝"
+    exit 1
+fi
+
+# --- Interactive confirmation: human at the terminal ---
+if [ -z "${CI:-}" ]; then
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+    echo ""
+    echo "Push to origin/$CURRENT_BRANCH — type 'yes' to confirm:"
+    CONFIRM=""
+    read -r CONFIRM < /dev/tty
+    if [ "$CONFIRM" != "yes" ]; then
+        echo "Push cancelled."
+        exit 1
+    fi
+fi
+
+echo "✓ Push approved by human."
 
 ZEROS="0000000000000000000000000000000000000000"
 REJECTED=false

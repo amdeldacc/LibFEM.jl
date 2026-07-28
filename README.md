@@ -223,7 +223,7 @@ julia -e 'using Pkg; Pkg.test()'
 - **Unit tests** (`runtests.jl`, ~1054 lines) — per-element correctness: stiffness matrix shape/symmetry, force/stress/strain numeric validation, assembly correctness.
 - **Property-based tests** (`property_tests.jl`, ~237 lines) — PropCheck.jl random-input invariants (symmetry, positive semi-definiteness).
 - **Golden regression** (`golden_regression.jl`, ~114 lines) — binary snapshot regression for Kattan problems 2.1–8.3.
-- **Octave validation** (`scripts/validate_matlab.jl`) — runs separately from `Pkg.test()`; 20 comparisons (2 spring + 11 truss + 7 beam) against Kattan MATLAB reference. Run manually with `julia --project=. scripts/validate_matlab.jl all`. Octave >= 8.0 required.
+- **Octave validation** (`scripts/validate-matlab.jl`) — runs separately from `Pkg.test()`; 20 comparisons (2 spring + 11 truss + 7 beam) against Kattan MATLAB reference. Run manually with `julia --project=. scripts/validate-matlab.jl all`. Octave >= 8.0 required.
 - **Benchmarks** (`benchmark.jl`, 12 benchmarks) — Stiffness construction (10 element types), assembly (500-element chains), solve (random SPD), d3_spaceframe forces. Run manually: `julia --project=. test/benchmark.jl`.
 
 **CI**: GitHub Actions (`.github/workflows/ci.yml`) has two jobs: `test` runs unit tests, property tests, and golden regression on Julia 1.12; `validate` runs Octave validation. Other workflows: `benchmarks.yml`, `ocr-review.yml`, `openwiki-update.yml`, `super-linter.yml`.
@@ -307,7 +307,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 
 ## MATLAB Reference Verification
 
-The `Doc/Kattan/M-Files/` directory contains 80 read-only MATLAB `.m` files from the Kattan textbook. LibFEM functions are numerically validated against these references in `test/runtests.jl` and via the Octave validation pipeline (`scripts/validate_matlab.jl`).
+The `Doc/Kattan/M-Files/` directory contains 80 read-only MATLAB `.m` files from the Kattan textbook. LibFEM functions are numerically validated against these references in `test/runtests.jl` and via the Octave validation pipeline (`scripts/validate-matlab.jl`).
 
 Mapping convention:
 
@@ -347,7 +347,7 @@ Validate every in-scope element function against its original Kattan textbook MA
 Run the full validation suite (20 comparisons across 3 element families):
 
 ```bash
-julia --project=. scripts/validate_matlab.jl all
+julia --project=. scripts/validate-matlab.jl all
 ```
 
 ### CLI Reference
@@ -387,7 +387,7 @@ This is a required check; discrepancies between Julia and MATLAB reference imple
 
 ### Test Suite Integration
 
-Octave validation runs as a separate script, not via `Pkg.test()`. To validate before releasing, run `julia --project=. scripts/validate_matlab.jl all` manually.
+Octave validation runs as a separate script, not via `Pkg.test()`. To validate before releasing, run `julia --project=. scripts/validate-matlab.jl all` manually.
 
 ### Troubleshooting
 
@@ -411,9 +411,9 @@ Upgrade Octave to version 8 or later. The `jsonencode`/`jsondecode` functions ar
 
 If a comparison fails with a non-zero error:
 
-1. Run the validation for the specific family: `julia --project=. scripts/validate_matlab.jl spring` (or `truss`/`beam`)
+1. Run the validation for the specific family: `julia --project=. scripts/validate-matlab.jl spring` (or `truss`/`beam`)
 2. Check that your Julia code changes match the expected MATLAB output from the textbook
-3. Verify the tolerance values in `scripts/validate_matlab.jl` (lines 34-35: `RTOL = 1e-8`, `ATOL = 1e-10`)
+3. Verify the tolerance values in `scripts/validate-matlab.jl` (lines 34-35: `RTOL = 1e-8`, `ATOL = 1e-10`)
 
 ---
 

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# prepare-commit-msg:
+# 1. Injects "Approved-by:" into commit body when GIT_APPROVED is set.
+# 2. Safety net: replaces the generic placeholder commit message with a
+#    stat-based summary (fallback when the AI agent forgets to generate
+#    a proper message from git diff --cached).
+
+COMMIT_MSG_FILE="$1"
+
+# --- Feature 1: Inject Approved-by ---
+if [ -n "${GIT_APPROVED:-}" ]; then
+    # Only inject if not already present (avoids duplicates on --amend)
+    if ! grep -q "^Approved-by:" "$COMMIT_MSG_FILE" 2>/dev/null; then
+        echo "" >> "$COMMIT_MSG_FILE"
+        echo "Approved-by: $GIT_APPROVED" >> "$COMMIT_MSG_FILE"
+    fi
+fi
+
+# --- Feature 2: Safety net — replace placeholder with stat summary ---
+PLACEHOLDER="TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT"
+if grep -qF "$PLACEHOLDER" "$COMMIT_MSG_FILE" 2>/dev/null; then
+    # Count changed files (lines with '|' in stat output)
+    FILES_CHANGED=$( (git diff --cached --stat 2>/dev/null || true) | grep -c '|' || true)
+    # Get final summary line like "3 files changed, 42 insertions(+), 12 deletions(-)"
+    STAT_LINE=$(git diff --cached --stat 2>/dev/null | tail -1)
+    [ -z "$STAT_LINE" ] && STAT_LINE="no changes staged"
+    # Escape / and & for sed
+    STAT_LINE_ESC=$(echo "$STAT_LINE" | sed 's:/:\\/:g; s:&:\\&:g')
+    sed -i "s/$PLACEHOLDER/auto: $FILES_CHANGED file(s) changed — $STAT_LINE_ESC/" "$COMMIT_MSG_FILE"
+fi

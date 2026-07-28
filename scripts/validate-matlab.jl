@@ -1,12 +1,12 @@
 #!/usr/bin/env julia
 # ═══════════════════════════════════════════════════════════════
-# scripts/validate_matlab.jl — Octave/MATLAB vs Julia comparison
+# scripts/validate-matlab.jl — Octave/MATLAB vs Julia comparison
 # ═══════════════════════════════════════════════════════════════
 # Compares LibFEM.jl Julia functions against MATLAB .m file
 # reference implementations via GNU Octave.
 #
 # Usage:
-#   julia --project=. scripts/validate_matlab.jl [element_type]
+#   julia --project=. scripts/validate-matlab.jl [element_type]
 #
 # element_type ∈ {spring, truss, beam, all}
 #
@@ -26,7 +26,7 @@ const PROJECT_DIR = dirname(SCRIPT_DIR)
 
 include(joinpath(PROJECT_DIR, "test", "octave_runner.jl"))
 include(joinpath(PROJECT_DIR, "test", "matlab_adapters.jl"))
-include(joinpath(PROJECT_DIR, "scripts", "problem_wrapper.jl"))
+include(joinpath(PROJECT_DIR, "lib", "problem_wrapper.jl"))
 using .OctaveRunner
 using .ProblemWrapper
 
@@ -525,7 +525,7 @@ end
 # ═════════════════════════════════════════════════════════════════
 
 function print_usage()
-    println("Usage: julia --project=. scripts/validate_matlab.jl [element_type]")
+    println("Usage: julia --project=. scripts/validate-matlab.jl [element_type]")
     println()
     println("element_type: spring | truss | beam | problems | all")
     println()

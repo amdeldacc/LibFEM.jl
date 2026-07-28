@@ -12,7 +12,7 @@ Manifest.toml
 .omo/
 .codegraph/
 .superpowers/
-docs/
+openwiki/
 
 # AI context files (agent-only, not for commit)
 PRD.md

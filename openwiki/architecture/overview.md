@@ -68,13 +68,13 @@ end
 
 ## Git Hooks & Commit Workflow
 
-LibFEM.jl enforces an approval-gated commit workflow via three git hooks installed in `scripts/git-hooks/`:
+LibFEM.jl enforces an approval-gated commit workflow via three git hooks installed in `.githooks/`:
 
 | Hook | Script | Purpose |
 |------|--------|---------|
-| `pre-commit` | `scripts/git-hooks/pre-commit` | Blocks commit unless `GIT_APPROVED=<message-id>` environment variable is set. Logs approval to `.git/commit-approval.log`. |
-| `prepare-commit-msg` | `scripts/git-hooks/prepare-commit-msg` | 1. Injects `Approved-by: $GIT_APPROVED` into commit body when `GIT_APPROVED` is set (idempotent on `--amend`). 2. Safety net: if the commit message still contains the placeholder `TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT`, replaces it with a `git diff --cached --stat` summary. |
-| `pre-push` | `scripts/git-hooks/pre-push` | Blocks push to `origin` unless every new commit in the pushed range has an `Approved-by:` line in its body. Prevents bypassing the pre-commit guard. |
+| `pre-commit` | `.githooks/pre-commit` | Blocks commit unless `GIT_APPROVED=<message-id>` environment variable is set. Logs approval to `.git/commit-approval.log`. |
+| `prepare-commit-msg` | `.githooks/prepare-commit-msg` | 1. Injects `Approved-by: $GIT_APPROVED` into commit body when `GIT_APPROVED` is set (idempotent on `--amend`). 2. Safety net: if the commit message still contains the placeholder `TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT`, replaces it with a `git diff --cached --stat` summary. |
+| `pre-push` | `.githooks/pre-push` | Blocks push to `origin` unless every new commit in the pushed range has an `Approved-by:` line in its body. Prevents bypassing the pre-commit guard. |
 
 ### Workflow
 
@@ -281,7 +281,7 @@ Tests are in `test/`:
 - **`comparison.jl`** — Side-by-side MATLAB reference implementations transcribed from `Doc/Kattan/M-Files/`. Not run as independent tests; included from `runtests.jl`.
 - **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (12 benchmarks). Covers stiffness construction (10 element types), assembly (500-element d2_truss chain + 500-element d3_spaceframe chain), solve (random SPD system), and d3_spaceframe element forces. Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
 - **`golden_regression.jl`** — Regression test runner that diffs current outputs against `test/golden/v1/`. Binary fixtures in `test/golden/v1/d{2,3}_{spring,truss,spaceframe}_*.bin` are paired with a `manifests.toml` specifying parameters and tolerances; the binary content was regenerated in commit 4f7582f after the 3D direction-cosine normalization fix to track the new (mathematically correct) outputs.
-- **`octave_runner.jl`** — Octave runner module for MATLAB validation (used by `scripts/validate_matlab.jl`).
+- **`octave_runner.jl`** — Octave runner module for MATLAB validation (used by `scripts/validate-matlab.jl`).
 - **`matlab_adapters.jl`** — MATLAB↔Julia argument/result adapters used by the Octave verification harness.
 
 Test-only deps (`Project.toml` `[extras]` `[targets].test`): `BenchmarkTools`, `PropCheck`, `Test`. The `test/Project.toml` workspace holds the test project.

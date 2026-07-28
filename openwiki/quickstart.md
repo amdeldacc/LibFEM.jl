@@ -135,8 +135,8 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (12 benchmarks) |
 | `test/golden/` | Binary golden files (`v1/*.bin`) + `manifests.toml` + `params_common.jl` for regression testing |
 | `scripts/dev/setup.jl` | Loads Revise, instantiates the project, and pre-loads LibFEM for interactive sessions |
-| `scripts/problems/problem_definitions.jl` | `PROBLEM_REGISTRY` — canonical Kattan reference problems with MATLAB file, family, and tolerances |
-| `scripts/validate_matlab.jl` | Octave↔Julia validation driver; runs in CI’s `validate` job |
+| `lib/problem_definitions.jl` | `PROBLEM_REGISTRY` — canonical Kattan reference problems with MATLAB file, family, and tolerances |
+| `scripts/validate-matlab.jl` | Octave↔Julia validation driver; runs in CI’s `validate` job |
 | `scripts/` (other) | Example scripts using LibFEM and ModelingToolkit |
 | `Doc/Kattan/M-Files/` | Read-only MATLAB reference (80 `.m` files from Kattan) |
 | `Doc/Kattan/Solutions-Manual/` | `.rtf` and `.doc` problem solutions, plus per-problem MATLAB scripts (`problem_2_1.m` … `problem_8_3.m`, `ocr_m_verify.m`) |

@@ -19,7 +19,7 @@ Negative cross-sectional area creates unphysical stiffness matrices (negative `E
 
 The verification stack has 3 layers:
 - **Unit tests** (`runtests.jl`) — primary, per-element correctness
-- **Octave validation** (`validate_matlab.jl`) — ground truth against actual Kattan `.m` files
+- **Octave validation** (`validate-matlab.jl`) — ground truth against actual Kattan `.m` files
 - **Golden regression tests** (problem registry + binary goldens) — additive snapshot layer for detecting regressions when refactoring internals. Not meant to replace unit tests or Octave validation.
 
 The hand-transcribed MATLAB layer (`comparison.jl`) has been removed due to transcription bugs, overlap with Octave validation, and maintenance burden.

@@ -1,12 +1,12 @@
 # ═══════════════════════════════════════════════════════════════
-# scripts/problem_wrapper.jl — Octave problem-script wrapper
+# lib/problem_wrapper.jl — Octave problem-script wrapper
 # ═══════════════════════════════════════════════════════════════
 # Generates and runs wrapper scripts around Kattan Solutions
 # Manual problem .m files via Octave, parses JSON struct output,
 # and optionally compares against Julia equivalents.
 #
-# Usage (from validate_matlab.jl or standalone):
-#   include("scripts/problem_wrapper.jl")
+# Usage (from validate-matlab.jl or standalone):
+#   include("lib/problem_wrapper.jl")
 #   using .ProblemWrapper
 #   validate_problem("2.1")  # → Vector{ValidateResult}
 # ═══════════════════════════════════════════════════════════════
@@ -743,7 +743,7 @@ end
 # Validation
 # ═══════════════════════════════════════════════════════════════
 
-# Reuse tolerance and result type from validate_matlab.jl
+# Reuse tolerance and result type from validate-matlab.jl
 const RTOL = 1e-8
 const ATOL = 1e-10
 

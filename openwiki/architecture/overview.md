@@ -64,6 +64,29 @@ end
 
 **Exports**: All public functions are exported in grouped blocks. `deg2rad` is imported from `Base` into the module namespace (`import Base: deg2rad` in `src/LibFEM.jl`). The helpers `_assemble!`, `_d2_planeframe_kprime`, and `_d3_spaceframe_kprime` remain private (underscore prefix, not exported). Diagram functions (`d2_beam_elementsheardiagram`, etc.) are *also* exported — the extension re-exports them with Plots-backed implementations; without `Plots`, calling them throws `DiagramError`. The new solver helper `apply_bc!` is exported for applying Dirichlet boundary conditions.
 
+---
+
+## Git Hooks & Commit Workflow
+
+LibFEM.jl enforces an approval-gated commit workflow via three git hooks installed in `scripts/git-hooks/`:
+
+| Hook | Script | Purpose |
+|------|--------|---------|
+| `pre-commit` | `scripts/git-hooks/pre-commit` | Blocks commit unless `GIT_APPROVED=<message-id>` environment variable is set. Logs approval to `.git/commit-approval.log`. |
+| `prepare-commit-msg` | `scripts/git-hooks/prepare-commit-msg` | 1. Injects `Approved-by: $GIT_APPROVED` into commit body when `GIT_APPROVED` is set (idempotent on `--amend`). 2. Safety net: if the commit message still contains the placeholder `TO BE REPLACED BY RELEVANT CONTENT PROVIDED BY CONTEXT`, replaces it with a `git diff --cached --stat` summary. |
+| `pre-push` | `scripts/git-hooks/pre-push` | Blocks push to `origin` unless every new commit in the pushed range has an `Approved-by:` line in its body. Prevents bypassing the pre-commit guard. |
+
+### Workflow
+
+1. **User approval**: Human sets `GIT_APPROVED='user approved message'` (or `GIT_APPROVED=manual` for direct commits) and runs `git commit`.
+2. **Pre-commit**: Allows commit only if `GIT_APPROVED` is set; logs approval.
+3. **Prepare-commit-msg**: Injects `Approved-by: $GIT_APPROVED` into the commit body (idempotent on `--amend`). Falls back to a `git diff --stat` summary if the agent forgot to supply a message.
+4. **Pre-push**: Verifies every new commit on push to `origin` contains `Approved-by:`. Blocks push if any commit is missing it.
+
+This creates a verifiable chain: **pre-commit requires approval → prepare-commit-msg records it → pre-push enforces it**. The agent cannot bypass the human approval step.
+
+---
+
 ## Naming Convention
 
 ```

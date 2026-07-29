@@ -32,6 +32,34 @@ Abstract type for beam (frame) elements in `NDIM` dimensions.
 """
 abstract type AbstractBeam{NDIM} <: AbstractElement{NDIM} end
 
+"""
+    AbstractTriangle{NDIM} <: AbstractElement{NDIM}
+
+Abstract type for 2-D triangular elements (CST, LST) in `NDIM` dimensions.
+"""
+abstract type AbstractTriangle{NDIM} <: AbstractElement{NDIM} end
+
+"""
+    AbstractQuadrilateral{NDIM} <: AbstractElement{NDIM}
+
+Abstract type for 2-D quadrilateral elements (Q4, Q8) in `NDIM` dimensions.
+"""
+abstract type AbstractQuadrilateral{NDIM} <: AbstractElement{NDIM} end
+
+"""
+    AbstractTetrahedron{NDIM} <: AbstractElement{NDIM}
+
+Abstract type for 3-D tetrahedral elements in `NDIM` dimensions.
+"""
+abstract type AbstractTetrahedron{NDIM} <: AbstractElement{NDIM} end
+
+"""
+    AbstractBrick{NDIM} <: AbstractElement{NDIM}
+
+Abstract type for 3-D brick (hexahedral) elements in `NDIM` dimensions.
+"""
+abstract type AbstractBrick{NDIM} <: AbstractElement{NDIM} end
+
 # Explicit import for @kwdef macro (Julia 1.9+ has it in Base, but explicit is cleaner)
 using Base: @kwdef
 
@@ -97,6 +125,62 @@ Concrete beam (frame) element type.
     G::Real = 0.0
 end
 
+"""
+    Triangle{NDIM} <: AbstractTriangle{NDIM}
+
+Concrete 2-D triangular element type (CST/LST).
+
+# Fields
+- `E::Real`: Modulus of elasticity.
+- `NU::Real`: Poisson's ratio.
+"""
+@kwdef struct Triangle{NDIM} <: AbstractTriangle{NDIM}
+    E::Real = 0.0
+    NU::Real = 0.0
+end
+
+"""
+    Quadrilateral{NDIM} <: AbstractQuadrilateral{NDIM}
+
+Concrete 2-D quadrilateral element type (Q4/Q8).
+
+# Fields
+- `E::Real`: Modulus of elasticity.
+- `NU::Real`: Poisson's ratio.
+"""
+@kwdef struct Quadrilateral{NDIM} <: AbstractQuadrilateral{NDIM}
+    E::Real = 0.0
+    NU::Real = 0.0
+end
+
+"""
+    Tetrahedron{NDIM} <: AbstractTetrahedron{NDIM}
+
+Concrete 3-D tetrahedral element type.
+
+# Fields
+- `E::Real`: Modulus of elasticity.
+- `NU::Real`: Poisson's ratio.
+"""
+@kwdef struct Tetrahedron{NDIM} <: AbstractTetrahedron{NDIM}
+    E::Real = 0.0
+    NU::Real = 0.0
+end
+
+"""
+    Brick{NDIM} <: AbstractBrick{NDIM}
+
+Concrete 3-D brick (hexahedral) element type.
+
+# Fields
+- `E::Real`: Modulus of elasticity.
+- `NU::Real`: Poisson's ratio.
+"""
+@kwdef struct Brick{NDIM} <: AbstractBrick{NDIM}
+    E::Real = 0.0
+    NU::Real = 0.0
+end
+
 # ═══════════════════════════════════════════════════════════
 # Type Aliases
 # ═══════════════════════════════════════════════════════════
@@ -109,6 +193,8 @@ const Truss2D = Truss{2}
 const Truss3D = Truss{3}
 const Beam2D = Beam{2}
 const Beam3D = Beam{3}
+const Tet3D = Tetrahedron{3}
+const Brick3D = Brick{3}
 
 # ═══════════════════════════════════════════════════════════
 # Show Methods
@@ -163,5 +249,45 @@ function Base.show(io::IO, ::MIME"text/plain", b::Beam{NDIM}) where {NDIM}
         println(io, "  J  = $(b.J)")
         println(io, "  G  = $(b.G)")
     end
+end
+
+function Base.show(io::IO, t::Triangle{NDIM}) where {NDIM}
+    print(io, "Triangle{$NDIM}(E=$(t.E), NU=$(t.NU))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", t::Triangle{NDIM}) where {NDIM}
+    println(io, "Triangle{$NDIM}:")
+    println(io, "  E  = $(t.E)")
+    println(io, "  NU = $(t.NU)")
+end
+
+function Base.show(io::IO, q::Quadrilateral{NDIM}) where {NDIM}
+    print(io, "Quadrilateral{$NDIM}(E=$(q.E), NU=$(q.NU))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", q::Quadrilateral{NDIM}) where {NDIM}
+    println(io, "Quadrilateral{$NDIM}:")
+    println(io, "  E  = $(q.E)")
+    println(io, "  NU = $(q.NU)")
+end
+
+function Base.show(io::IO, t::Tetrahedron{NDIM}) where {NDIM}
+    print(io, "Tetrahedron{$NDIM}(E=$(t.E), NU=$(t.NU))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", t::Tetrahedron{NDIM}) where {NDIM}
+    println(io, "Tetrahedron{$NDIM}:")
+    println(io, "  E  = $(t.E)")
+    println(io, "  NU = $(t.NU)")
+end
+
+function Base.show(io::IO, b::Brick{NDIM}) where {NDIM}
+    print(io, "Brick{$NDIM}(E=$(b.E), NU=$(b.NU))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", b::Brick{NDIM}) where {NDIM}
+    println(io, "Brick{$NDIM}:")
+    println(io, "  E  = $(b.E)")
+    println(io, "  NU = $(b.NU)")
 end
 

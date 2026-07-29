@@ -24,11 +24,11 @@ const PARAM_ORDER = Dict{String,Vector{Symbol}}(
     # ── d3_spring ──
     "d3_spring_elementstiffness" => [:k, :thetax, :thetay, :thetaz],
     "d3_spring_elementforce"     => [:k, :thetax, :thetay, :thetaz, :u],
-    # ── d1_truss ──
-    "d1_truss_elementstiffness"  => [:E, :A, :L],
-    "d1_truss_elementforces"     => [:Ke, :u],
-    "d1_truss_elementstress"     => [:Ke, :u, :A],
-    "d1_truss_elementstrain"     => [:L, :u],
+    # ── d1_bar ──
+    "d1_bar_elementstiffness"  => [:E, :A, :L],
+    "d1_bar_elementforces"     => [:Ke, :u],
+    "d1_bar_elementstress"     => [:Ke, :u, :A],
+    "d1_bar_elementstrain"     => [:L, :u],
     # ── d2_truss ──
     "d2_truss_elementlength"     => [:x1, :y1, :x2, :y2],
     "d2_truss_elementstiffness"  => [:E, :A, :L, :theta],
@@ -52,6 +52,22 @@ const PARAM_ORDER = Dict{String,Vector{Symbol}}(
     "d3_spaceframe_elementlength"     => [:x1, :y1, :z1, :x2, :y2, :z2],
     "d3_spaceframe_elementstiffness"  => [:E, :G, :A, :Iy, :Iz, :J, :x1, :y1, :z1, :x2, :y2, :z2],
     "d3_spaceframe_elementforces"     => [:E, :G, :A, :Iy, :Iz, :J, :x1, :y1, :z1, :x2, :y2, :z2, :u],
+    # ── d1_quadraticbar ──
+    "d1_quadraticbar_elementstiffness" => [:E, :A, :L],
+    # ── d2_cst ──
+    "d2_cst_elementstiffness" => [:E, :NU, :t, :x1, :y1, :x2, :y2, :x3, :y3, :p],
+    # ── d2_lst ──
+    "d2_lst_elementstiffness" => [:E, :NU, :t, :x1, :y1, :x2, :y2, :x3, :y3, :x4, :y4, :x5, :y5, :x6, :y6, :p],
+    # ── d2_q4 ──
+    "d2_q4_elementstiffness" => [:E, :NU, :h, :x1, :y1, :x2, :y2, :x3, :y3, :x4, :y4, :p],
+    # ── d2_q8 ──
+    "d2_q8_elementstiffness" => [:E, :NU, :h, :x1, :y1, :x2, :y2, :x3, :y3, :x4, :y4, :x5, :y5, :x6, :y6, :x7, :y7, :x8, :y8, :p],
+    # ── d3_tet ──
+    "d3_tet_elementstiffness" => [:E, :NU, :x1, :y1, :z1, :x2, :y2, :z2, :x3, :y3, :z3, :x4, :y4, :z4],
+    # ── d3_brick ──
+    "d3_brick_elementstiffness" => [:E, :NU, :x1, :y1, :z1, :x2, :y2, :z2, :x3, :y3, :z3, :x4, :y4, :z4, :x5, :y5, :z5, :x6, :y6, :z6, :x7, :y7, :z7, :x8, :y8, :z8],
+    # ── d1_fluidflow ──
+    "d1_fluidflow_elementstiffness" => [:Kxx, :A, :L],
 )
 
 """

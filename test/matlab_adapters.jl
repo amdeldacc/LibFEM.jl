@@ -127,9 +127,9 @@ end
 #     SpaceTrussAssemble(K, k, i, j)                   → mutated K
 #
 # Julia equivalents (d{1,2,3}_truss_*):
-#   d1_truss_elementstiffness(E, A, L)      — identical
-#   d1_truss_elementforces(Ke, u)           — identical
-#   d1_truss_elementstress(Ke, u, A)        — identical
+#   d1_bar_elementstiffness(E, A, L)      — identical
+#   d1_bar_elementforces(Ke, u)           — identical
+#   d1_bar_elementstress(Ke, u, A)        — identical
 #   d2_truss_elementstiffness(E, A, L, θ)   — identical
 #   d2_truss_elementforces(E, A, L, θ, u)   — 1-element vector (MATLAB: scalar)
 #   d2_truss_elementstress(E, L, θ, u)      — 1-element vector (MATLAB: scalar)
@@ -143,7 +143,7 @@ end
 
 Prepare Julia arguments for `LinearBarElementStiffness(E, A, L)`.
 MATLAB: 3 scalars (E, A, L).
-Julia:  `d1_truss_elementstiffness(E, A, L)` — identical.
+Julia:  `d1_bar_elementstiffness(E, A, L)` — identical.
 """
 adapt_truss_args(E::Real, A::Real, L::Real) = (E, A, L)
 
@@ -152,7 +152,7 @@ adapt_truss_args(E::Real, A::Real, L::Real) = (E, A, L)
 
 Prepare Julia arguments for `LinearBarElementForces(k, u)`.
 MATLAB: 2 args (2×2 stiffness k, 2-element disp u).
-Julia:  `d1_truss_elementforces(Ke, u)` — identical.
+Julia:  `d1_bar_elementforces(Ke, u)` — identical.
 """
 adapt_truss_args(k::AbstractMatrix, u::AbstractVector) = (k, u)
 
@@ -161,7 +161,7 @@ adapt_truss_args(k::AbstractMatrix, u::AbstractVector) = (k, u)
 
 Prepare Julia arguments for `LinearBarElementStresses(k, u, A)`.
 MATLAB: 3 args (2×2 k, 2-vec u, scalar A).
-Julia:  `d1_truss_elementstress(Ke, u, A)` — identical.
+Julia:  `d1_bar_elementstress(Ke, u, A)` — identical.
 """
 adapt_truss_args(k::AbstractMatrix, u::AbstractVector, A::Real) = (k, u, A)
 
@@ -463,6 +463,308 @@ This is a convenience wrapper; prefer the family-specific adapters
 element type is known.
 """
 function adapt_result(arr, n::Int)
+    if isa(arr, Number)
+        return [arr]
+    elseif length(arr) == n * n
+        return reshape(arr, n, n)
+    else
+        return vec(arr)
+    end
+end
+
+# ═══════════════════════════════════════════════════════════════
+# CST (Linear Triangle) — Argument & Result Adapters
+# ═══════════════════════════════════════════════════════════════
+#
+# MATLAB function signatures (from Doc/Kattan/M-Files/):
+#   LinearTriangleElementStiffness(E, NU, t, xi, yi, xj, yj, xm, ym, p) → 6×6
+#   LinearTriangleElementArea(xi, yi, xj, yj, xm, ym) → scalar
+#   LinearTriangleElementStresses(E, NU, t, xi, yi, xj, yj, xm, ym, p, u) → 3×1
+#   LinearTriangleElementPStresses(sigma) → 3 values
+#
+# Julia equivalents (d2_cst_*):
+#   d2_cst_elementstiffness(E, NU, t, x1, y1, x2, y2, x3, y3, p) — identical
+#   d2_cst_elementarea(x1, y1, x2, y2, x3, y3) — identical
+#   d2_cst_elementstress(E, NU, x1, y1, x2, y2, x3, y3, p, u) — no `t` param
+
+"""
+    adapt_cst_args(E, NU, t, x1, y1, x2, y2, x3, y3, p) -> Tuple
+
+Prepare Julia arguments for `LinearTriangleElementStiffness(E, NU, t, xi, yi, xj, yj, xm, ym, p)`.
+MATLAB and Julia signatures are identical in structure.
+"""
+adapt_cst_args(E, NU, t, x1, y1, x2, y2, x3, y3, p) = (E, NU, t, x1, y1, x2, y2, x3, y3, p)
+
+"""
+    adapt_cst_area_args(x1, y1, x2, y2, x3, y3) -> Tuple
+
+Prepare Julia arguments for `LinearTriangleElementArea(xi, yi, xj, yj, xm, ym)`.
+"""
+adapt_cst_area_args(x1, y1, x2, y2, x3, y3) = (x1, y1, x2, y2, x3, y3)
+
+"""
+    adapt_cst_stress_args(E, NU, t, x1, y1, x2, y2, x3, y3, p, u) -> Tuple
+
+Prepare Julia arguments for `LinearTriangleElementStresses(E, NU, t, xi, yi, xj, yj, xm, ym, p, u)`.
+Note: Julia's `d2_cst_elementstress` does NOT take `t`, but MATLAB does.
+This adapter adds `t` for MATLAB compatibility.
+"""
+adapt_cst_stress_args(E, NU, t, x1, y1, x2, y2, x3, y3, p, u) = (E, NU, t, x1, y1, x2, y2, x3, y3, p, u)
+
+"""
+    adapt_cst_result(arr, n=6) -> Union{Matrix, Vector}
+
+Convert a JSON-decoded Octave array for a CST result back to Julia type.
+MATLAB returns:
+  - Stiffness: 6×6 matrix (36 flat elements)
+  - Stress:    3×1 column vector (3 elements)
+  - Area:      scalar
+"""
+function adapt_cst_result(arr, n::Int=6)
+    if isa(arr, Number)
+        return [arr]
+    elseif length(arr) == n * n
+        return reshape(arr, n, n)
+    else
+        return vec(arr)
+    end
+end
+
+# ═══════════════════════════════════════════════════════════════
+# LST (Quad Triangle) — Argument & Result Adapters
+# ═══════════════════════════════════════════════════════════════
+#
+# MATLAB function signatures (from Doc/Kattan/M-Files/):
+#   QuadTriangleElementStiffness(E, NU, t, x1, y1, x2, y2, x3, y3, p) → 12×12
+#     (MATLAB computes mid-edge nodes internally via syms)
+#   QuadTriangleElementStresses(E, NU, t, x1, y1, x2, y2, x3, y3, p, u) → 3×1
+#
+# Julia equivalents (d2_lst_*):
+#   d2_lst_elementstiffness(E, NU, t, x1, y1, x2, y2, x3, y3,
+#                           x4, y4, x5, y5, x6, y6, p)
+#     — Julia takes explicit mid-edge coordinates; MATLAB computes them internally.
+
+"""
+    adapt_lst_args(E, NU, t, x1, y1, x2, y2, x3, y3, p) -> Tuple
+
+Prepare Julia arguments for `QuadTriangleElementStiffness(E, NU, t, x1, y1, x2, y2, x3, y3, p)`.
+MATLAB only takes 3 corner nodes (computes mid-edges internally).
+Julia takes 3 corner + 3 mid-edge nodes.
+"""
+adapt_lst_args(E, NU, t, x1, y1, x2, y2, x3, y3, p) = (E, NU, t, x1, y1, x2, y2, x3, y3, p)
+
+"""
+    adapt_lst_result(arr, n=12) -> Union{Matrix, Vector}
+
+Convert a JSON-decoded Octave array for an LST result back to Julia type.
+"""
+function adapt_lst_result(arr, n::Int=12)
+    if isa(arr, Number)
+        return [arr]
+    elseif length(arr) == n * n
+        return reshape(arr, n, n)
+    else
+        return vec(arr)
+    end
+end
+
+# ═══════════════════════════════════════════════════════════════
+# Q4 (Bilinear Quad) — Argument & Result Adapters
+# ═══════════════════════════════════════════════════════════════
+#
+# MATLAB function signatures (from Doc/Kattan/M-Files/):
+#   BilinearQuadElementStiffness(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p) → 8×8
+#   BilinearQuadElementArea(x1, y1, x2, y2, x3, y3, x4, y4) → scalar
+#
+# Julia equivalents (d2_q4_*):
+#   d2_q4_elementstiffness(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p) — identical
+#   d2_q4_elementarea(x1, y1, x2, y2, x3, y3, x4, y4) — identical
+
+"""
+    adapt_q4_args(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p) -> Tuple
+
+Prepare Julia arguments for `BilinearQuadElementStiffness(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p)`.
+MATLAB and Julia signatures are identical.
+"""
+adapt_q4_args(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p) = (E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p)
+
+"""
+    adapt_q4_area_args(x1, y1, x2, y2, x3, y3, x4, y4) -> Tuple
+"""
+adapt_q4_area_args(x1, y1, x2, y2, x3, y3, x4, y4) = (x1, y1, x2, y2, x3, y3, x4, y4)
+
+"""
+    adapt_q4_result(arr, n=8) -> Union{Matrix, Vector}
+
+Convert a JSON-decoded Octave array for a Q4 result back to Julia type.
+"""
+function adapt_q4_result(arr, n::Int=8)
+    if isa(arr, Number)
+        return [arr]
+    elseif length(arr) == n * n
+        return reshape(arr, n, n)
+    else
+        return vec(arr)
+    end
+end
+
+# ═══════════════════════════════════════════════════════════════
+# Q8 (Quadratic Quad) — Argument & Result Adapters
+# ═══════════════════════════════════════════════════════════════
+#
+# MATLAB function signatures (from Doc/Kattan/M-Files/):
+#   QuadraticQuadElementStiffness(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p) → 16×16
+#     (MATLAB computes mid-edge nodes internally via syms)
+#
+# Julia equivalents (d2_q8_*):
+#   d2_q8_elementstiffness(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4,
+#                          x5, y5, x6, y6, x7, y7, x8, y8, p)
+#     — Julia takes explicit mid-edge coordinates; MATLAB computes them internally.
+
+"""
+    adapt_q8_args(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p) -> Tuple
+
+Prepare Julia arguments for `QuadraticQuadElementStiffness(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p)`.
+MATLAB only takes 4 corner nodes (computes mid-edges internally).
+Julia takes 4 corner + 4 mid-edge nodes.
+"""
+adapt_q8_args(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p) = (E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p)
+
+"""
+    adapt_q8_result(arr, n=16) -> Union{Matrix, Vector}
+
+Convert a JSON-decoded Octave array for a Q8 result back to Julia type.
+"""
+function adapt_q8_result(arr, n::Int=16)
+    if isa(arr, Number)
+        return [arr]
+    elseif length(arr) == n * n
+        return reshape(arr, n, n)
+    else
+        return vec(arr)
+    end
+end
+
+# ═══════════════════════════════════════════════════════════════
+# Tet (Tetrahedron) — Argument & Result Adapters
+# ═══════════════════════════════════════════════════════════════
+#
+# MATLAB function signatures (from Doc/Kattan/M-Files/):
+#   TetrahedronElementStiffness(E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) → 12×12
+#   TetrahedronElementVolume(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) → scalar
+#
+# Julia equivalents (d3_tet_*):
+#   d3_tet_elementstiffness(E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) — identical
+#   d3_tet_elementvolume(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) — identical
+
+"""
+    adapt_tet_args(E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) -> Tuple
+
+Prepare Julia arguments for `TetrahedronElementStiffness(E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4)`.
+MATLAB and Julia are identical.
+"""
+adapt_tet_args(E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) = (E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4)
+
+"""
+    adapt_tet_volume_args(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) -> Tuple
+"""
+adapt_tet_volume_args(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) = (x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4)
+
+"""
+    adapt_tet_result(arr, n=12) -> Union{Matrix, Vector}
+
+Convert a JSON-decoded Octave array for a Tet result back to Julia type.
+"""
+function adapt_tet_result(arr, n::Int=12)
+    if isa(arr, Number)
+        return [arr]
+    elseif length(arr) == n * n
+        return reshape(arr, n, n)
+    else
+        return vec(arr)
+    end
+end
+
+# ═══════════════════════════════════════════════════════════════
+# Brick (Linear Brick) — Argument & Result Adapters
+# ═══════════════════════════════════════════════════════════════
+#
+# MATLAB function signatures (from Doc/Kattan/M-Files/):
+#   LinearBrickElementStiffness(E, NU, x1, y1, z1, ..., x8, y8, z8) → 24×24
+#   LinearBrickElementVolume(x1, y1, z1, ..., x8, y8, z8) → scalar
+#
+# Julia equivalents (d3_brick_*):
+#   d3_brick_elementstiffness(E, NU, x1, y1, z1, ..., x8, y8, z8) — identical
+
+"""
+    adapt_brick_args(E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
+                     x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8) -> Tuple
+
+Prepare Julia arguments for `LinearBrickElementStiffness(...)`.
+MATLAB and Julia are identical.
+"""
+adapt_brick_args(E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
+                 x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8) = (E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8)
+
+"""
+    adapt_brick_volume_args(x1, y1, z1, ..., x8, y8, z8) -> Tuple
+"""
+adapt_brick_volume_args(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
+                         x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8) = (x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8)
+
+"""
+    adapt_brick_result(arr, n=24) -> Union{Matrix, Vector}
+
+Convert a JSON-decoded Octave array for a Brick result back to Julia type.
+"""
+function adapt_brick_result(arr, n::Int=24)
+    if isa(arr, Number)
+        return [arr]
+    elseif length(arr) == n * n
+        return reshape(arr, n, n)
+    else
+        return vec(arr)
+    end
+end
+
+# ═══════════════════════════════════════════════════════════════
+# Fluid Flow 1D — Argument & Result Adapters
+# ═══════════════════════════════════════════════════════════════
+#
+# MATLAB function signatures (from Doc/Kattan/M-Files/):
+#   FluidFlow1DElementStiffness(Kxx, A, L) → 2×2
+#   FluidFlow1DElementVelocities(Kxx, L, p) → scalar
+#   FluidFlow1DElementVFR(Kxx, L, p, A) → scalar
+#
+# Julia equivalents (d1_fluidflow_*):
+#   d1_fluidflow_elementstiffness(Kxx, A, L) — identical
+#   d1_fluidflow_elementvelocity(Kxx, L, p) — identical
+#   d1_fluidflow_elementvfr(Kxx, L, p, A) — identical
+
+"""
+    adapt_fluidflow_args(Kxx, A, L) -> Tuple
+
+Prepare Julia arguments for `FluidFlow1DElementStiffness(Kxx, A, L)`.
+MATLAB and Julia signatures are identical.
+"""
+adapt_fluidflow_args(Kxx, A, L) = (Kxx, A, L)
+
+"""
+    adapt_fluidflow_velocity_args(Kxx, L, p) -> Tuple
+"""
+adapt_fluidflow_velocity_args(Kxx, L, p) = (Kxx, L, p)
+
+"""
+    adapt_fluidflow_vfr_args(Kxx, L, p, A) -> Tuple
+"""
+adapt_fluidflow_vfr_args(Kxx, L, p, A) = (Kxx, L, p, A)
+
+"""
+    adapt_fluidflow_result(arr, n=2) -> Union{Matrix, Vector}
+
+Convert a JSON-decoded Octave array for a FluidFlow result back to Julia type.
+"""
+function adapt_fluidflow_result(arr, n::Int=2)
     if isa(arr, Number)
         return [arr]
     elseif length(arr) == n * n

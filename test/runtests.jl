@@ -86,31 +86,6 @@ end
     end
 
     # ─────────────────────────────────────────────────
-    # _direction_cosines (private utility)
-    # ─────────────────────────────────────────────────
-    @testset "_direction_cosines" begin
-        # Valid unit vector: cos²(30)+cos²(60)+cos²(90) = 0.75+0.25+0 = 1
-        c1 = LibFEM._direction_cosines(30, 60, 90)
-        @test sqrt(sum(x -> x^2, c1)) ≈ 1.0
-        @test c1[1] ≈ cos(LibFEM.deg2rad(30))  # exact values returned unchanged
-
-        # Valid input: (0, 90, 90) → (1, 0, 0) (cos(π/2) ≈ 6e-17 from FP)
-        c2 = LibFEM._direction_cosines(0, 90, 90)
-        @test c2[1] == 1.0
-        @test c2[2] ≈ 0.0 atol = 1e-15
-        @test c2[3] ≈ 0.0 atol = 1e-15
-
-        # Invalid input gets normalized: (45, 45, 45) → nsq = 1.5 → normalized
-        c3 = LibFEM._direction_cosines(45, 45, 45)
-        @test sqrt(sum(x -> x^2, c3)) ≈ 1.0
-        # Expected normalized value: cos(45°)/√1.5 ≈ 0.57735
-        expected = cos(LibFEM.deg2rad(45)) / sqrt(1.5)
-        @test c3[1] ≈ expected
-        # Warns on non-physical input
-        @test_logs (:warn, r"Direction cosines do not form a unit vector") LibFEM._direction_cosines(45, 45, 45)
-    end
-
-    # ─────────────────────────────────────────────────
     # 1-D Spring (d1_spring)
     # ─────────────────────────────────────────────────
     @testset "d1_spring" begin
@@ -165,12 +140,12 @@ end
     end
 
     # ─────────────────────────────────────────────────
-    # 1-D Truss / Linear Bar (d1_truss)
+    # 1-D Truss / Linear Bar (d1_bar)
     # ─────────────────────────────────────────────────
-    @testset "d1_truss" begin
+    @testset "d1_bar" begin
         @testset "elementstiffness" begin
             E, A, L = 200e9, 0.01, 4.0
-            Ke = d1_truss_elementstiffness(E, A, L)
+            Ke = d1_bar_elementstiffness(E, A, L)
             EAoL = E * A / L  # 5e8
             @test Ke ≈ [EAoL -EAoL; -EAoL EAoL]
             @test size(Ke) == (2, 2)
@@ -180,51 +155,51 @@ end
 
         @testset "elementforces" begin
             E, A, L = 200e9, 0.01, 4.0
-            Ke = d1_truss_elementstiffness(E, A, L)
+            Ke = d1_bar_elementstiffness(E, A, L)
             u = [0.001; 0.0]
-            f = d1_truss_elementforces(Ke, u)
+            f = d1_bar_elementforces(Ke, u)
             @test f ≈ [500000.0; -500000.0]
             # zero displacement
-            @test d1_truss_elementforces(Ke, [0.0; 0.0]) ≈ [0.0; 0.0]
+            @test d1_bar_elementforces(Ke, [0.0; 0.0]) ≈ [0.0; 0.0]
         end
 
         @testset "elementstress" begin
             Ke = [5e8 -5e8; -5e8 5e8]
             u = [0.001; 0.0]
-            sigma = d1_truss_elementstress(Ke, u, 0.01)
+            sigma = d1_bar_elementstress(Ke, u, 0.01)
             @test sigma ≈ [5e7; -5e7]
-            @test_throws ElementParameterError d1_truss_elementstress([1 -1; -1 1], [0; 0], 0.0)
-            @test_throws ElementParameterError d1_truss_elementstress([1 -1; -1 1], [0; 0], -1.0)
+            @test_throws ElementParameterError d1_bar_elementstress([1 -1; -1 1], [0; 0], 0.0)
+            @test_throws ElementParameterError d1_bar_elementstress([1 -1; -1 1], [0; 0], -1.0)
         end
 
         @testset "elementstrain" begin
             L = 4.0
             u = [0.001; 0.0]
-            eps = d1_truss_elementstrain(L, u)
+            eps = d1_bar_elementstrain(L, u)
             @test eps ≈ -2.5e-4
             # zero displacement
-            @test d1_truss_elementstrain(L, [0.0; 0.0]) ≈ 0.0
+            @test d1_bar_elementstrain(L, [0.0; 0.0]) ≈ 0.0
         end
 
         @testset "assemble" begin
             K = zeros(2, 2)
             k = [5e8 -5e8; -5e8 5e8]
-            K = d1_truss_assemble(K, k, 1, 2)
+            K = d1_bar_assemble(K, k, 1, 2)
             @test K == k
             @test size(K) == (2, 2)
         end
 
         @testset "L>0 error paths" begin
-            @test_throws ElementParameterError d1_truss_elementstiffness(1.0, 1.0, 0.0)
-            @test_throws ElementParameterError d1_truss_elementstiffness(1.0, 1.0, -1.0)
-            @test_throws ElementParameterError d1_truss_elementstrain(0.0, [1.0; 0.0])
-            @test_throws ElementParameterError d1_truss_elementstrain(-1.0, [1.0; 0.0])
+            @test_throws ElementParameterError d1_bar_elementstiffness(1.0, 1.0, 0.0)
+            @test_throws ElementParameterError d1_bar_elementstiffness(1.0, 1.0, -1.0)
+            @test_throws ElementParameterError d1_bar_elementstrain(0.0, [1.0; 0.0])
+            @test_throws ElementParameterError d1_bar_elementstrain(-1.0, [1.0; 0.0])
         end
 
         @testset "assembly error paths" begin
             K = zeros(2, 2)
-            k = d1_truss_elementstiffness(1, 1, 1)
-            @test_throws AssemblyError d1_truss_assemble(K, k, 1, 1)
+            k = d1_bar_elementstiffness(1, 1, 1)
+            @test_throws AssemblyError d1_bar_assemble(K, k, 1, 1)
 
             K4 = zeros(4, 4)
             k4 = d2_truss_elementstiffness(1, 1, 1, 0)
@@ -237,14 +212,33 @@ end
 
         @testset "negative/zero parameter behavior" begin
             # Zero area → throws
-            @test_throws ElementParameterError d1_truss_elementstiffness(1.0, 0.0, 1.0)
+            @test_throws ElementParameterError d1_bar_elementstiffness(1.0, 0.0, 1.0)
             # Negative area → throws
-            @test_throws ElementParameterError d1_truss_elementstiffness(1.0, -1.0, 1.0)
+            @test_throws ElementParameterError d1_bar_elementstiffness(1.0, -1.0, 1.0)
             # Zero modulus → zero matrix (not validated)
-            @test d1_truss_elementstiffness(0.0, 1.0, 1.0) == zeros(2, 2)
+            @test d1_bar_elementstiffness(0.0, 1.0, 1.0) == zeros(2, 2)
             # Negative modulus → negated matrix (not validated)
-            @test d1_truss_elementstiffness(-1.0, 1.0, 1.0) == -[1 -1; -1 1]
+            @test d1_bar_elementstiffness(-1.0, 1.0, 1.0) == -[1 -1; -1 1]
         end
+    end
+
+    # ─────────────────────────────────────────────────
+    # d1_truss → d1_bar deprecation aliases
+    # ─────────────────────────────────────────────────
+    @testset "d1_truss deprecation aliases" begin
+        E, A, L = 200e9, 0.01, 4.0
+        u = [0.001; 0.0]
+        k_bar = d1_bar_elementstiffness(E, A, L)
+
+        # Each old d1_truss name must still return the same result as its d1_bar replacement
+        @test LibFEM.d1_truss_elementstiffness(E, A, L) ≈ k_bar
+        @test LibFEM.d1_truss_elementforces(k_bar, u) ≈ d1_bar_elementforces(k_bar, u)
+        @test LibFEM.d1_truss_elementstress(k_bar, u, A) ≈ d1_bar_elementstress(k_bar, u, A)
+        @test LibFEM.d1_truss_elementstrain(L, u) ≈ d1_bar_elementstrain(L, u)
+
+        K = zeros(2, 2)
+        K2 = zeros(2, 2)
+        @test LibFEM.d1_truss_assemble(K, k_bar, 1, 2) ≈ d1_bar_assemble(K2, k_bar, 1, 2)
     end
 
     # ─────────────────────────────────────────────────
@@ -404,7 +398,7 @@ end
     @testset "d2_planeframe" begin
         @testset "elementlength" begin
             @test d2_planeframe_elementlength(0, 0, 3, 4) == 5.0
-            @test d2_planeframe_elementlength(1, 2, 1, 2) == 0.0  # zero length
+            @test_throws ElementParameterError d2_planeframe_elementlength(1, 2, 1, 2)
             @test d2_planeframe_elementlength(-1, -1, 2, 3) ≈ sqrt(3^2 + 4^2)
             @test d2_planeframe_elementlength(0, 0, 0, 5) == 5.0
         end
@@ -923,13 +917,87 @@ end
         @test_throws ElementParameterError d3_spaceframe_elementforces(1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0, zeros(12))
         @test_throws ElementParameterError d3_spaceframe_elementforces(1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0, zeros(12))
 
+    # ─────────────────────────────────────────────────
+    # 2-D Grid (d2_grid)
+    # ─────────────────────────────────────────────────
+    @testset "d2_grid" begin
+        @testset "elementlength" begin
+            @test d2_grid_elementlength(0, 0, 3, 4) == 5.0
+            @test_throws ElementParameterError d2_grid_elementlength(0, 0, 0, 0)
+            @test d2_grid_elementlength(1, 2, 4, 6) == 5.0
+        end
+
+        @testset "elementstiffness" begin
+            E, G, I, J, L = 1.0, 1.0, 1.0, 1.0, 1.0
+
+            # azi=0 → element aligned with global X → R = I → k_global = kprime
+            Ke = d2_grid_elementstiffness(E, G, I, J, L, 0)
+            @test size(Ke) == (6, 6)
+            @test Ke ≈ [
+                12   0   6 -12   0   6
+                 0   1   0   0  -1   0
+                 6   0   4  -6   0   2
+               -12   0  -6  12   0  -6
+                 0  -1   0   0   1   0
+                 6   0   2  -6   0   4
+            ]
+            @test_physical_invariants Ke
+
+            # azi=90 → check rotated
+            Ke90 = d2_grid_elementstiffness(E, G, I, J, L, 90)
+            @test_physical_invariants Ke90
+        end
+
+        @testset "elementforces" begin
+            E, G, I, J, L = 1.0, 1.0, 1.0, 1.0, 1.0
+
+            # azi=0, unit vertical displacement at node 1
+            u = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            f = d2_grid_elementforces(E, G, I, J, L, 0, u)
+            @test length(f) == 6
+            # f = kprime * I * u = kprime * u = column 1 of kprime
+            @test f ≈ [12, 0, 6, -12, 0, 6]
+
+            # zero displacement
+            @test d2_grid_elementforces(E, G, I, J, L, 0, zeros(6)) ≈ zeros(6)
+        end
+
+        @testset "assemble" begin
+            K = zeros(6, 6)
+            k = ones(6, 6)
+            K = d2_grid_assemble(K, k, 1, 2)
+            @test K == ones(6, 6)
+
+            # Assemble into larger system
+            K9 = zeros(9, 9)
+            ke = reshape(1:36, 6, 6)
+            K9 = d2_grid_assemble(K9, ke, 1, 2)
+            # Node 1 DOF: 1-3, Node 2 DOF: 4-6
+            @test K9[1:3, 1:3] == ke[1:3, 1:3]
+            @test K9[1:3, 4:6] == ke[1:3, 4:6]
+            @test K9[4:6, 1:3] == ke[4:6, 1:3]
+            @test K9[4:6, 4:6] == ke[4:6, 4:6]
+        end
+
+        @testset "L>0 error paths" begin
+            @test_throws ElementParameterError d2_grid_elementstiffness(1.0, 1.0, 1.0, 1.0, 0.0, 0.0)
+            @test_throws ElementParameterError d2_grid_elementstiffness(1.0, 1.0, 1.0, 1.0, -1.0, 0.0)
+            @test_throws ElementParameterError d2_grid_elementforces(1.0, 1.0, 1.0, 1.0, 0.0, 0.0, zeros(6))
+        end
+
+        @testset "invariant in element property tests" begin
+            k = d2_grid_elementstiffness(1, 1, 1, 1, 1, 30)
+            @test_physical_invariants(k)
+        end
+    end
+
         # ═══════════════════════════════════════════════════
         # Sprint 3 — Wave 5: Test Hardening
         # ═══════════════════════════════════════════════════
 
         @testset "element property tests" begin
             Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(stderr, Base.CoreLogging.Error)) do
-            k1 = d1_truss_elementstiffness(1, 1, 1)
+            k1 = d1_bar_elementstiffness(1, 1, 1)
             @test_translational_invariants(k1, 1e-15)
 
             k2 = d2_truss_elementstiffness(1, 1, 1, 30)
@@ -953,11 +1021,11 @@ end
         end
 
         @testset "negative path tests" begin
-            @test_throws ElementParameterError d1_truss_elementstiffness(1, 1, 0)
+            @test_throws ElementParameterError d1_bar_elementstiffness(1, 1, 0)
             @test_throws ElementParameterError d2_truss_elementstiffness(1, 1, 0, 0)
             @test_throws ElementParameterError d3_truss_elementstiffness(1, 1, 0, 0, 0, 0)
             @test_throws ElementParameterError d2_planeframe_elementstiffness(1, 1, 1, 0, 0)
-            @test_throws ElementParameterError d1_truss_elementstiffness(1, 1, -1)
+            @test_throws ElementParameterError d1_bar_elementstiffness(1, 1, -1)
             # C2: impossible 3D direction cosines → warning, not error
             @test_logs (:warn, r"Direction cosines do not form a unit vector") d3_truss_elementstiffness(1, 1, 1, 90, 90, 90)
             @test_logs (:warn, r"Direction cosines do not form a unit vector") d3_spring_elementstiffness(100, 90, 90, 90)
@@ -995,8 +1063,8 @@ end
             @test K6[5:6, 1:2] == k[3:4, 1:2]
             @test K6[5:6, 5:6] == k[3:4, 3:4]
 
-            # d1_spring/d1_truss identity
-            @test d1_spring_elementstiffness(500) == d1_truss_elementstiffness(500, 1, 1)
+            # d1_spring/d1_bar identity
+            @test d1_spring_elementstiffness(500) == d1_bar_elementstiffness(500, 1, 1)
             # 2D identity: spring(k=EA/L) = truss(E, A, L)
             @test d2_spring_elementstiffness(100, 30) ≈ d2_truss_elementstiffness(100, 1, 1, 30)
             # 3D identity
@@ -1019,6 +1087,202 @@ end
         end
     end
 
+    # ════════════════════════════════════════════════════
+    # Sprint 4 — Wave 1: 2-D Continuum / 3-D Continuum / Fluid
+    # ════════════════════════════════════════════════════
+
+    # ─────────────────────────────────────────────────
+    # 2-D CST — Constant Strain Triangle (d2_cst)
+    # ─────────────────────────────────────────────────
+    @testset "d2_cst" begin
+        @testset "elementarea" begin
+            @test d2_cst_elementarea(0,0, 1,0, 0,1) ≈ 0.5
+            @test d2_cst_elementarea(0,0, 2,0, 0,2) ≈ 2.0
+        end
+
+        @testset "elementstiffness" begin
+            k = d2_cst_elementstiffness(200e9, 0.3, 0.01, 0,0, 1,0, 0,1, 1)
+            @test size(k) == (6, 6)
+            @test_physical_invariants(k)
+            # plane stress vs plane strain differ
+            k2 = d2_cst_elementstiffness(200e9, 0.3, 0.01, 0,0, 1,0, 0,1, 2)
+            @test k ≉ k2  # different D matrices
+        end
+
+        @testset "assemble" begin
+            K = zeros(12, 12); k = d2_cst_elementstiffness(200e9, 0.3, 0.01, 0,0, 1,0, 0,1, 1)
+            K = d2_cst_assemble(K, k, 1, 2, 3)
+            @test K[1:6, 1:6] ≈ k  # block maps to correct DOFs
+            # Two-element assembly with shared node
+            K2 = zeros(12, 12)
+            k2 = d2_cst_elementstiffness(200e9, 0.3, 0.01, 0,0, 0,1, -1,0, 1)
+            d2_cst_assemble(K2, k, 1, 2, 3)
+            d2_cst_assemble(K2, k2, 1, 3, 4)
+            @test K2 ≉ zeros(12, 12)  # non-trivial superposition
+        end
+
+        @testset "stress" begin
+            u = zeros(6)
+            sigma = d2_cst_elementstress(200e9, 0.3, 0,0, 1,0, 0,1, 1, u)
+            @test sigma ≈ zeros(3)
+        end
+
+        @testset "pstress" begin
+            s1, s2, θ = d2_cst_elementpstress([100.0, 50.0, 25.0])
+            @test s1 > s2  # principal σ1 ≥ σ2
+        end
+    end
+
+    # ─────────────────────────────────────────────────
+    # 2-D LST — Linear Strain Triangle (d2_lst)
+    # ─────────────────────────────────────────────────
+    @testset "d2_lst" begin
+        @testset "elementstiffness" begin
+            # Unit right triangle with mid-edge nodes
+            k = d2_lst_elementstiffness(200e9, 0.3, 0.01,
+                0,0, 1,0, 0,1,  0.5,0, 0.5,0.5, 0,0.5, 1)
+            @test size(k) == (12, 12)
+            @test_physical_invariants(k)
+        end
+
+        @testset "assemble" begin
+            K = zeros(12, 12)
+            k = d2_lst_elementstiffness(200e9, 0.3, 0.01,
+                0,0, 1,0, 0,1,  0.5,0, 0.5,0.5, 0,0.5, 1)
+            K = d2_lst_assemble(K, k, 1,2,3, 4,5,6)
+            @test K ≈ k
+        end
+
+        @testset "stress" begin
+            u = zeros(12)
+            sigma = d2_lst_elementstress(200e9, 0.3,
+                0,0,1,0,0,1, 0.5,0,0.5,0.5,0,0.5, 1, u)
+            @test sigma ≈ zeros(3)
+        end
+    end
+
+    # ─────────────────────────────────────────────────
+    # 2-D Q4 — Bilinear Quadrilateral (d2_q4)
+    # ─────────────────────────────────────────────────
+    @testset "d2_q4" begin
+        @testset "elementarea" begin
+            @test d2_q4_elementarea(0,0, 1,0, 1,1, 0,1) ≈ 1.0
+            @test d2_q4_elementarea(0,0, 2,0, 2,2, 0,2) ≈ 4.0
+        end
+
+        @testset "elementstiffness" begin
+            k = d2_q4_elementstiffness(200e9, 0.3, 0.01, 0,0, 1,0, 1,1, 0,1, 1)
+            @test size(k) == (8, 8)
+            @test_physical_invariants(k)
+        end
+
+        @testset "assemble" begin
+            K = zeros(8, 8); k = d2_q4_elementstiffness(200e9,0.3,0.01, 0,0,1,0,1,1,0,1, 1)
+            K = d2_q4_assemble(K, k, 1,2,3,4)
+            @test K ≈ k
+        end
+    end
+
+    # ─────────────────────────────────────────────────
+    # 2-D Q8 — Quadratic Quadrilateral (d2_q8)
+    # ─────────────────────────────────────────────────
+    @testset "d2_q8" begin
+        @testset "elementstiffness" begin
+            k = d2_q8_elementstiffness(200e9, 0.3, 0.01,
+                0,0, 1,0, 1,1, 0,1,  0.5,0, 1,0.5, 0.5,1, 0,0.5, 1)
+            @test size(k) == (16, 16)
+            @test_physical_invariants(k)
+        end
+
+        @testset "assemble" begin
+            K = zeros(16, 16)
+            k = d2_q8_elementstiffness(200e9, 0.3, 0.01,
+                0,0,1,0,1,1,0,1, 0.5,0,1,0.5,0.5,1,0,0.5, 1)
+            K = d2_q8_assemble(K, k, 1,2,3,4, 5,6,7,8)
+            @test K ≈ k
+        end
+    end
+
+    # ─────────────────────────────────────────────────
+    # 3-D Tetrahedron — Linear 4-node (d3_tet)
+    # ─────────────────────────────────────────────────
+    @testset "d3_tet" begin
+        @testset "elementvolume" begin
+            V = d3_tet_elementvolume(0,0,0, 1,0,0, 0,1,0, 0,0,1)
+            @test abs(V - 1/6) < 1e-10
+        end
+
+        @testset "elementstiffness" begin
+            k = d3_tet_elementstiffness(200e9, 0.3, 0,0,0, 1,0,0, 0,1,0, 0,0,1)
+            @test size(k) == (12, 12)
+            @test k ≈ k'
+        end
+
+        @testset "assemble" begin
+            K = zeros(12, 12); k = d3_tet_elementstiffness(200e9,0.3, 0,0,0,1,0,0,0,1,0,0,0,1)
+            K = d3_tet_assemble(K, k, 1,2,3,4)
+            @test K ≈ k
+        end
+
+        @testset "pstress" begin
+            p = d3_tet_elementpstress([100.0,0.0,0.0,0.0,0.0,0.0])
+            @test length(p) == 4
+            @test abs(p[1] - 100) < 1e-10  # σ1 = 100
+            @test abs(p[2]) < 1e-10       # σ2 = 0
+        end
+    end
+
+    # ─────────────────────────────────────────────────
+    # 3-D Brick — Linear 8-node Hexahedron (d3_brick)
+    # ─────────────────────────────────────────────────
+    @testset "d3_brick" begin
+        @testset "elementstiffness" begin
+            k = d3_brick_elementstiffness(200e9, 0.3,
+                0,0,0, 1,0,0, 1,1,0, 0,1,0,
+                0,0,1, 1,0,1, 1,1,1, 0,1,1)
+            @test size(k) == (24, 24)
+            @test k ≈ k'
+        end
+
+        @testset "assemble" begin
+            K = zeros(24, 24)
+            k = d3_brick_elementstiffness(200e9, 0.3,
+                0,0,0,1,0,0,1,1,0,0,1,0,
+                0,0,1,1,0,1,1,1,1,0,1,1)
+            K = d3_brick_assemble(K, k, 1,2,3,4, 5,6,7,8)
+            @test K ≈ k
+        end
+    end
+
+    # ─────────────────────────────────────────────────
+    # 1-D Fluid Flow (d1_fluidflow)
+    # ─────────────────────────────────────────────────
+    @testset "d1_fluidflow" begin
+        @testset "elementstiffness" begin
+            k = d1_fluidflow_elementstiffness(1.0, 1.0, 1.0)
+            @test size(k) == (2, 2)
+            @test k ≈ [1 -1; -1 1]
+            @test_throws ElementParameterError d1_fluidflow_elementstiffness(1.0, 1.0, 0.0)
+            @test_throws ElementParameterError d1_fluidflow_elementstiffness(1.0, 0.0, 1.0)
+        end
+
+        @testset "velocity" begin
+            v = d1_fluidflow_elementvelocity(1.0, 10.0, [10.0, 5.0])
+            @test abs(v - 0.5) < 1e-10
+        end
+
+        @testset "vfr" begin
+            Q = d1_fluidflow_elementvfr(1.0, 10.0, [10.0, 5.0], 2.0)
+            @test abs(Q - 1.0) < 1e-10  # 0.5 * 2 = 1.0
+        end
+
+        @testset "assemble" begin
+            K = zeros(4, 4); k = d1_fluidflow_elementstiffness(1.0, 1.0, 1.0)
+            K = d1_fluidflow_assemble(K, k, 1, 2)
+            @test K[1:2, 1:2] ≈ k
+        end
+    end
+
 end  # @testset "LibFEM"
 
 @testset "module loaded and exports accessible" begin
@@ -1028,18 +1292,34 @@ end  # @testset "LibFEM"
         :d1_spring_elementstiffness,
         :d2_spring_elementstiffness,
         :d3_spring_elementstiffness,
-        :d1_truss_elementstiffness,
+        :d1_bar_elementstiffness,
         :d2_truss_elementstiffness,
         :d3_truss_elementstiffness,
         :d2_beam_elementstiffness,
         :d2_planeframe_elementstiffness,
         :d3_spaceframe_elementstiffness,
+        :d2_grid_elementstiffness,
+        :d2_cst_elementstiffness,
+        :d2_lst_elementstiffness,
+        :d2_q4_elementstiffness,
+        :d2_q8_elementstiffness,
+        :d3_tet_elementstiffness,
+        :d3_brick_elementstiffness,
+        :d1_fluidflow_elementstiffness,
         :AbstractSpring,
         :Spring,
         :AbstractTruss,
         :Truss,
         :AbstractBeam,
         :Beam,
+        :AbstractTriangle,
+        :Triangle,
+        :AbstractQuadrilateral,
+        :Quadrilateral,
+        :AbstractTetrahedron,
+        :Tetrahedron,
+        :AbstractBrick,
+        :Brick,
         :ElementDimensionError,
         :AssemblyError,
     ]

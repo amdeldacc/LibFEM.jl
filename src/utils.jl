@@ -88,3 +88,92 @@ Validate that a numeric value is positive.
     x > 0 || throw(ElementParameterError(name, "$name must be positive, got $x"))
     return nothing
 end
+
+"""
+    _principal_stresses(sigma)
+
+Compute principal stresses and orientation from a 2D stress vector.
+
+# Arguments
+- `sigma::AbstractVector`: 3-element stress vector [σxx, σyy, τxy]
+
+# Returns
+A tuple `(σ1, σ2, θ_deg)` where:
+- `σ1` = first principal stress (major)
+- `σ2` = second principal stress (minor)
+- `θ_deg` = principal angle in degrees
+
+# Formula
+σ1,2 = (σxx + σyy)/2 ± √(((σxx - σyy)/2)² + τxy²)
+θ = ½ · atan2(τxy, (σxx - σyy)/2)  (returned in degrees)
+"""
+function _principal_stresses(sigma::AbstractVector)
+    σxx, σyy, τxy = sigma[1], sigma[2], sigma[3]
+    center = (σxx + σyy) / 2
+    radius = sqrt(((σxx - σyy) / 2)^2 + τxy^2)
+    σ1 = center + radius
+    σ2 = center - radius
+    θ_rad = 0.5 * atan(τxy, (σxx - σyy) / 2)
+    θ_deg = rad2deg(θ_rad)
+    return (σ1, σ2, θ_deg)
+end
+
+"""
+    _d3_elasticity_matrix(E, NU)
+
+Compute the 6×6 3D isotropic elasticity (constitutive) matrix D.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `NU::Real`: Poisson's ratio.
+
+# Returns
+A 6×6 symmetric matrix for 3D stress-strain relation.
+
+# Notes
+Standard 3D isotropic elasticity matrix, matching Kattan's formulation.
+Used by both tetrahedron and brick elements.
+"""
+function _d3_elasticity_matrix(E::Real, NU::Real)
+    c = E / ((1 + NU) * (1 - 2 * NU))
+    return c * [
+        1 - NU   NU       NU       0       0       0
+        NU       1 - NU   NU       0       0       0
+        NU       NU       1 - NU   0       0       0
+        0        0        0        (1 - 2 * NU) / 2  0       0
+        0        0        0        0       (1 - 2 * NU) / 2  0
+        0        0        0        0       0       (1 - 2 * NU) / 2
+    ]
+end
+
+"""
+    _d3_principal_stresses(sigma)
+
+Compute principal stresses from a 6×1 3D stress vector
+[σxx; σyy; σzz; τxy; τyz; τzx].
+
+# Arguments
+- `sigma::AbstractVector`: 6-element stress vector.
+
+# Returns
+A tuple `(σ1, σ2, σ3, τ_max)` where:
+- `σ1`: Maximum principal stress (most tensile).
+- `σ2`: Intermediate principal stress.
+- `σ3`: Minimum principal stress (most compressive).
+- `τ_max`: Maximum shear stress = (σ1 - σ3) / 2.
+
+# Notes
+Uses eigenvalue decomposition of the 3×3 stress tensor.
+Same formulation for tetrahedron and brick elements.
+"""
+function _d3_principal_stresses(sigma::AbstractVector)
+    S = [
+        sigma[1] sigma[4] sigma[6]
+        sigma[4] sigma[2] sigma[5]
+        sigma[6] sigma[5] sigma[3]
+    ]
+    vals = eigvals(S)
+    σ1, σ2, σ3 = sort(vals, rev=true)
+    τ_max = (σ1 - σ3) / 2
+    return (σ1, σ2, σ3, τ_max)
+end

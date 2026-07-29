@@ -30,9 +30,9 @@ L2 = 2.0
 L3 = 1.0
 
 # ─── Element stiffness matrices ──────────────────────────────
-k1 = d1_truss_elementstiffness(E, A, L1)
-k2 = d1_truss_elementstiffness(E, A, L2)
-k3 = d1_truss_elementstiffness(E, A, L3)
+k1 = d1_bar_elementstiffness(E, A, L1)
+k2 = d1_bar_elementstiffness(E, A, L2)
+k3 = d1_bar_elementstiffness(E, A, L3)
 
 println("k1 =")
 display(k1)
@@ -43,9 +43,9 @@ display(k3)
 
 # ─── Assembly ────────────────────────────────────────────────
 K = zeros(4, 4)
-K = d1_truss_assemble(K, k1, 1, 2)
-K = d1_truss_assemble(K, k2, 2, 3)
-K = d1_truss_assemble(K, k3, 3, 4)
+K = d1_bar_assemble(K, k1, 1, 2)
+K = d1_bar_assemble(K, k2, 2, 3)
+K = d1_bar_assemble(K, k3, 3, 4)
 
 println("\nK =")
 display(K)
@@ -71,13 +71,13 @@ display(F)
 
 # ─── Post-processing: stresses ───────────────────────────────
 u1 = [0.0; U[2]]
-sigma1 = d1_truss_elementstress(k1, u1, A)
+sigma1 = d1_bar_elementstress(k1, u1, A)
 
 u2 = [U[2]; U[3]]
-sigma2 = d1_truss_elementstress(k2, u2, A)
+sigma2 = d1_bar_elementstress(k2, u2, A)
 
 u3 = [U[3]; U[4]]
-sigma3 = d1_truss_elementstress(k3, u3, A)
+sigma3 = d1_bar_elementstress(k3, u3, A)
 
 println("\nsigma1 =")
 display(sigma1)

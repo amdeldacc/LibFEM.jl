@@ -301,18 +301,18 @@ function _problem_2_2_julia()
     )
 end
 
-"""Julia equivalent of Problem 3.1: Three-bar structure (d1_truss)."""
+"""Julia equivalent of Problem 3.1: Three-bar structure (d1_bar)."""
 function _problem_3_1_julia()
     E = 70e6; A = 0.005; L1 = 1.0; L2 = 2.0; L3 = 1.0
 
-    k1 = d1_truss_elementstiffness(E, A, L1)
-    k2 = d1_truss_elementstiffness(E, A, L2)
-    k3 = d1_truss_elementstiffness(E, A, L3)
+    k1 = d1_bar_elementstiffness(E, A, L1)
+    k2 = d1_bar_elementstiffness(E, A, L2)
+    k3 = d1_bar_elementstiffness(E, A, L3)
 
     K = zeros(4, 4)
-    K = d1_truss_assemble(K, k1, 1, 2)
-    K = d1_truss_assemble(K, k2, 2, 3)
-    K = d1_truss_assemble(K, k3, 3, 4)
+    K = d1_bar_assemble(K, k1, 1, 2)
+    K = d1_bar_assemble(K, k2, 2, 3)
+    K = d1_bar_assemble(K, k3, 3, 4)
 
     k = K[2:4, 2:4]
     f = [-10.0; 0.0; 15.0]
@@ -320,9 +320,9 @@ function _problem_3_1_julia()
     U = [0.0; u]
     F = K * U
 
-    sigma1 = d1_truss_elementstress(k1, [0.0; U[2]], A)
-    sigma2 = d1_truss_elementstress(k2, [U[2]; U[3]], A)
-    sigma3 = d1_truss_elementstress(k3, [U[3]; U[4]], A)
+    sigma1 = d1_bar_elementstress(k1, [0.0; U[2]], A)
+    sigma2 = d1_bar_elementstress(k2, [U[2]; U[3]], A)
+    sigma3 = d1_bar_elementstress(k3, [U[3]; U[4]], A)
 
     return Dict{String,Any}(
         "K" => K, "k" => k, "f" => f, "u" => u,
@@ -335,11 +335,11 @@ end
 function _problem_3_3_julia()
     E = 200e6; A = 0.01; L = 2.0; k_spring = 1000.0
 
-    k1 = d1_truss_elementstiffness(E, A, L)
+    k1 = d1_bar_elementstiffness(E, A, L)
     k2 = d1_spring_elementstiffness(k_spring)
 
     K = zeros(3, 3)
-    K = d1_truss_assemble(K, k1, 1, 2)
+    K = d1_bar_assemble(K, k1, 1, 2)
     K = d1_spring_assemble(K, k2, 2, 3)
 
     k = K[2:2, 2:2]
@@ -348,7 +348,7 @@ function _problem_3_3_julia()
     U = [0.0; u; 0.0]
     F = K * U
 
-    sigma1 = d1_truss_elementstress(k1, [0.0; u], A)
+    sigma1 = d1_bar_elementstress(k1, [0.0; u], A)
     f2 = d1_spring_elementforce(k2, [u; 0.0])
 
     return Dict{String,Any}(

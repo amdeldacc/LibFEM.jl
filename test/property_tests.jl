@@ -97,6 +97,26 @@ using LibFEM, Test, LinearAlgebra, PropCheck
             Ke = d3_spaceframe_elementstiffness(e, g, a, iy, iz, j, 0, 0, 0, x2, 0, 0)
             @test Ke ≈ Ke'
         end
+
+        # d2_cst: K ≈ K' for random (E, NU, t, p)
+        for _ in 1:15
+            e = 1.0 + 100.0 * rand()
+            nu = 0.1 + 0.4 * rand()
+            t = 0.01 + 1.0 * rand()
+            p = rand(1:2)
+            Ke = d2_cst_elementstiffness(e, nu, t, 0,0, 1,0, 0,1, p)
+            @test Ke ≈ Ke'
+        end
+
+        # d2_q4: K ≈ K' for random (E, NU, h, p)
+        for _ in 1:15
+            e = 1.0 + 100.0 * rand()
+            nu = 0.1 + 0.4 * rand()
+            h = 0.01 + 1.0 * rand()
+            p = rand(1:2)
+            Ke = d2_q4_elementstiffness(e, nu, h, 0,0, 1,0, 1,1, 0,1, p)
+            @test Ke ≈ Ke'
+        end
     end
 
     # ─────────────────────────────────────────────────
@@ -129,12 +149,12 @@ using LibFEM, Test, LinearAlgebra, PropCheck
             @test all(x -> isapprox(x, 0.0, atol=1e-9), sum(Ke, dims=2))
         end
 
-        # d1_truss
+        # d1_bar
         for _ in 1:10
             e = 1.0 + 100.0 * rand()
             a = 0.1 + 10.0 * rand()
             l = 0.1 + 10.0 * rand()
-            Ke = d1_truss_elementstiffness(e, a, l)
+            Ke = d1_bar_elementstiffness(e, a, l)
             @test all(x -> isapprox(x, 0.0, atol=1e-10), sum(Ke, dims=2))
         end
 

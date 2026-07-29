@@ -76,23 +76,23 @@ params = { k = 1000.0, thetax = 0.0, thetay = 90.0, thetaz = 0.0 }
 tolerances = { rtol = 1e-12, atol = 1e-14 }
 file = "v1/d3_spring_stiffness_90.bin"
 
-# --- d1_truss ---
+# --- d1_bar ---
 
 [[entries]]
-id = "d1_truss_stiffness_std"
-family = "d1_truss"
-function = "d1_truss_elementstiffness"
+id = "d1_bar_stiffness_std"
+family = "d1_bar"
+function = "d1_bar_elementstiffness"
 params = { E = 200e9, A = 0.01, L = 4.0 }
 tolerances = { rtol = 1e-12, atol = 1e-14 }
-file = "v1/d1_truss_stiffness_std.bin"
+file = "v1/d1_bar_stiffness_std.bin"
 
 [[entries]]
-id = "d1_truss_stiffness_0E"
-family = "d1_truss"
-function = "d1_truss_elementstiffness"
+id = "d1_bar_stiffness_0E"
+family = "d1_bar"
+function = "d1_bar_elementstiffness"
 params = { E = 0.0, A = 1.0, L = 1.0 }
 tolerances = { rtol = 1e-12, atol = 1e-14 }
-file = "v1/d1_truss_stiffness_0E.bin"
+file = "v1/d1_bar_stiffness_0E.bin"
 
 # --- d2_truss ---
 
@@ -195,12 +195,12 @@ file = "v1/d3_sf_stiffness_nearvert.bin"
 # --- Error path cases ---
 
 [[entries]]
-id = "d1_truss_stiffness_zeroL"
-family = "d1_truss"
-function = "d1_truss_elementstiffness"
+id = "d1_bar_stiffness_zeroL"
+family = "d1_bar"
+function = "d1_bar_elementstiffness"
 params = { E = 1.0, A = 1.0, L = 0.0 }
 tolerances = { rtol = 1e-12, atol = 1e-14 }
-file = "v1/d1_truss_stiffness_zeroL.bin"
+file = "v1/d1_bar_stiffness_zeroL.bin"
 
 [[entries]]
 id = "d2_truss_stiffness_zeroL"
@@ -209,3 +209,53 @@ function = "d2_truss_elementstiffness"
 params = { E = 1.0, A = 1.0, L = 0.0, theta = 0.0 }
 tolerances = { rtol = 1e-12, atol = 1e-14 }
 file = "v1/d2_truss_stiffness_zeroL.bin"
+
+[[entries]]
+id = "d3_truss_stiffness_zeroL"
+family = "d3_truss"
+function = "d3_truss_elementstiffness"
+params = { E = 1.0, A = 1.0, L = 0.0, thetax = 0.0, thetay = 0.0, thetaz = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d3_truss_stiffness_zeroL.bin"
+
+[[entries]]
+id = "d2_beam_stiffness_zeroL"
+family = "d2_beam"
+function = "d2_beam_elementstiffness"
+params = { E = 1.0, I = 1.0, L = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_beam_stiffness_zeroL.bin"
+
+[[entries]]
+id = "d2_pf_stiffness_zeroL"
+family = "d2_planeframe"
+function = "d2_planeframe_elementstiffness"
+params = { E = 1.0, A = 1.0, I = 1.0, L = 0.0, theta = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d2_pf_stiffness_zeroL.bin"
+
+[[entries]]
+id = "d3_sf_stiffness_zeroL"
+family = "d3_spaceframe"
+function = "d3_spaceframe_elementstiffness"
+params = { E = 1.0, G = 1.0, A = 1.0, Iy = 1.0, Iz = 1.0, J = 1.0, x1 = 0.0, y1 = 0.0, z1 = 0.0, x2 = 0.0, y2 = 0.0, z2 = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d3_sf_stiffness_zeroL.bin"
+
+[[entries]]
+id = "d1_qbar_stiffness_zeroL"
+family = "d1_quadraticbar"
+function = "d1_quadraticbar_elementstiffness"
+params = { E = 1.0, A = 1.0, L = 0.0 }
+tolerances = { rtol = 1e-12, atol = 1e-14 }
+file = "v1/d1_qbar_stiffness_zeroL.bin"
+
+# --- d2_cst ---
+
+[[entries]]
+id = "d2_cst_stiffness_unit"
+family = "d2_cst"
+function = "d2_cst_elementstiffness"
+params = { E = 200e9, NU = 0.3, t = 0.01, x1 = 0.0, y1 = 0.0, x2 = 1.0, y2 = 0.0, x3 = 0.0, y3 = 1.0, p = 1 }
+tolerances = { rtol = 1e-10, atol = 1e-12 }
+file = "v1/d2_cst_stiffness_unit.bin"

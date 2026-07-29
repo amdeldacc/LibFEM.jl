@@ -30,7 +30,7 @@ L = 2.0
 k_spring = 1000.0
 
 # ─── Element stiffness matrices ──────────────────────────────
-k1 = d1_truss_elementstiffness(E, A, L)
+k1 = d1_bar_elementstiffness(E, A, L)
 k2 = d1_spring_elementstiffness(k_spring)
 
 println("k1 (bar) =")
@@ -40,7 +40,7 @@ display(k2)
 
 # ─── Assembly ────────────────────────────────────────────────
 K = zeros(3, 3)
-K = d1_truss_assemble(K, k1, 1, 2)
+K = d1_bar_assemble(K, k1, 1, 2)
 K = d1_spring_assemble(K, k2, 2, 3)
 
 println("\nK =")
@@ -67,7 +67,7 @@ display(F)
 
 # ─── Post-processing ─────────────────────────────────────────
 u1 = [0.0; u]
-sigma1 = d1_truss_elementstress(k1, u1, A)
+sigma1 = d1_bar_elementstress(k1, u1, A)
 
 u2 = [u; 0.0]
 f_spring = d1_spring_elementforce(k2, u2)

@@ -139,6 +139,35 @@ function compute_errors(a, b)
 end
 
 # ═════════════════════════════════════════════════════════════════
+# Symbolic Math Detection (some MATLAB .m files use Symbolic Toolbox)
+# ═════════════════════════════════════════════════════════════════
+
+"""Cache for Octave symbolic support check."""
+const _OCTAVE_SYMS_CACHE = Ref{Union{Nothing,Bool}}(nothing)
+
+"""
+    _has_octave_syms() -> Bool
+
+Check if the current Octave installation supports symbolic math (`syms`).
+Cached after first call. Returns `false` if unsupported, which is used
+to skip tests that depend on Symbolic Toolbox features.
+"""
+function _has_octave_syms()
+    if _OCTAVE_SYMS_CACHE[] !== nothing
+        return _OCTAVE_SYMS_CACHE[]
+    end
+    result = try
+        script = "syms x;\ndisp(jsonencode(1.0));"
+        r = OctaveRunner.run_script(script; timeout=5.0)
+        r.success
+    catch
+        false
+    end
+    _OCTAVE_SYMS_CACHE[] = result
+    return result
+end
+
+# ═════════════════════════════════════════════════════════════════
 # Formatting Helpers
 # ═════════════════════════════════════════════════════════════════
 
@@ -229,7 +258,9 @@ function print_summary(all_results::Vector{ValidateResult})
         println(" Max rel error: $(fmt_sci(max_rel)) | Max abs error: $(fmt_sci(max_abs))")
     end
 
-    return all(r -> r.status == :pass, all_results)
+    # Only non-skipped results count toward pass/fail
+    tested = filter(r -> r.status != :skip, all_results)
+    return all(r -> r.status == :pass, tested)
 end
 
 # ═════════════════════════════════════════════════════════════════
@@ -271,35 +302,35 @@ function test_truss()
 
     # ── 1D Truss / LinearBar ──
     E1, A1, L1 = 70e6, 0.005, 1.0
-    k1 = d1_truss_elementstiffness(E1, A1, L1)
+    k1 = d1_bar_elementstiffness(E1, A1, L1)
     u1 = [1.0 / 70000.0, 0.0]  # from Problem 3.1, element 1
 
     # Stiffness
     push!(results, run_validation(
-        "d1_truss_elementstiffness(E, A, L)",
-        "d1_truss_elementstiffness",
+        "d1_bar_elementstiffness(E, A, L)",
+        "d1_bar_elementstiffness",
         "LinearBarElementStiffness.m", "LinearBarElementStiffness";
-        julia_fn = () -> d1_truss_elementstiffness(E1, A1, L1),
+        julia_fn = () -> d1_bar_elementstiffness(E1, A1, L1),
         matlab_args_fn = () -> adapt_truss_args(E1, A1, L1),
         result_adapter = adapt_truss_result, dof = 2,
     ))
 
     # Forces
     push!(results, run_validation(
-        "d1_truss_elementforces(Ke, u)",
-        "d1_truss_elementforces",
+        "d1_bar_elementforces(Ke, u)",
+        "d1_bar_elementforces",
         "LinearBarElementForces.m", "LinearBarElementForces";
-        julia_fn = () -> d1_truss_elementforces(k1, u1),
+        julia_fn = () -> d1_bar_elementforces(k1, u1),
         matlab_args_fn = () -> adapt_truss_args(k1, u1),
         result_adapter = adapt_truss_result, dof = 2,
     ))
 
     # Stress
     push!(results, run_validation(
-        "d1_truss_elementstress(Ke, u, A)",
-        "d1_truss_elementstress",
+        "d1_bar_elementstress(Ke, u, A)",
+        "d1_bar_elementstress",
         "LinearBarElementStresses.m", "LinearBarElementStresses";
-        julia_fn = () -> d1_truss_elementstress(k1, u1, A1),
+        julia_fn = () -> d1_bar_elementstress(k1, u1, A1),
         matlab_args_fn = () -> adapt_truss_args(k1, u1, A1),
         result_adapter = adapt_truss_result, dof = 2,
     ))
@@ -521,13 +552,311 @@ function test_problems()
 end
 
 # ═════════════════════════════════════════════════════════════════
+# CST / Linear Triangle (Kattan Ch11)
+# ═════════════════════════════════════════════════════════════════
+
+function test_cst()
+    results = ValidateResult[]
+
+    E = 200e9; NU = 0.3; t = 0.01
+    x1, y1 = 0.0, 0.0
+    x2, y2 = 1.0, 0.0
+    x3, y3 = 0.0, 1.0
+    p = 1  # plane stress
+
+    # ── Stiffness (6×6) ──
+    push!(results, run_validation(
+        "d2_cst_elementstiffness(E,NU,t,x1,y1,x2,y2,x3,y3,p)",
+        "d2_cst_elementstiffness",
+        "LinearTriangleElementStiffness.m", "LinearTriangleElementStiffness";
+        julia_fn = () -> d2_cst_elementstiffness(E, NU, t, x1, y1, x2, y2, x3, y3, p),
+        matlab_args_fn = () -> adapt_cst_args(E, NU, t, x1, y1, x2, y2, x3, y3, p),
+        result_adapter = adapt_cst_result, dof = 6,
+    ))
+
+    # ── Area ──
+    push!(results, run_validation(
+        "d2_cst_elementarea(x1,y1,x2,y2,x3,y3)",
+        "d2_cst_elementarea",
+        "LinearTriangleElementArea.m", "LinearTriangleElementArea";
+        julia_fn = () -> d2_cst_elementarea(x1, y1, x2, y2, x3, y3),
+        matlab_args_fn = () -> adapt_cst_area_args(x1, y1, x2, y2, x3, y3),
+        result_adapter = (r, n) -> [r],
+        dof = 1,
+    ))
+
+    # ── Stress (zero displacement) ──
+    u = zeros(6)
+    push!(results, run_validation(
+        "d2_cst_elementstress(E,NU,x1,y1,x2,y2,x3,y3,p,u=0)",
+        "d2_cst_elementstress",
+        "LinearTriangleElementStresses.m", "LinearTriangleElementStresses";
+        julia_fn = () -> d2_cst_elementstress(E, NU, x1, y1, x2, y2, x3, y3, p, u),
+        matlab_args_fn = () -> adapt_cst_stress_args(E, NU, t, x1, y1, x2, y2, x3, y3, p, u),
+        result_adapter = adapt_cst_result, dof = 3,
+    ))
+
+    return results
+end
+
+# ═════════════════════════════════════════════════════════════════
+# LST / Quadratic Triangle (Kattan Ch12)
+# ═════════════════════════════════════════════════════════════════
+# NOTE: MATLAB uses Symbolic Math Toolbox (syms, int).
+# If Octave lacks the symbolic package, this test will be skipped.
+
+function test_lst()
+    results = ValidateResult[]
+
+    E = 200e9; NU = 0.3; t = 0.01
+    # Corner nodes
+    x1, y1 = 0.0, 0.0; x2, y2 = 1.0, 0.0; x3, y3 = 0.0, 1.0
+    # Mid-edge nodes (computed internally by MATLAB)
+    x4, y4 = 0.5, 0.0; x5, y5 = 0.5, 0.5; x6, y6 = 0.0, 0.5
+    p = 1
+
+    # ── Stiffness (12×12) — MATLAB uses syms ──
+    if !_has_octave_syms()
+        push!(results, ValidateResult(
+            "d2_lst_elementstiffness(E,NU,t,...)",
+            "d2_lst_elementstiffness",
+            "QuadTriangleElementStiffness.m", :skip, NaN, NaN,
+            "Skipped: Octave lacks symbolic package (syms)"))
+    else
+        push!(results, run_validation(
+            "d2_lst_elementstiffness(E,NU,t,x1,y1,x2,y2,x3,y3,p)",
+            "d2_lst_elementstiffness",
+            "QuadTriangleElementStiffness.m", "QuadTriangleElementStiffness";
+            julia_fn = () -> d2_lst_elementstiffness(E, NU, t, x1, y1, x2, y2, x3, y3,
+                                                     x4, y4, x5, y5, x6, y6, p),
+            matlab_args_fn = () -> adapt_lst_args(E, NU, t, x1, y1, x2, y2, x3, y3, p),
+            result_adapter = adapt_lst_result, dof = 12,
+        ))
+    end
+
+    return results
+end
+
+# ═════════════════════════════════════════════════════════════════
+# Q4 / Bilinear Quadrilateral (Kattan Ch13)
+# ═════════════════════════════════════════════════════════════════
+# NOTE: MATLAB stiffness uses Symbolic Math Toolbox (syms, int).
+# Area calculation is numeric-only.
+
+function test_q4()
+    results = ValidateResult[]
+
+    E = 200e9; NU = 0.3; h = 0.01
+    x1, y1 = 0.0, 0.0; x2, y2 = 1.0, 0.0
+    x3, y3 = 1.0, 1.0; x4, y4 = 0.0, 1.0
+    p = 1
+
+    # ── Area (numeric, always works) ──
+    push!(results, run_validation(
+        "d2_q4_elementarea(x1,y1,x2,y2,x3,y3,x4,y4)",
+        "d2_q4_elementarea",
+        "BilinearQuadElementArea.m", "BilinearQuadElementArea";
+        julia_fn = () -> d2_q4_elementarea(x1, y1, x2, y2, x3, y3, x4, y4),
+        matlab_args_fn = () -> adapt_q4_area_args(x1, y1, x2, y2, x3, y3, x4, y4),
+        result_adapter = (r, n) -> [r],
+        dof = 1,
+    ))
+
+    # ── Stiffness (8×8) — MATLAB uses syms ──
+    if !_has_octave_syms()
+        push!(results, ValidateResult(
+            "d2_q4_elementstiffness(E,NU,h,...)",
+            "d2_q4_elementstiffness",
+            "BilinearQuadElementStiffness.m", :skip, NaN, NaN,
+            "Skipped: Octave lacks symbolic package (syms)"))
+    else
+        push!(results, run_validation(
+            "d2_q4_elementstiffness(E,NU,h,x1,y1,x2,y2,x3,y3,x4,y4,p)",
+            "d2_q4_elementstiffness",
+            "BilinearQuadElementStiffness.m", "BilinearQuadElementStiffness";
+            julia_fn = () -> d2_q4_elementstiffness(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p),
+            matlab_args_fn = () -> adapt_q4_args(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p),
+            result_adapter = adapt_q4_result, dof = 8,
+        ))
+    end
+
+    return results
+end
+
+# ═════════════════════════════════════════════════════════════════
+# Q8 / Quadratic Quadrilateral (Kattan Ch14)
+# ═════════════════════════════════════════════════════════════════
+# NOTE: MATLAB stiffness uses Symbolic Math Toolbox (syms, int).
+# Area calculation is numeric-only.
+
+function test_q8()
+    results = ValidateResult[]
+
+    E = 200e9; NU = 0.3; h = 0.01
+    # Corner nodes
+    x1, y1 = 0.0, 0.0; x2, y2 = 1.0, 0.0
+    x3, y3 = 1.0, 1.0; x4, y4 = 0.0, 1.0
+    # Mid-edge nodes (computed internally by MATLAB)
+    x5, y5 = 0.5, 0.0; x6, y6 = 1.0, 0.5
+    x7, y7 = 0.5, 1.0; x8, y8 = 0.0, 0.5
+    p = 1
+
+    # ── Stiffness (16×16) — MATLAB uses syms ──
+    if !_has_octave_syms()
+        push!(results, ValidateResult(
+            "d2_q8_elementstiffness(E,NU,h,...)",
+            "d2_q8_elementstiffness",
+            "QuadraticQuadElementStiffness.m", :skip, NaN, NaN,
+            "Skipped: Octave lacks symbolic package (syms)"))
+    else
+        push!(results, run_validation(
+            "d2_q8_elementstiffness(E,NU,h,x1,y1,x2,y2,x3,y3,x4,y4,p)",
+            "d2_q8_elementstiffness",
+            "QuadraticQuadElementStiffness.m", "QuadraticQuadElementStiffness";
+            julia_fn = () -> d2_q8_elementstiffness(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4,
+                                                    x5, y5, x6, y6, x7, y7, x8, y8, p),
+            matlab_args_fn = () -> adapt_q8_args(E, NU, h, x1, y1, x2, y2, x3, y3, x4, y4, p),
+            result_adapter = adapt_q8_result, dof = 16,
+        ))
+    end
+
+    return results
+end
+
+# ═════════════════════════════════════════════════════════════════
+# Tet / Linear Tetrahedron (Kattan Ch15)
+# ═════════════════════════════════════════════════════════════════
+
+function test_tet()
+    results = ValidateResult[]
+
+    E = 200e9; NU = 0.3
+    x1, y1, z1 = 0.0, 0.0, 0.0
+    x2, y2, z2 = 1.0, 0.0, 0.0
+    x3, y3, z3 = 0.0, 1.0, 0.0
+    x4, y4, z4 = 0.0, 0.0, 1.0
+
+    # ── Volume ──
+    push!(results, run_validation(
+        "d3_tet_elementvolume(x1,y1,z1,x2,y2,z2,x3,y3,z3,x4,y4,z4)",
+        "d3_tet_elementvolume",
+        "TetrahedronElementVolume.m", "TetrahedronElementVolume";
+        julia_fn = () -> d3_tet_elementvolume(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4),
+        matlab_args_fn = () -> adapt_tet_volume_args(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4),
+        result_adapter = (r, n) -> [r],
+        dof = 1,
+    ))
+
+    # ── Stiffness (12×12) ──
+    push!(results, run_validation(
+        "d3_tet_elementstiffness(E,NU,x1,y1,z1,x2,y2,z2,x3,y3,z3,x4,y4,z4)",
+        "d3_tet_elementstiffness",
+        "TetrahedronElementStiffness.m", "TetrahedronElementStiffness";
+        julia_fn = () -> d3_tet_elementstiffness(E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4),
+        matlab_args_fn = () -> adapt_tet_args(E, NU, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4),
+        result_adapter = adapt_tet_result, dof = 12,
+    ))
+
+    return results
+end
+
+# ═════════════════════════════════════════════════════════════════
+# Brick / Linear Hexahedron (Kattan Ch16)
+# ═════════════════════════════════════════════════════════════════
+# NOTE: MATLAB uses Symbolic Math Toolbox (syms, int).
+
+function test_brick()
+    results = ValidateResult[]
+
+    E = 200e9; NU = 0.3
+    # Unit cube: bottom face CCW, top face CCW
+    x1, y1, z1 = 0.0, 0.0, 0.0
+    x2, y2, z2 = 1.0, 0.0, 0.0
+    x3, y3, z3 = 1.0, 1.0, 0.0
+    x4, y4, z4 = 0.0, 1.0, 0.0
+    x5, y5, z5 = 0.0, 0.0, 1.0
+    x6, y6, z6 = 1.0, 0.0, 1.0
+    x7, y7, z7 = 1.0, 1.0, 1.0
+    x8, y8, z8 = 0.0, 1.0, 1.0
+
+    # ── Stiffness (24×24) — MATLAB uses syms ──
+    if !_has_octave_syms()
+        push!(results, ValidateResult(
+            "d3_brick_elementstiffness(E,NU,...)",
+            "d3_brick_elementstiffness",
+            "LinearBrickElementStiffness.m", :skip, NaN, NaN,
+            "Skipped: Octave lacks symbolic package (syms)"))
+    else
+        push!(results, run_validation(
+            "d3_brick_elementstiffness(E,NU,x1,y1,z1,...,x8,y8,z8)",
+            "d3_brick_elementstiffness",
+            "LinearBrickElementStiffness.m", "LinearBrickElementStiffness";
+            julia_fn = () -> d3_brick_elementstiffness(E, NU,
+                x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
+                x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8),
+            matlab_args_fn = () -> adapt_brick_args(E, NU,
+                x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
+                x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8),
+            result_adapter = adapt_brick_result, dof = 24,
+        ))
+    end
+
+    return results
+end
+
+# ═════════════════════════════════════════════════════════════════
+# Fluid Flow 1D (Kattan Ch17)
+# ═════════════════════════════════════════════════════════════════
+
+function test_fluidflow()
+    results = ValidateResult[]
+
+    Kxx = 1e-5; A = 0.1; L = 10.0
+    p = [10.0, 0.0]  # nodal potentials (head)
+
+    # ── Stiffness (2×2) ──
+    push!(results, run_validation(
+        "d1_fluidflow_elementstiffness(Kxx, A, L)",
+        "d1_fluidflow_elementstiffness",
+        "FluidFlow1DElementStiffness.m", "FluidFlow1DElementStiffness";
+        julia_fn = () -> d1_fluidflow_elementstiffness(Kxx, A, L),
+        matlab_args_fn = () -> adapt_fluidflow_args(Kxx, A, L),
+        result_adapter = adapt_fluidflow_result, dof = 2,
+    ))
+
+    # ── Velocity (scalar) ──
+    push!(results, run_validation(
+        "d1_fluidflow_elementvelocity(Kxx, L, p)",
+        "d1_fluidflow_elementvelocity",
+        "FluidFlow1DElementVelocities.m", "FluidFlow1DElementVelocities";
+        julia_fn = () -> d1_fluidflow_elementvelocity(Kxx, L, p),
+        matlab_args_fn = () -> adapt_fluidflow_velocity_args(Kxx, L, p),
+        result_adapter = (r, n) -> [r],
+        dof = 1,
+    ))
+
+    # ── Volumetric Flow Rate (scalar) ──
+    push!(results, run_validation(
+        "d1_fluidflow_elementvfr(Kxx, L, p, A)",
+        "d1_fluidflow_elementvfr",
+        "FluidFlow1DElementVFR.m", "FluidFlow1DElementVFR";
+        julia_fn = () -> d1_fluidflow_elementvfr(Kxx, L, p, A),
+        matlab_args_fn = () -> adapt_fluidflow_vfr_args(Kxx, L, p, A),
+        result_adapter = (r, n) -> [r],
+        dof = 1,
+    ))
+
+    return results
+end
+
+# ═════════════════════════════════════════════════════════════════
 # CLI
 # ═════════════════════════════════════════════════════════════════
 
 function print_usage()
     println("Usage: julia --project=. scripts/validate-matlab.jl [element_type]")
     println()
-    println("element_type: spring | truss | beam | problems | all")
+    println("element_type: spring | truss | beam | cst | lst | q4 | q8 | tet | brick | fluidflow | problems | all")
     println()
     println("Exit codes:")
     println("  0 — all tests within tolerance (rtol=$(RTOL))")
@@ -537,7 +866,7 @@ end
 
 function main()
     # ─── Parse args ─────────────────────────────────────────────
-    valid_types = ["spring", "truss", "beam", "problems", "all"]
+    valid_types = ["spring", "truss", "beam", "cst", "lst", "q4", "q8", "tet", "brick", "fluidflow", "problems", "all"]
     element_type = length(ARGS) >= 1 ? lowercase(strip(ARGS[1])) : "all"
 
     if element_type ∉ valid_types
@@ -593,6 +922,55 @@ function main()
         print_separator("─", 80)
         r = test_beam()
         print_results(r, "Beam Elements")
+        append!(all_results, r)
+    end
+
+    if element_type ∈ ("cst", "all")
+        print_separator("─", 80)
+        r = test_cst()
+        print_results(r, "CST / Linear Triangle Elements")
+        append!(all_results, r)
+    end
+
+    if element_type ∈ ("lst", "all")
+        print_separator("─", 80)
+        r = test_lst()
+        print_results(r, "LST / Quadratic Triangle Elements")
+        append!(all_results, r)
+    end
+
+    if element_type ∈ ("q4", "all")
+        print_separator("─", 80)
+        r = test_q4()
+        print_results(r, "Q4 / Bilinear Quadrilateral Elements")
+        append!(all_results, r)
+    end
+
+    if element_type ∈ ("q8", "all")
+        print_separator("─", 80)
+        r = test_q8()
+        print_results(r, "Q8 / Quadratic Quadrilateral Elements")
+        append!(all_results, r)
+    end
+
+    if element_type ∈ ("tet", "all")
+        print_separator("─", 80)
+        r = test_tet()
+        print_results(r, "Tet / Linear Tetrahedron Elements")
+        append!(all_results, r)
+    end
+
+    if element_type ∈ ("brick", "all")
+        print_separator("─", 80)
+        r = test_brick()
+        print_results(r, "Brick / Linear Hexahedron Elements")
+        append!(all_results, r)
+    end
+
+    if element_type ∈ ("fluidflow", "all")
+        print_separator("─", 80)
+        r = test_fluidflow()
+        print_results(r, "Fluid Flow 1D Elements")
         append!(all_results, r)
     end
 

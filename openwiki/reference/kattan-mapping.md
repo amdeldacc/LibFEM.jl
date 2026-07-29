@@ -41,7 +41,7 @@ These are the MATLAB files whose algorithms are implemented (or planned) in `src
 |------------|---------------|--------|
 | `SpringElementStiffness.m` | `d1_spring_elementstiffness` | Implemented |
 | `SpringAssemble.m` | `d1_spring_assemble` | Implemented |
-| `SpringElementForces.m` | `d1_spring_elementforce` | Implemented |
+| `SpringElementForces.m` | `d1_spring_elementforces` | Implemented |
 
 2D and 3D spring implementations (`d2_spring_*`, `d3_spring_*`) are LibFEM extensions — Kattan only provides the 1D spring directly, though the 2D/3D formulations follow the same principles.
 
@@ -49,10 +49,10 @@ These are the MATLAB files whose algorithms are implemented (or planned) in `src
 
 | MATLAB File | Julia Function | Status |
 |------------|---------------|--------|
-| `LinearBarElementStiffness.m` | `d1_truss_elementstiffness` | Implemented |
-| `LinearBarAssemble.m` | `d1_truss_assemble` | Implemented |
-| `LinearBarElementForces.m` | `d1_truss_elementforces` | Implemented |
-| `LinearBarElementStresses.m` | `d1_truss_elementstress` | Implemented |
+| `LinearBarElementStiffness.m` | `d1_bar_elementstiffness` | Implemented |
+| `LinearBarAssemble.m` | `d1_bar_assemble` | Implemented |
+| `LinearBarElementForces.m` | `d1_bar_elementforces` | Implemented |
+| `LinearBarElementStresses.m` | `d1_bar_elementstress` | Implemented |
 | `PlaneTrussElementStiffness.m` | `d2_truss_elementstiffness` | Implemented |
 | `PlaneTrussAssemble.m` | `d2_truss_assemble` | Implemented |
 | `PlaneTrussElementForce.m` | `d2_truss_elementforces` | Implemented |
@@ -66,7 +66,7 @@ These are the MATLAB files whose algorithms are implemented (or planned) in `src
 | `SpaceTrussElementLength.m` | `d3_truss_elementlength` | Implemented |
 | `SpaceTrussInclinedSupport.m` | — | Not implemented |
 
-LibFEM adds `d1_truss_elementstrain`, `d2_truss_elementstrain`, and `d3_truss_elementstrain` — strain calculations not present as standalone MATLAB files.
+LibFEM adds `d1_bar_elementstrain`, `d2_truss_elementstrain`, and `d3_truss_elementstrain` — strain calculations not present as standalone MATLAB files. (The 1D bar functions were renamed from `d1_truss_*` to `d1_bar_*` to match the MATLAB `LinearBar` convention.)
 
 ### Beam (Pure Bending) Elements
 

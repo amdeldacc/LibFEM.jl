@@ -68,14 +68,14 @@ const PROBLEM_REGISTRY = Vector{ProblemDef}([
     ProblemDef(
         name="problem_3_1",
         matlab_file="problem_3_1.m",
-        element_family="d1_truss",
+        element_family="d1_bar",
         description="Three-bar truss",
         rtol=1e-8, atol=1e-10,
     ),
     ProblemDef(
         name="problem_3_3",
         matlab_file="problem_3_3.m",
-        element_family="d1_truss",
+        element_family="d1_bar",
         description="Linear bar with a spring",
         rtol=1e-8, atol=1e-10,
     ),

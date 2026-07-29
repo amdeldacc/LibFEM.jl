@@ -18,8 +18,8 @@ STIFF["d2_spring"] = @benchmarkable d2_spring_elementstiffness(1000, 30)
 # d3_spring: k = 1000, thetax = 30, thetay = 45, thetaz = 60 degrees
 STIFF["d3_spring"] = @benchmarkable d3_spring_elementstiffness(1000, 30, 45, 60)
 
-# d1_truss: E = 200e9 Pa, A = 0.01 m², L = 2.0 m
-STIFF["d1_truss"] = @benchmarkable d1_truss_elementstiffness(200e9, 0.01, 2.0)
+# d1_bar: E = 200e9 Pa, A = 0.01 m², L = 2.0 m
+STIFF["d1_bar"] = @benchmarkable d1_bar_elementstiffness(200e9, 0.01, 2.0)
 
 # d1_quadraticbar: E = 200e9 Pa, A = 0.01 m², L = 2.0 m (3×3 stiffness)
 STIFF["d1_quadraticbar"] = @benchmarkable d1_quadraticbar_elementstiffness(200e9, 0.01, 2.0)
@@ -32,6 +32,9 @@ STIFF["d3_truss"] = @benchmarkable d3_truss_elementstiffness(200e9, 0.01, 2.0, 3
 
 # d2_beam: E = 200e9, I = 2e-4, L = 2.0 (pure beam, local coords, no axial DOF)
 STIFF["d2_beam"] = @benchmarkable d2_beam_elementstiffness(200e9, 2e-4, 2.0)
+
+# d2_planeframe: E = 200e9, A = 0.01, I = 2e-4, L = 2.0, theta = 30 (6×6, axial + bending)
+STIFF["d2_planeframe"] = @benchmarkable d2_planeframe_elementstiffness(200e9, 0.01, 2e-4, 2.0, 30)
 
 # d3_spaceframe: E = 3e10, G = 1.15e8, A = 0.01, Iy = 1e-4, Iz = 2e-4, J = 1e-5, (0,0,0)→(4,0,0)
 STIFF["d3_spaceframe"] = @benchmarkable d3_spaceframe_elementstiffness(3e10, 1.15e8, 0.01, 1e-4, 2e-4, 1e-5, 0, 0, 0, 4, 0, 0)
@@ -92,15 +95,15 @@ ASSEMBLE["d3_spring"] = @benchmarkable begin
     end
 end
 
-# d1_truss: 500 elements, 501 nodes, 1 DOF/node → 501 DOF
+# d1_bar: 500 elements, 501 nodes, 1 DOF/node → 501 DOF
 const n_d1t = 500
 const n_d1t_nodes = n_d1t + 1
 K_d1t = zeros(1 * n_d1t_nodes, 1 * n_d1t_nodes)
-k_d1t_elements = [d1_truss_elementstiffness(200e9, 0.01, 2.0) for _ in 1:n_d1t]
-ASSEMBLE["d1_truss"] = @benchmarkable begin
+k_d1t_elements = [d1_bar_elementstiffness(200e9, 0.01, 2.0) for _ in 1:n_d1t]
+ASSEMBLE["d1_bar"] = @benchmarkable begin
     fill!($K_d1t, 0.0)
     for idx in 1:$n_d1t
-        d1_truss_assemble($K_d1t, $k_d1t_elements[idx], idx, idx + 1)
+        d1_bar_assemble($K_d1t, $k_d1t_elements[idx], idx, idx + 1)
     end
 end
 
@@ -113,6 +116,18 @@ ASSEMBLE["d2_beam"] = @benchmarkable begin
     fill!($K_d2b, 0.0)
     for idx in 1:$n_d2b
         d2_beam_assemble($K_d2b, $k_d2b_elements[idx], idx, idx + 1)
+    end
+end
+
+# d2_planeframe: 500 elements, 501 nodes, 3 DOF/node → 1503 DOF
+const n_d2pf = 500
+const n_d2pf_nodes = n_d2pf + 1
+K_d2pf = zeros(3 * n_d2pf_nodes, 3 * n_d2pf_nodes)
+k_d2pf_elements = [d2_planeframe_elementstiffness(200e9, 0.01, 2e-4, 2.0, 30) for _ in 1:n_d2pf]
+ASSEMBLE["d2_planeframe"] = @benchmarkable begin
+    fill!($K_d2pf, 0.0)
+    for idx in 1:$n_d2pf
+        d2_planeframe_assemble($K_d2pf, $k_d2pf_elements[idx], idx, idx + 1)
     end
 end
 
@@ -168,10 +183,10 @@ FORCES["d2_spring"] = @benchmarkable d2_spring_elementforce(1000, 30, $u_s2)
 const u_s3 = [0.001; zeros(5)]
 FORCES["d3_spring"] = @benchmarkable d3_spring_elementforce(1000, 30, 45, 60, $u_s3)
 
-# d1_truss: Ke = d1_truss_elementstiffness(200e9, 0.01, 2.0), u = [0.001; 0.0]
-const Ke_t1 = d1_truss_elementstiffness(200e9, 0.01, 2.0)
+# d1_bar: Ke = d1_bar_elementstiffness(200e9, 0.01, 2.0), u = [0.001; 0.0]
+const Ke_t1 = d1_bar_elementstiffness(200e9, 0.01, 2.0)
 const u_t1 = [0.001; 0.0]
-FORCES["d1_truss"] = @benchmarkable d1_truss_elementforces($Ke_t1, $u_t1)
+FORCES["d1_bar"] = @benchmarkable d1_bar_elementforces($Ke_t1, $u_t1)
 
 # d1_quadraticbar: Ke = d1_quadraticbar_elementstiffness(200e9, 0.01, 2.0), u = [0.001; zeros(2)]
 const Ke_qb1 = d1_quadraticbar_elementstiffness(200e9, 0.01, 2.0)
@@ -190,6 +205,10 @@ FORCES["d3_truss"] = @benchmarkable d3_truss_elementforces(200e9, 0.01, 2.0, 30,
 const k_b2 = d2_beam_elementstiffness(200e9, 2e-4, 2.0)
 const u_b2 = [0.001; zeros(3)]
 FORCES["d2_beam"] = @benchmarkable d2_beam_elementforces($k_b2, $u_b2)
+
+# d2_planeframe: E = 200e9, A = 0.01, I = 2e-4, L = 2.0, theta = 30, u (6-element)
+const u_pf = [0.001; zeros(5)]
+FORCES["d2_planeframe"] = @benchmarkable d2_planeframe_elementforces(200e9, 0.01, 2e-4, 2.0, 30, $u_pf)
 
 # =====================
 # Group 4: d3_spaceframe Assembly into ~3000 DOF system

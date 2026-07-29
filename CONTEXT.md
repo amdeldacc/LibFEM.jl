@@ -48,11 +48,11 @@ The abstract type hierarchy (`AbstractElement{NDIM}`, `AbstractSpring{NDIM}`, `A
 - **Functions**: `*_elementstiffness(k)`, `*_assemble(K, k, i, j)`, `*_elementforce(k, u)`
 - **2D/3D variants**: Add angle parameters (`theta` for 2D, `thetax, thetay, thetaz` for 3D).
 
-### Truss (1D Linear Bar, 2D Plane Truss, 3D Space Truss)
+### Bar (1D Linear Bar), Truss (2D Plane Truss, 3D Space Truss)
 - **MATLAB prefix**: `LinearBar*` (1D), `PlaneTruss*` (2D), `SpaceTruss*` (3D)
-- **LibFEM prefix**: `d1_truss_*` (1D), `d2_truss_*` (2D), `d3_truss_*` (3D)
+- **LibFEM prefix**: `d1_bar_*` (1D), `d2_truss_*` (2D), `d3_truss_*` (3D)
 - **Functions**: `*_elementstiffness(E, A, L, ...)`, `*_assemble(K, k, i, j)`, `*_elementforce(E, A, L, ... , u)`, `*_elementstress(...)`, `*_elementstrain(...)`, `*_elementlength(coords...)`
-- **Key mapping**: MATLAB `LinearBarElementStiffness.m` → `d1_truss_elementstiffness`. `PlaneTrussElementForce.m` → `d2_truss_elementforce`. `SpaceTrussElementStress.m` → `d3_truss_elementstress`.
+- **Key mapping**: MATLAB `LinearBarElementStiffness.m` → `d1_bar_elementstiffness`. `PlaneTrussElementForce.m` → `d2_truss_elementforce`. `SpaceTrussElementStress.m` → `d3_truss_elementstress`.
 
 ### Quadratic Bar (1D)
 - **MATLAB prefix**: None (original addition, not from Kattan)
@@ -84,7 +84,7 @@ The abstract type hierarchy (`AbstractElement{NDIM}`, `AbstractSpring{NDIM}`, `A
 
 | Prefix | Dimensions | MATLAB Domain | LibFEM Domain |
 |--------|-----------|---------------|---------------|
-| `d1_` | 1D (x) | LinearBar, 1D Spring | Truss, Spring |
+| `d1_` | 1D (x) | LinearBar, 1D Spring | Bar, Spring |
 | `d2_` | 2D (x, y) | PlaneTruss, PlaneFrame, Beam, 2D Spring | Truss, Beam, Spring |
 | `d3_` | 3D (x, y, z) | SpaceTruss, SpaceFrame, 3D Spring | Truss, Beam, Spring |
 

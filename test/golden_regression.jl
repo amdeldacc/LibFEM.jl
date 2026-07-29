@@ -97,7 +97,7 @@ end
                 if result isa AbstractMatrix
                     @test result ≈ result'
                     # Relaxed bound: some problems have negative k or large values
-                    @test minimum(eigvals(result)) >= -1e-6
+                    @test minimum(real(eigvals(result))) >= -1e-6  # real() handles complex FP noise on CI
                 end
             else
                 golden_data = _deserialize_binary(golden_path)

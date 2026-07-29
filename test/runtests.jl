@@ -36,7 +36,9 @@ macro test_physical_invariants(K, atol=1e-6)
         local K_ = $(esc(K))
         local atol_ = $(esc(atol))
         @test K_ ≈ K_'  # symmetry
-        @test all(eigvals(K_) .>= -atol_)  # PSD
+        # Use real() to handle complex FP noise from eigvals on non-exactly-symmetric
+        # matrices (BLAS/LAPACK-dependent) — see CI issue #122
+        @test all(real(eigvals(K_)) .>= -atol_)  # PSD
     end
 end
 
@@ -53,7 +55,7 @@ macro test_translational_invariants(K, atol=1e-6)
         local K_ = $(esc(K))
         local atol_ = $(esc(atol))
         @test K_ ≈ K_'
-        @test all(eigvals(K_) .>= -atol_)
+        @test all(real(eigvals(K_)) .>= -atol_)  # PSD (real() handles complex FP noise on CI)
         @test all(x -> isapprox(x, 0.0, atol=atol_), sum(K_, dims=2))  # zero row-sum (rigid body)
     end
 end

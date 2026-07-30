@@ -18,11 +18,14 @@ LibFEM.jl is a single-module library with multi-file source organization. The mo
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
 | `src/utils.jl` | `_direction_cosines`, validation helpers (`validate_positive`) |
-| `src/assembly.jl` | `_assemble!` private helper, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime` |
+| `src/assembly.jl` | `_assemble!` private helper (2-node), `_assemble_n!` (N-node continuum) |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
+| `src/bar.jl` | All `d1_bar_*` implementations (1D linear bar, renamed from `d1_truss_*`) |
 | `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (1-D quadratic bar, 3-node) |
-| `src/beam.jl` | All `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), and `d3_spaceframe_*` (space frame) implementations |
+| `src/beam.jl` | All `d2_beam_*` (pure 2D beam, bending only) |
+| `src/planeframe.jl` | All `d2_planeframe_*` (plane frame) + `_d2_planeframe_kprime` private helper |
+| `src/spaceframe.jl` | All `d3_spaceframe_*` (space frame) + `_d3_spaceframe_kprime`, `_spaceframe_transform` private helpers |
 | `src/solver.jl` | `apply_bc!` — Dirichlet boundary condition application |
 | `src/triangle.jl` | 2D constant strain triangle (CST) — `d2_cst_*` |
 | `src/lst.jl` | 2D quadratic triangle (LST) — `d2_lst_*` |
@@ -70,7 +73,7 @@ end
 end
 ```
 
-**Exports**: All public functions are exported in grouped blocks. `deg2rad` is imported from `Base` into the module namespace (`import Base: deg2rad` in `src/LibFEM.jl`). The helpers `_assemble!`, `_d2_planeframe_kprime`, and `_d3_spaceframe_kprime` remain private (underscore prefix, not exported). Diagram functions (`d2_beam_elementsheardiagram`, etc.) are *also* exported — the extension re-exports them with Plots-backed implementations; without `Plots`, calling them throws `DiagramError`. The new solver helper `apply_bc!` is exported for applying Dirichlet boundary conditions.
+**Exports**: All public functions are exported in grouped blocks. `deg2rad` is imported from `Base` into the module namespace (`import Base: deg2rad` in `src/LibFEM.jl`). The private helpers (`_assemble!`, `_assemble_n!`, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime`, `_spaceframe_transform`, `_beamdiagram`) remain private (underscore prefix, not exported) and live next to the elements they support: assembly helpers in `src/assembly.jl`, plane-frame helper in `src/planeframe.jl`, space-frame helpers in `src/spaceframe.jl`. Diagram functions (`d2_beam_elementsheardiagram`, etc.) are *also* exported — the extension re-exports them with Plots-backed implementations; without `Plots`, calling them throws `DiagramError`. The solver helper `apply_bc!` is exported for applying Dirichlet boundary conditions.
 
 ---
 

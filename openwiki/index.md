@@ -9,4 +9,10 @@ okf_version: "0.1"
 # Directories
 
 - [architecture](architecture/)
+- [assembly-solver](assembly-solver/)
+- [elements](elements/)
+- [kattan](kattan/)
+- [plotting](plotting/)
 - [reference](reference/)
+- [testing](testing/)
+- [workflows](workflows/)

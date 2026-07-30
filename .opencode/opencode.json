@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["oh-my-openagent@latest"],
+  "plugin": ["oh-my-openagent@latest","@tarquinen/opencode-dcp@latest"],
   "skills": {
     "disable": [
       "using-superpowers",

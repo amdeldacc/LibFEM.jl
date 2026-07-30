@@ -1,9 +1,12 @@
 # ═══════════════════════════════════════════════════════════
-# 2-D Pure Beam Element (d2_beam) — Bending Only
-# ═══════════════════════════════════════════════════════════
-# Pure beam: 2 DOF/node (v, θ), 4×4 stiffness, no axial DOF.
+# Ch7: Beam Element (2D Pure Beam — Bending Only)
+# MATLAB: BeamElementStiffness.m, BeamElementForces.m,
+#         BeamElementShearDiagram.m, BeamElementMomentDiagram.m
+# Julia: d2_beam_elementstiffness, d2_beam_elementforces,
+#        d2_beam_elementsheardiagram, d2_beam_elementmomentdiagram,
+#        d2_beam_assemble
+# Note: 2 DOF/node (v, θ), 4×4 stiffness, no axial DOF.
 # Inextensible Bernoulli-Euler beam (no axial deformation).
-# Based on Kattan's Beam* functions.
 # ═══════════════════════════════════════════════════════════
 
 """

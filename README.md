@@ -167,7 +167,7 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
   - `d1_` — 1 DOF/node (1D spring, linear bar)
   - `d2_` — 2 DOF/node (2D spring, plane truss, pure beam); 3 DOF/node for plane frame
   - `d3_` — 3 DOF/node (3D spring, space truss); **6 DOF/node** for 3D beam (space frame)
-- **Multi-file module**: Source organized into `src/LibFEM.jl` + 20 source files in `src/` (types, errors, utils, assembly, individual element families). The `lib/` directory contains problem definitions for Kattan textbook validation.
+- **Multi-file module**: Source organized into `src/LibFEM.jl` + 21 source files in `src/` (types, errors, utils, assembly, individual element families). The `lib/` directory contains problem definitions for Kattan textbook validation.
 - **Assembly refactored**: All `*_assemble` functions delegate to the private `_assemble!(K, k, i, j, ndofs)` or `_assemble_n!(K, k, nodes, ndofs)` helpers (use `@views` for efficiency).
 - **Validation**: All stiffness/length functions validate positive inputs (`L > 0`, `A > 0`).
 - **Type hierarchy**: Abstract types `AbstractElement{NDIM}`, `AbstractSpring{NDIM}`, `AbstractTruss{NDIM}`, `AbstractBeam{NDIM}` with concrete `@kwdef` structs `Spring{NDIM}`, `Truss{NDIM}`, `Beam{NDIM}`.
@@ -189,22 +189,23 @@ LibFEM.jl/
 │   ├── errors.jl          # Custom error types (ElementDimensionError, etc.)
 │   ├── utils.jl           # deg2rad and shared helpers
 │   ├── assembly.jl        # _assemble! helper, _assemble_n!
-│   ├── spring.jl          # d1/d2/d3_spring_* implementations
-│   ├── truss.jl           # d2/d3_truss_* implementations (1D moved to bar.jl)
-│   ├── beam.jl            # d2_beam_* implementations (planeframe/spaceframe moved to own files)
-│   ├── bar.jl             # d1_bar_* (1D linear bar, renamed from d1_truss)
-│   ├── planeframe.jl      # d2_planeframe_* (plane frame: axial + bending)
-│   ├── spaceframe.jl      # d3_spaceframe_* (3D frame: 6 DOF/node)
-│   ├── grid.jl            # d2_grid_* (grid element)
-│   ├── quadraticbar.jl    # d1_quadraticbar_* (3-node 1D element)
-│   ├── triangle.jl        # d2_cst_* (constant-strain triangle)
-│   ├── lst.jl             # d2_lst_* (linear-strain triangle, 6-node)
-│   ├── quadrilateral.jl   # d2_q4_* (4-node bilinear quadrilateral)
-│   ├── q8.jl              # d2_q8_* (8-node serendipity quadrilateral)
-│   ├── tetrahedron.jl     # d3_tet_* (4-node linear tetrahedron)
-│   ├── brick.jl           # d3_brick_* (8-node hexahedral brick)
-│   ├── fluidflow.jl       # d1_fluidflow_* (1D fluid flow / seepage)
-│   └── solver.jl          # apply_bc! (boundary condition helper)
+│   ├── spring.jl                    # Ch2: Spring (d1/d2/d3_spring_*)
+│   ├── bar.jl                       # Ch3: Linear Bar (d1_bar_*)
+│   ├── quadraticbar.jl              # Ch4: Quadratic Bar (d1_quadraticbar_*)
+│   ├── planetruss.jl                # Ch5: Plane Truss (d2_truss_*)
+│   ├── spacetruss.jl                # Ch6: Space Truss (d3_truss_*)
+│   ├── beam.jl                      # Ch7: Beam (d2_beam_*)
+│   ├── planeframe.jl                # Ch8: Plane Frame (d2_planeframe_*)
+│   ├── grid.jl                      # Ch9: Grid (d2_grid_*)
+│   ├── spaceframe.jl                # Ch10: Space Frame (d3_spaceframe_*)
+│   ├── triangle.jl                  # Ch11: CST Linear Triangle (d2_cst_*)
+│   ├── quadratictriangle.jl         # Ch12: LST Quadratic Triangle (d2_lst_*)
+│   ├── quadrilateral.jl             # Ch13: Q4 Bilinear Quadrilateral (d2_q4_*)
+│   ├── quadraticquadrilateral.jl    # Ch14: Q8 Quadratic Quadrilateral (d2_q8_*)
+│   ├── tetrahedron.jl               # Ch15: Tetrahedron (d3_tet_*)
+│   ├── brick.jl                     # Ch16: Brick (d3_brick_*)
+│   ├── fluidflow.jl                 # Ch17: Fluid Flow (d1_fluidflow_*)
+│   └── solver.jl                    # apply_bc! (boundary condition helper)
 ├── lib/
 │   ├── problem_definitions.jl  # Kattan textbook problem definitions
 │   └── problem_wrapper.jl      # Problem runner wrapper

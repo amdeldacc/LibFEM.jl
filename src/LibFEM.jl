@@ -5,27 +5,46 @@ using LinearAlgebra
 # ═══════════════════════════════════════════════════════════
 # Includes (order matters: types/errors/utils/assembly first)
 # ═══════════════════════════════════════════════════════════
+#
+# Kattan Chapter Index — 1:1 File ↔ Chapter Mapping
+#   Ch2:  spring.jl              ─  1D/2D/3D Spring
+#   Ch3:  bar.jl                 ─  1D Linear Bar
+#   Ch4:  quadraticbar.jl        ─  1D Quadratic Bar
+#   Ch5:  planetruss.jl          ─  2D Plane Truss
+#   Ch6:  spacetruss.jl          ─  3D Space Truss
+#   Ch7:  beam.jl                ─  2D Pure Beam
+#   Ch8:  planeframe.jl          ─  2D Plane Frame
+#   Ch9:  grid.jl                ─  2D Grid
+#   Ch10: spaceframe.jl          ─  3D Space Frame
+#   Ch11: triangle.jl            ─  2D CST (d2_cst_*)
+#   Ch12: quadratictriangle.jl   ─  2D LST / Quadratic Triangle (d2_lst_*)
+#   Ch13: quadrilateral.jl       ─  2D Q4 (d2_q4_*)
+#   Ch14: quadraticquadrilateral.jl ─  2D Q8 / Quadratic Quadrilateral (d2_q8_*)
+#   Ch15: tetrahedron.jl         ─  3D Tetrahedron (d3_tet_*)
+#   Ch16: brick.jl               ─  3D Brick (d3_brick_*)
+#   Ch17: fluidflow.jl           ─  1D Fluid Flow / Seepage
 
 include("types.jl")
 include("errors.jl")
 include("utils.jl")
 include("assembly.jl")
-include("spring.jl")
-include("bar.jl")
-include("truss.jl")
-include("beam.jl")
-include("planeframe.jl")
-include("spaceframe.jl")
-include("grid.jl")
-include("quadraticbar.jl")
-include("triangle.jl")
-include("lst.jl")
-include("fluidflow.jl")
-include("quadrilateral.jl")
-include("q8.jl")
-include("solver.jl")
-include("tetrahedron.jl")
-include("brick.jl")
+include("spring.jl")                # Ch2:  Spring
+include("bar.jl")                   # Ch3:  Linear Bar
+include("quadraticbar.jl")          # Ch4:  Quadratic Bar
+include("planetruss.jl")            # Ch5:  Plane Truss
+include("spacetruss.jl")            # Ch6:  Space Truss
+include("beam.jl")                  # Ch7:  Beam
+include("planeframe.jl")            # Ch8:  Plane Frame
+include("grid.jl")                  # Ch9:  Grid
+include("spaceframe.jl")            # Ch10: Space Frame
+include("triangle.jl")              # Ch11: CST (Linear Triangle)
+include("quadratictriangle.jl")     # Ch12: LST (Quadratic Triangle)
+include("quadrilateral.jl")         # Ch13: Q4 (Bilinear Quadrilateral)
+include("quadraticquadrilateral.jl")# Ch14: Q8 (Quadratic Quadrilateral)
+include("tetrahedron.jl")           # Ch15: Tetrahedron
+include("brick.jl")                 # Ch16: Brick
+include("fluidflow.jl")             # Ch17: Fluid Flow
+include("solver.jl")                # Solver / BCs
 
 # Import Base.deg2rad for Julia < 1.10 compat (ensures deg2rad
 # is available in the module namespace on all Julia 1.x versions)

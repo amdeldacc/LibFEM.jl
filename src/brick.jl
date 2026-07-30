@@ -1,10 +1,12 @@
 # ═══════════════════════════════════════════════════════════
-# 3-D Linear Brick Element (d3_brick)
-# ═══════════════════════════════════════════════════════════
-# 8-node hexahedron (trilinear), 3 DOF/node, 24×24 stiffness.
+# Ch16: Linear Brick Element (8-node Hexahedron, 3D Continuum)
+# MATLAB: LinearBrickElementStiffness.m, LinearBrickElementVolume.m,
+#         LinearBrickElementStresses.m, LinearBrickElementPStresses.m
+# Julia: d3_brick_elementvolume, d3_brick_elementstiffness, d3_brick_elementstress,
+#        d3_brick_elementpstress, d3_brick_assemble
+# Note: 8-node hexahedron, trilinear, 3 DOF/node, 24×24 stiffness.
 # 2×2×2 Gauss quadrature with full integration.
 # Node ordering: bottom face CCW 1-2-3-4, top face CCW 5-6-7-8.
-# Based on Kattan's LinearBrickElement* functions (Chapter 16).
 # ═══════════════════════════════════════════════════════════
 
 """

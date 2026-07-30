@@ -1,5 +1,9 @@
 # ═══════════════════════════════════════════════════════════
-# 1-D Spring Element (d1_spring)
+# Ch2: Spring Element
+# MATLAB: SpringElementStiffness.m, SpringElementForce.m
+# Julia: d1/d2/d3_spring_elementstiffness, d1/d2/d3_spring_elementforce,
+#        d1/d2/d3_spring_assemble
+# Note: Kattan Ch2 covers 1D springs only. 2D/3D springs are extensions.
 # ═══════════════════════════════════════════════════════════
 
 """

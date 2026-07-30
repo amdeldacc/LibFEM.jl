@@ -1,5 +1,11 @@
 # ═══════════════════════════════════════════════════════════
-# 1-D Fluid Flow Element (d1_fluidflow)
+# Ch17: Fluid Flow / Seepage Element (1D)
+# MATLAB: FluidFlow1DElementStiffness.m, FluidFlow1DElementVelocities.m,
+#         FluidFlow1DElementVFR.m
+# Julia: d1_fluidflow_elementstiffness, d1_fluidflow_elementvelocity,
+#        d1_fluidflow_elementvfr, d1_fluidflow_assemble
+# Note: Kattan Ch17 also covers 1D/2D heat transfer and structural
+# dynamics — only the 1D fluid flow portion is currently implemented.
 # ═══════════════════════════════════════════════════════════
 
 """

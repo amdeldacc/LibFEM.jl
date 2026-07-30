@@ -1,3 +1,11 @@
+# ═══════════════════════════════════════════════════════════
+# Ch11: Constant Strain Triangle (CST — Linear Triangle)
+# MATLAB: LinearTriangleElementStiffness.m, LinearTriangleElementArea.m,
+#         LinearTriangleElementStresses.m, LinearTriangleElementPStresses.m
+# Julia: d2_cst_elementarea, d2_cst_elementstiffness, d2_cst_elementstress,
+#        d2_cst_elementpstress, d2_cst_assemble
+# ═══════════════════════════════════════════════════════════
+
 """
     d2_cst_elementarea(x1, y1, x2, y2, x3, y3)
 
@@ -71,21 +79,7 @@ function d2_cst_elementstiffness(
     ]
 
     # Material constitutive matrix D (3×3)
-    if p == 1
-        # Plane stress
-        D = (E / (1 - NU^2)) * [
-            1    NU    0
-            NU   1     0
-            0    0     (1 - NU) / 2
-        ]
-    else
-        # Plane strain
-        D = (E / ((1 + NU) * (1 - 2 * NU))) * [
-            1 - NU   NU       0
-            NU       1 - NU   0
-            0        0        (1 - 2 * NU) / 2
-        ]
-    end
+    D = _d2_elasticity_matrix(E, NU, p)
 
     return t * A * transpose(B) * D * B
 end
@@ -138,19 +132,7 @@ function d2_cst_elementstress(
     ]
 
     # Material constitutive matrix D (3×3)
-    if p == 1
-        D = (E / (1 - NU^2)) * [
-            1    NU    0
-            NU   1     0
-            0    0     (1 - NU) / 2
-        ]
-    else
-        D = (E / ((1 + NU) * (1 - 2 * NU))) * [
-            1 - NU   NU       0
-            NU       1 - NU   0
-            0        0        (1 - 2 * NU) / 2
-        ]
-    end
+    D = _d2_elasticity_matrix(E, NU, p)
 
     return D * B * u
 end

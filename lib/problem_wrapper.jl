@@ -53,6 +53,9 @@ const PROBLEM_VARS = Dict(
     "8.1" => ["K", "k", "f", "u", "U", "F", "f1", "f2"],
     "8.2" => ["K", "k", "f", "u", "U", "F", "f1", "f2", "f3"],
     "8.3" => ["K", "k", "f", "u", "U", "F", "f1", "f2"],
+    "9.1" => ["K", "k", "f", "u", "U", "F", "f1", "f2"],
+    "10.1" => ["K", "k", "f", "u", "U", "F", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8"],
+    "11.1" => ["K", "k", "f", "u", "U", "F", "sig1", "sig2", "sig3", "sig4", "s1", "s2", "s3", "s4"],
 )
 
 """All known problem names (sorted)."""
@@ -187,7 +190,7 @@ end
 # Each function computes the same variables as the MATLAB problem
 # script but using LibFEM.jl Julia functions.
 #
-# All 14 Kattan problems (2.1 through 8.3) have Julia equivalents.
+# All 15 Kattan problems (2.1 through 9.1) have Julia equivalents.
 # ═══════════════════════════════════════════════════════════════
 
 """
@@ -198,7 +201,7 @@ LibFEM.jl Julia functions. Returns `nothing` for problems that
 do not yet have a Julia equivalent.
 
 Implemented: "2.1", "2.2", "3.1", "3.3", "4.2", "5.1", "5.2",
-"6.1", "7.1", "7.2", "7.3", "8.1", "8.2", "8.3".
+"6.1", "7.1", "7.2", "7.3", "8.1", "8.2", "8.3", "9.1".
 """
 function run_julia_problem(problem_name::AbstractString)
     if problem_name == "2.1"
@@ -229,9 +232,61 @@ function run_julia_problem(problem_name::AbstractString)
         return _problem_8_2_julia()
     elseif problem_name == "8.3"
         return _problem_8_3_julia()
+    elseif problem_name == "9.1"
+        return _problem_9_1_julia()
+    elseif problem_name == "10.1"
+        return _problem_10_1_julia()
+    elseif problem_name == "11.1"
+        return _problem_11_1_julia()
     else
         return nothing
     end
+end
+
+"""Julia equivalent of Problem 11.1: Thin plate with 4 CST elements."""
+function _problem_11_1_julia()
+    E = 210e6; NU = 0.3; t = 0.025; p = 1
+
+    k1 = d2_cst_elementstiffness(E, NU, t, 0, 0, 0.25, 0.125, 0, 0.25, p)
+    k2 = d2_cst_elementstiffness(E, NU, t, 0, 0, 0.5, 0, 0.25, 0.125, p)
+    k3 = d2_cst_elementstiffness(E, NU, t, 0.5, 0.25, 0, 0.25, 0.25, 0.125, p)
+    k4 = d2_cst_elementstiffness(E, NU, t, 0.5, 0, 0.5, 0.25, 0.25, 0.125, p)
+
+    K = zeros(10, 10)
+    K = d2_cst_assemble(K, k1, 1, 5, 4)
+    K = d2_cst_assemble(K, k2, 1, 2, 5)
+    K = d2_cst_assemble(K, k3, 3, 4, 5)
+    K = d2_cst_assemble(K, k4, 2, 3, 5)
+
+    k = [K[3:6, 3:6] K[3:6, 9:10]; K[9:10, 3:6] K[9:10, 9:10]]
+    f = [9.375; 0.0; 9.375; 0.0; 0.0; 0.0]
+    u = k \ f
+    U = zeros(10)
+    U[3:6] = u[1:4]
+    U[9:10] = u[5:6]
+    F = K * U
+    F[abs.(F) .< 1e-10] .= 0.0
+
+    u1 = [U[1]; U[2]; U[9]; U[10]; U[7]; U[8]]
+    u2 = [U[1]; U[2]; U[3]; U[4]; U[9]; U[10]]
+    u3 = [U[5]; U[6]; U[7]; U[8]; U[9]; U[10]]
+    u4 = [U[3]; U[4]; U[5]; U[6]; U[9]; U[10]]
+
+    sig1 = d2_cst_elementstress(E, NU, 0, 0, 0.25, 0.125, 0, 0.25, p, u1)
+    sig2 = d2_cst_elementstress(E, NU, 0, 0, 0.5, 0, 0.25, 0.125, p, u2)
+    sig3 = d2_cst_elementstress(E, NU, 0.5, 0.25, 0, 0.25, 0.25, 0.125, p, u3)
+    sig4 = d2_cst_elementstress(E, NU, 0.5, 0, 0.5, 0.25, 0.25, 0.125, p, u4)
+
+    s1 = d2_cst_elementpstress(sig1)
+    s2 = d2_cst_elementpstress(sig2)
+    s3 = d2_cst_elementpstress(sig3)
+    s4 = d2_cst_elementpstress(sig4)
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u, "U" => U, "F" => F,
+        "sig1" => sig1, "sig2" => sig2, "sig3" => sig3, "sig4" => sig4,
+        "s1" => collect(s1), "s2" => collect(s2), "s3" => collect(s3), "s4" => collect(s4),
+    )
 end
 
 """Julia equivalent of Problem 2.1: Two-element spring system."""
@@ -736,6 +791,94 @@ function _problem_8_3_julia()
         "K" => K, "k" => k, "f" => f, "u" => u,
         "U" => U, "F" => F,
         "f1" => f1, "f2" => f2,
+    )
+end
+
+"""Julia equivalent of Problem 9.1: Two-element grid (L-shaped)."""
+function _problem_9_1_julia()
+    E = 210e6; G = 84e6; I = 20e-5; J = 5e-5
+    x1, y1 = 4.0, 0.0; x2, y2 = 0.0, 3.0; x3, y3 = 0.0, -3.0
+
+    L1 = d2_grid_elementlength(x1, y1, x2, y2)
+    L2 = d2_grid_elementlength(x1, y1, x3, y3)
+    θ1 = 180 + atan(3 / 4) * 180 / π
+    θ2 = 180 - atan(3 / 4) * 180 / π
+
+    k1 = d2_grid_elementstiffness(E, G, I, J, L1, θ1)
+    k2 = d2_grid_elementstiffness(E, G, I, J, L2, θ2)
+
+    K = zeros(9, 9)
+    K = d2_grid_assemble(K, k1, 1, 2)
+    K = d2_grid_assemble(K, k2, 1, 3)
+
+    k = K[1:3, 1:3]
+    f = [-10.0; 0.0; 0.0]
+    u = k \ f
+    U = zeros(9)
+    U[1:3] = u
+    F = K * U
+    F[abs.(F) .< 1e-10] .= 0.0
+
+    u1 = [U[1]; U[2]; U[3]; U[4]; U[5]; U[6]]
+    f1 = d2_grid_elementforces(E, G, I, J, L1, θ1, u1)
+    u2 = [U[1]; U[2]; U[3]; U[7]; U[8]; U[9]]
+    f2 = d2_grid_elementforces(E, G, I, J, L2, θ2, u2)
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u,
+        "U" => U, "F" => F, "f1" => f1, "f2" => f2,
+    )
+end
+
+"""Julia equivalent of Problem 10.1: Rectangular space frame (8 elements)."""
+function _problem_10_1_julia()
+    E = 210e6; G = 84e6; A = 2e-2; Iy = 10e-5; Iz = 20e-5; J = 5e-5
+
+    x = [0,0,0, 0,0,4, 4,0,4, 4,0,0, 0,5,0, 0,5,4, 4,5,4, 4,5,0]
+
+    k1 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, x[1],x[2],x[3], x[13],x[14],x[15])
+    k2 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, x[4],x[5],x[6], x[16],x[17],x[18])
+    k3 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, x[7],x[8],x[9], x[19],x[20],x[21])
+    k4 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, x[10],x[11],x[12], x[22],x[23],x[24])
+    k5 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, x[13],x[14],x[15], x[16],x[17],x[18])
+    k6 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, x[16],x[17],x[18], x[19],x[20],x[21])
+    k7 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, x[19],x[20],x[21], x[22],x[23],x[24])
+    k8 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, x[13],x[14],x[15], x[22],x[23],x[24])
+
+    K = zeros(48, 48)
+    for (ke, ni, nj) in [(k1,1,5),(k2,2,6),(k3,3,7),(k4,4,8),(k5,5,6),(k6,6,7),(k7,7,8),(k8,5,8)]
+        K = d3_spaceframe_assemble(K, ke, ni, nj)
+    end
+
+    k = K[25:48, 25:48]
+    f = zeros(24); f[13] = -15.0
+    u = k \ f
+    U = zeros(48); U[25:48] = u
+    F = K * U
+    F[abs.(F) .< 1e-10] .= 0.0
+
+    u1 = [U[1:6]; U[25:30]]
+    u2 = [U[7:12]; U[31:36]]
+    u3 = [U[13:18]; U[37:42]]
+    u4 = [U[19:24]; U[43:48]]
+    u5 = [U[25:30]; U[31:36]]
+    u6 = [U[31:36]; U[37:42]]
+    u7 = [U[37:42]; U[43:48]]
+    u8 = [U[25:30]; U[43:48]]
+
+    f1 = d3_spaceframe_elementforces(E,G,A,Iy,Iz,J, x[1],x[2],x[3], x[13],x[14],x[15], u1)
+    f2 = d3_spaceframe_elementforces(E,G,A,Iy,Iz,J, x[4],x[5],x[6], x[16],x[17],x[18], u2)
+    f3 = d3_spaceframe_elementforces(E,G,A,Iy,Iz,J, x[7],x[8],x[9], x[19],x[20],x[21], u3)
+    f4 = d3_spaceframe_elementforces(E,G,A,Iy,Iz,J, x[10],x[11],x[12], x[22],x[23],x[24], u4)
+    f5 = d3_spaceframe_elementforces(E,G,A,Iy,Iz,J, x[13],x[14],x[15], x[16],x[17],x[18], u5)
+    f6 = d3_spaceframe_elementforces(E,G,A,Iy,Iz,J, x[16],x[17],x[18], x[19],x[20],x[21], u6)
+    f7 = d3_spaceframe_elementforces(E,G,A,Iy,Iz,J, x[19],x[20],x[21], x[22],x[23],x[24], u7)
+    f8 = d3_spaceframe_elementforces(E,G,A,Iy,Iz,J, x[13],x[14],x[15], x[22],x[23],x[24], u8)
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u, "U" => U, "F" => F,
+        "f1" => f1, "f2" => f2, "f3" => f3, "f4" => f4,
+        "f5" => f5, "f6" => f6, "f7" => f7, "f8" => f8,
     )
 end
 

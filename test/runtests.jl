@@ -915,6 +915,44 @@ end
             @test_throws ElementParameterError d3_spaceframe_elementstiffness(1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0)
         end
 
+        @testset "problem_10_1_integration" begin
+            E = 210e6; G = 84e6; A = 2e-2; Iy = 10e-5; Iz = 20e-5; J = 5e-5
+            # 8-node space frame, DOFs 1-24 fixed, 25-48 free
+            k1 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, 0,0,0, 0,5,0)
+            k2 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, 0,0,4, 0,5,4)
+            k3 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, 4,0,4, 4,5,4)
+            k4 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, 4,0,0, 4,5,0)
+            k5 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, 0,5,0, 0,5,4)
+            k6 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, 0,5,4, 4,5,4)
+            k7 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, 4,5,4, 4,5,0)
+            k8 = d3_spaceframe_elementstiffness(E,G,A,Iy,Iz,J, 0,5,0, 4,5,0)
+
+            K = zeros(48, 48)
+            for (ke, ni, nj) in [(k1,1,5),(k2,2,6),(k3,3,7),(k4,4,8),(k5,5,6),(k6,6,7),(k7,7,8),(k8,5,8)]
+                K = d3_spaceframe_assemble(K, ke, ni, nj)
+            end
+
+            k = K[25:48, 25:48]
+            f = zeros(24); f[13] = -15.0
+            u = k \ f
+            U = zeros(48); U[25:48] = u
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+
+            # Golden values from Kattan Solutions Manual (rtol=1e-1 for magnitude)
+            @test u[1] ≈ -0.0004 atol = 1e-3   # Ux₅
+            @test u[3] ≈ -0.0006 atol = 1e-3   # Uz₅
+            @test u[13] ≈ -0.0021 atol = 1e-3  # Ux₇
+            @test u[15] ≈ 0.0006 atol = 1e-3   # Uz₇
+
+            @test F[1] ≈ 1.1599 rtol = 1e-2    # Fx₁
+            @test F[2] ≈ 2.5054 rtol = 1e-2    # Fy₁
+            @test F[6] ≈ -3.2737 rtol = 1e-2   # Rz₁
+            @test F[7] ≈ 6.3324 rtol = 1e-2    # Fx₂
+            @test F[12] ≈ -17.6937 rtol = 1e-2 # Rz₂
+            @test F[37] ≈ -15.0 atol = 1e-4    # Fy₂ (applied load)
+        end
+
         # A validation for force functions
         @test_throws ElementParameterError d3_spaceframe_elementforces(1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0, zeros(12))
         @test_throws ElementParameterError d3_spaceframe_elementforces(1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 0,0,0, 1,0,0, zeros(12))
@@ -990,6 +1028,45 @@ end
         @testset "invariant in element property tests" begin
             k = d2_grid_elementstiffness(1, 1, 1, 1, 1, 30)
             @test_physical_invariants(k)
+        end
+
+        @testset "problem_9_1_integration" begin
+            E = 210e6; G = 84e6; I = 20e-5; J = 5e-5
+            L1 = d2_grid_elementlength(4, 0, 0, 3)
+            L2 = d2_grid_elementlength(4, 0, 0, -3)
+            θ1 = 180 + atan(3 / 4) * 180 / π
+            θ2 = 180 - atan(3 / 4) * 180 / π
+
+            k1 = d2_grid_elementstiffness(E, G, I, J, L1, θ1)
+            k2 = d2_grid_elementstiffness(E, G, I, J, L2, θ2)
+
+            K = zeros(9, 9)
+            K = d2_grid_assemble(K, k1, 1, 2)
+            K = d2_grid_assemble(K, k2, 1, 3)
+
+            k = K[1:3, 1:3]
+            f = [-10.0; 0.0; 0.0]
+            u = k \ f
+            U = zeros(9)
+            U[1:3] = u
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+
+            # Golden values from Kattan Solutions Manual
+            @test u[1] ≈ -0.0048 atol = 1e-4  # UZ₁
+            @test u[2] ≈ 0.0 atol = 1e-4      # RX₁
+            @test u[3] ≈ -0.0018 atol = 1e-4   # RY₁
+
+            @test F[1] ≈ -10.0 atol = 1e-4     # FZ₁
+            @test F[4] ≈ 5.0 atol = 1e-4       # FZ₂
+            @test F[5] ≈ -13.8905 atol = 1e-2  # MX₂
+            @test F[6] ≈ 20.0 atol = 1e-2      # MY₂
+            @test F[7] ≈ 5.0 atol = 1e-4       # FZ₃
+            @test F[8] ≈ 13.8905 atol = 1e-2   # MX₃
+            @test F[9] ≈ 20.0 atol = 1e-2      # MY₃
+
+            # Equilibrium: sum of Z-forces ≈ 0
+            @test sum(F[1:3:end]) ≈ 0.0 atol = 1e-10
         end
     end
 
@@ -1132,6 +1209,59 @@ end
         @testset "pstress" begin
             s1, s2, θ = d2_cst_elementpstress([100.0, 50.0, 25.0])
             @test s1 > s2  # principal σ1 ≥ σ2
+        end
+
+        @testset "problem_11_1_integration" begin
+            # Thin plate with 4 CST elements (Kattan Problem 11.1)
+            # 5 nodes, 4 elements, plane stress
+            E = 210e6; NU = 0.3; t = 0.025; p = 1
+
+            k1 = d2_cst_elementstiffness(E, NU, t, 0, 0, 0.25, 0.125, 0, 0.25, p)
+            k2 = d2_cst_elementstiffness(E, NU, t, 0, 0, 0.5, 0, 0.25, 0.125, p)
+            k3 = d2_cst_elementstiffness(E, NU, t, 0.5, 0.25, 0, 0.25, 0.25, 0.125, p)
+            k4 = d2_cst_elementstiffness(E, NU, t, 0.5, 0, 0.5, 0.25, 0.25, 0.125, p)
+
+            K = zeros(10, 10)
+            K = d2_cst_assemble(K, k1, 1, 5, 4)
+            K = d2_cst_assemble(K, k2, 1, 2, 5)
+            K = d2_cst_assemble(K, k3, 3, 4, 5)
+            K = d2_cst_assemble(K, k4, 2, 3, 5)
+
+            k = [K[3:6, 3:6] K[3:6, 9:10]; K[9:10, 3:6] K[9:10, 9:10]]
+            f = [9.375; 0.0; 9.375; 0.0; 0.0; 0.0]
+            u = k \ f
+            U = zeros(10); U[3:6] = u[1:4]; U[9:10] = u[5:6]
+            F = K * U; F[abs.(F) .< 1e-10] .= 0.0
+
+            # Node displacements (×10⁻⁶)
+            @test u[1] ≈ 6.928e-6 rtol=1e-2  # Ux₂
+            @test u[2] ≈ 0.714e-6 rtol=1e-2  # Uy₂
+            @test u[3] ≈ 6.928e-6 rtol=1e-2  # Ux₃
+            @test u[4] ≈ -0.714e-6 rtol=1e-2 # Uy₃
+            @test u[5] ≈ 3.271e-6 rtol=1e-2  # Ux₅
+            @test u[6] ≈ 0.0 atol=1e-10       # Uy₅
+
+            # Reactions
+            @test F[1] ≈ -9.375 rtol=1e-2     # Fx₁
+            @test F[2] ≈ -3.754 rtol=1e-2     # Fy₁
+            @test F[7] ≈ -9.375 rtol=1e-2     # Fx₄
+            @test F[8] ≈ 3.754 rtol=1e-2      # Fy₄
+
+            # Element stresses
+            u1 = [U[1];U[2];U[9];U[10];U[7];U[8]]
+            u2 = [U[1];U[2];U[3];U[4];U[9];U[10]]
+            u3 = [U[5];U[6];U[7];U[8];U[9];U[10]]
+            u4 = [U[3];U[4];U[5];U[6];U[9];U[10]]
+
+            sig1 = d2_cst_elementstress(E, NU, 0, 0, 0.25, 0.125, 0, 0.25, p, u1)
+            sig2 = d2_cst_elementstress(E, NU, 0, 0, 0.5, 0, 0.25, 0.125, p, u2)
+            sig3 = d2_cst_elementstress(E, NU, 0.5, 0.25, 0, 0.25, 0.25, 0.125, p, u3)
+            sig4 = d2_cst_elementstress(E, NU, 0.5, 0, 0.5, 0.25, 0.25, 0.125, p, u4)
+
+            @test sig1[1] ≈ 3019.2 rtol=1e-2  # σxx₁
+            @test sig2[1] ≈ 3000.0 rtol=1e-2  # σxx₂
+            @test sig4[1] ≈ 2980.8 rtol=1e-2  # σxx₄
+            @test sig4[2] ≈ -305.1 rtol=1e-2  # σyy₄
         end
     end
 

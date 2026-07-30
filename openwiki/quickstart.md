@@ -7,7 +7,7 @@ tags: ["quickstart", "getting-started", "fem", "julia"]
 
 # LibFEM.jl — Quickstart
 
-**LibFEM.jl v0.3.0** is an educational Finite Element Method (FEM) library for Julia. It provides element stiffness matrices, assembly functions, force/stress/strain calculations, boundary condition application, and diagram plotting for springs, trusses, beams, 2D/3D continuum elements, grid structures, and fluid flow in 1D, 2D, and 3D.
+**LibFEM.jl v0.4.0** is an educational Finite Element Method (FEM) library for Julia. It provides element stiffness matrices, assembly functions, force/stress/strain calculations, boundary condition application, and diagram plotting for springs, trusses, beams, 2D/3D continuum elements, grid structures, and fluid flow in 1D, 2D, and 3D.
 
 Inspired by *"MATLAB Guide to Finite Elements — An Interactive Approach"* by Peter I. Kattan (Springer, 2007). The reference MATLAB code is preserved in `Doc/Kattan/M-Files/` as a read-only verification source.
 
@@ -120,7 +120,8 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 
 - **Angle units**: all angle parameters are in **degrees**; converted to radians internally via `deg2rad` (imported from `Base`). The 3D convention is the **cosine-of-axis-angle** form: identity `cos²θx + cos²θy + cos²θz = 1` must hold; off-unit inputs are auto-normalized with a `@warn`. Derive angles from node coordinates via `d2_truss_elementlength`/`d3_truss_elementlength` rather than passing angles manually when possible.
 - **Dimension prefixes**: `d1_` (1 DOF/node), `d2_` (2 DOF/node for spring/truss; 3 for `d2_planeframe`), `d3_` (3 DOF/node for spring/truss; **6** for `d3_spaceframe`).
-- **Multi-file module**: source code is organized into `src/LibFEM.jl` (declaration + includes + diagram stubs) plus per-family files: `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/bar.jl` (1D linear bar), `src/truss.jl` (2D/3D truss), `src/beam.jl` (pure 2D beam), `src/planeframe.jl` (plane frame + `_d2_planeframe_kprime`), `src/spaceframe.jl` (space frame + `_d3_spaceframe_kprime` and `_spaceframe_transform`), `src/quadraticbar.jl`, `src/grid.jl`, `src/fluidflow.jl`, `src/triangle.jl`, `src/lst.jl`, `src/quadrilateral.jl`, `src/q8.jl`, `src/tetrahedron.jl`, `src/brick.jl`, `src/solver.jl`. Beam diagram functions live in the package extension `ext/LibFEMPlotsExt.jl` (loaded only when `Plots.jl` is present).
+- **Multi-file module**: source code is organized into `src/LibFEM.jl` (declaration + includes + diagram stubs) + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/bar.jl`, `src/quadraticbar.jl`, `src/planetruss.jl`, `src/spacetruss.jl`, `src/beam.jl`, `src/planeframe.jl`, `src/spaceframe.jl`, `src/grid.jl`, `src/triangle.jl`, `src/quadratictriangle.jl`, `src/quadrilateral.jl`, `src/quadraticquadrilateral.jl`, `src/tetrahedron.jl`, `src/brick.jl`, `src/fluidflow.jl`. The file layout mirrors the Kattan textbook chapters 1:1. Beam diagram functions live in the package extension `ext/LibFEMPlotsExt.jl` (loaded only when `Plots.jl` is present).
+- **Source layout**: each Kattan chapter maps to exactly one `src/*.jl` file (e.g. `planetruss.jl` ↔ Ch5, `spaceframe.jl` ↔ Ch10). Private helpers like `_d2_planeframe_kprime` and `_d3_spaceframe_kprime` live alongside the element they support, not in `src/assembly.jl`.
 - **Assembly refactored**: all 8 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
 - **Parameter validation**: `L`, `A`, `E`, `k > 0` are enforced at function entry via `validate_positive`; invalid inputs throw `ElementParameterError`.
 
@@ -132,13 +133,23 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
 | `src/utils.jl` | Shared helpers (`_direction_cosines`, validation) |
-| `src/assembly.jl` | `_assemble!` private helper (2-node), `_assemble_n!` (N-node continuum) |
+| `src/assembly.jl` | `_assemble!` private helper, generic N-node `_assemble_n!` |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
-| `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
+| `src/bar.jl` | `d1_bar_*` (1-D linear bar; the `d1_truss_*` aliases live here too) |
 | `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (3-node quadratic bar) |
-| `src/beam.jl` | All `d2_beam_*` (pure 2D beam, bending only) |
-| `src/planeframe.jl` | All `d2_planeframe_*` implementations + `_d2_planeframe_kprime` private helper |
-| `src/spaceframe.jl` | All `d3_spaceframe_*` implementations + `_d3_spaceframe_kprime`, `_spaceframe_transform` private helpers |
+| `src/planetruss.jl` | All `d2_truss_*` implementations (2-D plane truss) |
+| `src/spacetruss.jl` | All `d3_truss_*` implementations (3-D space truss) |
+| `src/beam.jl` | All `d2_beam_*` implementations (pure Euler-Bernoulli beam) |
+| `src/planeframe.jl` | All `d2_planeframe_*` implementations + private `_d2_planeframe_kprime` |
+| `src/spaceframe.jl` | All `d3_spaceframe_*` implementations + private `_d3_spaceframe_kprime`, `_spaceframe_transform` |
+| `src/grid.jl` | All `d2_grid_*` implementations + private `_d2_grid_kprime` |
+| `src/triangle.jl` | All `d2_cst_*` implementations (CST) |
+| `src/quadratictriangle.jl` | All `d2_lst_*` implementations (LST / 6-node triangle) |
+| `src/quadrilateral.jl` | All `d2_q4_*` implementations (Q4 / bilinear quad) |
+| `src/quadraticquadrilateral.jl` | All `d2_q8_*` implementations (Q8 / serendipity quad) |
+| `src/tetrahedron.jl` | All `d3_tet_*` implementations (4-node tetrahedron) |
+| `src/brick.jl` | All `d3_brick_*` implementations (8-node brick) |
+| `src/fluidflow.jl` | All `d1_fluidflow_*` implementations (1-D fluid flow) |
 | `src/solver.jl` | `apply_bc!` — Dirichlet boundary condition application |
 | `ext/LibFEMPlotsExt.jl` | Beam diagram functions (Plots weak dependency via extension) |
 | `test/runtests.jl` | Main test suite (~1054 lines, covers all 17 element types, property tests, golden regression) |

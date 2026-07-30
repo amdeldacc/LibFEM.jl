@@ -120,7 +120,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 
 - **Angle units**: all angle parameters are in **degrees**; converted to radians internally via `deg2rad` (imported from `Base`). The 3D convention is the **cosine-of-axis-angle** form: identity `cos²θx + cos²θy + cos²θz = 1` must hold; off-unit inputs are auto-normalized with a `@warn`. Derive angles from node coordinates via `d2_truss_elementlength`/`d3_truss_elementlength` rather than passing angles manually when possible.
 - **Dimension prefixes**: `d1_` (1 DOF/node), `d2_` (2 DOF/node for spring/truss; 3 for `d2_planeframe`), `d3_` (3 DOF/node for spring/truss; **6** for `d3_spaceframe`).
-- **Multi-file module**: source code is organized into `src/LibFEM.jl` (declaration + includes + diagram stubs) + `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/truss.jl`, `src/beam.jl`, `src/quadraticbar.jl`. Beam diagram functions live in the package extension `ext/LibFEMPlotsExt.jl` (loaded only when `Plots.jl` is present).
+- **Multi-file module**: source code is organized into `src/LibFEM.jl` (declaration + includes + diagram stubs) plus per-family files: `src/types.jl`, `src/errors.jl`, `src/utils.jl`, `src/assembly.jl`, `src/spring.jl`, `src/bar.jl` (1D linear bar), `src/truss.jl` (2D/3D truss), `src/beam.jl` (pure 2D beam), `src/planeframe.jl` (plane frame + `_d2_planeframe_kprime`), `src/spaceframe.jl` (space frame + `_d3_spaceframe_kprime` and `_spaceframe_transform`), `src/quadraticbar.jl`, `src/grid.jl`, `src/fluidflow.jl`, `src/triangle.jl`, `src/lst.jl`, `src/quadrilateral.jl`, `src/q8.jl`, `src/tetrahedron.jl`, `src/brick.jl`, `src/solver.jl`. Beam diagram functions live in the package extension `ext/LibFEMPlotsExt.jl` (loaded only when `Plots.jl` is present).
 - **Assembly refactored**: all 8 `*_assemble` functions delegate to one private `_assemble!(K, k, i, j, ndofs)` helper (uses `@views` for efficiency).
 - **Parameter validation**: `L`, `A`, `E`, `k > 0` are enforced at function entry via `validate_positive`; invalid inputs throw `ElementParameterError`.
 
@@ -132,11 +132,13 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `src/types.jl` | Abstract type hierarchy, `@kwdef` element structs |
 | `src/errors.jl` | Custom error type definitions |
 | `src/utils.jl` | Shared helpers (`_direction_cosines`, validation) |
-| `src/assembly.jl` | `_assemble!` private helper, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime` |
+| `src/assembly.jl` | `_assemble!` private helper (2-node), `_assemble_n!` (N-node continuum) |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
 | `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
 | `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (3-node quadratic bar) |
-| `src/beam.jl` | All `d2_beam_*`, `d2_planeframe_*`, and `d3_spaceframe_*` implementations |
+| `src/beam.jl` | All `d2_beam_*` (pure 2D beam, bending only) |
+| `src/planeframe.jl` | All `d2_planeframe_*` implementations + `_d2_planeframe_kprime` private helper |
+| `src/spaceframe.jl` | All `d3_spaceframe_*` implementations + `_d3_spaceframe_kprime`, `_spaceframe_transform` private helpers |
 | `src/solver.jl` | `apply_bc!` — Dirichlet boundary condition application |
 | `ext/LibFEMPlotsExt.jl` | Beam diagram functions (Plots weak dependency via extension) |
 | `test/runtests.jl` | Main test suite (~1054 lines, covers all 17 element types, property tests, golden regression) |

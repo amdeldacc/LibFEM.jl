@@ -1,12 +1,15 @@
 # ═══════════════════════════════════════════════════════════
-# 2-D Plane Frame Element (d2_planeframe) — Axial + Bending
-# ═══════════════════════════════════════════════════════════
-# Plane frame: 3 DOF/node (u, v, θ), 6×6 stiffness.
+# Ch8: Plane Frame Element (Axial + Bending)
+# MATLAB: PlaneFrameElementLength.m, PlaneFrameElementStiffness.m,
+#         PlaneFrameElementForces.m, PlaneFrameElementAxialDiagram.m,
+#         PlaneFrameElementShearDiagram.m, PlaneFrameElementMomentDiagram.m
+# Julia: d2_planeframe_elementlength, d2_planeframe_elementstiffness,
+#        d2_planeframe_elementforces, d2_planeframe_elementaxialdiagram,
+#        d2_planeframe_elementsheardiagram, d2_planeframe_elementmomentdiagram,
+#        d2_planeframe_assemble
+# Note: 3 DOF/node (u, v, θ), 6×6 stiffness.
 # Superposition of truss bar (axial) + beam (bending).
-# Based on Kattan's PlaneFrame* functions.
-# ═══════════════════════════════════════════════════════════
-# Diagram functions for 2-D and 3-D beams are defined in the Plots extension
-# and re-exported from LibFEM.jl.
+# Diagram functions are in the Plots extension (LibFEMPlotsExt.jl).
 # ═══════════════════════════════════════════════════════════
 
 """

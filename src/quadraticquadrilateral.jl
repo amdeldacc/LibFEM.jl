@@ -1,5 +1,9 @@
 # ═══════════════════════════════════════════════════════════════
-# Q8 — Quadratic Quadrilateral (Serendipity)
+# Ch14: Quadratic Quadrilateral Element (Q8 — Serendipity)
+# MATLAB: QuadQuadrilateralElementStiffness.m, QuadQuadrilateralElementStress.m,
+#         QuadQuadrilateralElementPStresses.m
+# Julia: d2_q8_elementstiffness, d2_q8_elementstress,
+#        d2_q8_elementpstress, d2_q8_assemble
 # ═══════════════════════════════════════════════════════════════
 
 """
@@ -123,18 +127,7 @@ function d2_q8_elementstiffness(
     y = [y1, y2, y3, y4, y5, y6, y7, y8]
 
     # D matrix (plane stress or plane strain)
-    if p == 1
-        D = (E / (1 - NU^2)) * [1   NU   0
-                                NU  1    0
-                                0   0    (1 - NU) / 2]
-    elseif p == 2
-        f = E / ((1 + NU) * (1 - 2 * NU))
-        D = f * [1 - NU   NU       0
-                  NU     1 - NU    0
-                  0      0         (1 - 2 * NU) / 2]
-    else
-        throw(ElementParameterError("p", "p must be 1 (plane stress) or 2 (plane strain), got $p"))
-    end
+    D = _d2_elasticity_matrix(E, NU, p)
 
     k = zeros(16, 16)
     gauss_pts = _gauss_3x3()
@@ -206,18 +199,7 @@ function d2_q8_elementstress(
     y = [y1, y2, y3, y4, y5, y6, y7, y8]
 
     # D matrix
-    if p == 1
-        D = (E / (1 - NU^2)) * [1   NU   0
-                                NU  1    0
-                                0   0    (1 - NU) / 2]
-    elseif p == 2
-        f = E / ((1 + NU) * (1 - 2 * NU))
-        D = f * [1 - NU   NU       0
-                  NU     1 - NU    0
-                  0      0         (1 - 2 * NU) / 2]
-    else
-        throw(ElementParameterError("p", "p must be 1 (plane stress) or 2 (plane strain), got $p"))
-    end
+    D = _d2_elasticity_matrix(E, NU, p)
 
     # Compute B matrix at centroid (ξ = η = 0)
     ξ, η = 0.0, 0.0

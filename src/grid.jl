@@ -1,11 +1,13 @@
 # ═══════════════════════════════════════════════════════════
-# 2-D Grid Element (d2_grid) — Out-of-Plane Bending + Torsion
-# ═══════════════════════════════════════════════════════════
-# Grid element: 3 DOF/node (UZ, RX, RY), 6×6 stiffness.
+# Ch9: Grid Element (Out-of-Plane Bending + Torsion)
+# MATLAB: GridElementLength.m, GridElementStiffness.m,
+#         GridElementForces.m
+# Julia: d2_grid_elementlength, d2_grid_elementstiffness,
+#        d2_grid_elementforces, d2_grid_assemble
+# Note: 3 DOF/node (UZ, RX, RY), 6×6 stiffness.
 # Superposition of torsional stiffness (GJ/L) + out-of-plane
-# beam bending (EI/L³). Elements lie in the XY plane; loads
-# are perpendicular to the plane (Z-direction).
-# Based on Kattan's GridElement* functions (Chapter 11).
+# beam bending. Elements lie in the XY plane; loads are
+# perpendicular to the plane (Z-direction).
 # ═══════════════════════════════════════════════════════════
 
 """

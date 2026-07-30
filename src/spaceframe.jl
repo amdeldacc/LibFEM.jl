@@ -1,5 +1,16 @@
 # ═══════════════════════════════════════════════════════════
-# 3-D Space Frame Element (d3_spaceframe)
+# Ch10: Space Frame Element (3D Beam — Axial + Biaxial Bending + Torsion)
+# MATLAB: SpaceFrameElementLength.m, SpaceFrameElementStiffness.m,
+#         SpaceFrameElementForces.m, SpaceFrameElementAxialDiagram.m,
+#         SpaceFrameElementShearYDiagram.m, SpaceFrameElementShearZDiagram.m,
+#         SpaceFrameElementMomentYDiagram.m, SpaceFrameElementMomentZDiagram.m,
+#         SpaceFrameElementTorsionDiagram.m
+# Julia: d3_spaceframe_elementlength, d3_spaceframe_elementstiffness,
+#        d3_spaceframe_elementforces, d3_spaceframe_elementaxialdiagram,
+#        d3_spaceframe_elementshearydiagram, d3_spaceframe_elementshearzdiagram,
+#        d3_spaceframe_elementmomentydiagram, d3_spaceframe_elementmomentzdiagram,
+#        d3_spaceframe_elementtorsiondiagram, d3_spaceframe_assemble
+# Note: 6 DOF/node, 12×12 stiffness. Diagram functions are in the Plots extension.
 # ═══════════════════════════════════════════════════════════
 
 """

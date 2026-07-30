@@ -188,7 +188,7 @@ LibFEM.jl/
 │   ├── types.jl           # Abstract type hierarchy, @kwdef element structs
 │   ├── errors.jl          # Custom error types (ElementDimensionError, etc.)
 │   ├── utils.jl           # deg2rad and shared helpers
-│   ├── assembly.jl        # _assemble! helper, _d3_spaceframe_kprime
+│   ├── assembly.jl        # _assemble! helper, _assemble_n!
 │   ├── spring.jl          # d1/d2/d3_spring_* implementations
 │   ├── truss.jl           # d2/d3_truss_* implementations (1D moved to bar.jl)
 │   ├── beam.jl            # d2_beam_* implementations (planeframe/spaceframe moved to own files)

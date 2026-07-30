@@ -728,6 +728,80 @@ function adapt_brick_result(arr, n::Int=24)
 end
 
 # ═══════════════════════════════════════════════════════════════
+# Grid Element (2D Plane Grid) — Argument & Result Adapters
+# ═══════════════════════════════════════════════════════════════
+#
+# MATLAB function signatures (from Doc/Kattan/M-Files/):
+#   GridElementLength(x1, y1, x2, y2) → scalar
+#   GridElementStiffness(E, G, I, J, L, θ) → 6×6 matrix (6 scalars)
+#   GridElementForces(E, G, I, J, L, θ, u) → 6-vec (6 scalars + 6-vec u)
+#   GridAssemble(K, k, i, j) → mutated K
+#
+# Julia equivalents (d2_grid_*):
+#   d2_grid_elementlength(x1, y1, x2, y2) — identical
+#   d2_grid_elementstiffness(E, G, I, J, L, θ) — identical
+#   d2_grid_elementforces(E, G, I, J, L, θ, u) — identical
+
+"""
+    adapt_grid_args(E, G, I, J, L, theta) -> Tuple
+
+Prepare Julia arguments for `GridElementStiffness(E, G, I, J, L, θ)`.
+MATLAB: 6 scalars (E, G, I, J, L, θ in degrees).
+Julia:  `d2_grid_elementstiffness(E, G, I, J, L, theta)` — identical.
+"""
+adapt_grid_args(E::Real, G::Real, I::Real, J::Real, L::Real, theta::Real) = (E, G, I, J, L, theta)
+
+"""
+    adapt_grid_args(E, G, I, J, L, theta, u) -> Tuple
+
+Prepare Julia arguments for `GridElementForces(E, G, I, J, L, θ, u)`.
+MATLAB: 7 args (6 scalars + 6-element disp vector).
+Julia:  `d2_grid_elementforces(E, G, I, J, L, theta, u)` — identical.
+"""
+adapt_grid_args(E::Real, G::Real, I::Real, J::Real, L::Real, theta::Real, u::AbstractVector) = (E, G, I, J, L, theta, u)
+
+"""
+    adapt_grid_args(x1, y1, x2, y2) -> Tuple
+
+Prepare Julia arguments for `GridElementLength(x1, y1, x2, y2)`.
+MATLAB: 4 coordinates.
+Julia:  `d2_grid_elementlength(x1, y1, x2, y2)` — identical.
+"""
+adapt_grid_args(x1::Real, y1::Real, x2::Real, y2::Real) = (x1, y1, x2, y2)
+
+"""
+    adapt_grid_args(K, k, i, j) -> Tuple
+
+Prepare Julia arguments for `GridAssemble(K, k, i, j)`.
+MATLAB: 4 args (global K, 6×6 element k, node indices i, j).
+"""
+adapt_grid_args(K::AbstractMatrix, k::AbstractMatrix, i::Integer, j::Integer) = (K, k, i, j)
+
+"""
+    adapt_grid_result(arr, n=6) -> Union{Matrix, Vector}
+
+Convert a JSON-decoded Octave array for a grid element result back to Julia type.
+
+MATLAB returns:
+  - Stiffness: 6×6 matrix (36 flat elements)
+  - Forces:    6×1 column vector (6 elements)
+  - Length:    scalar
+
+# Arguments
+- `arr`: JSON-decoded Octave output (Array or scalar).
+- `n`:   Total DOF (default 6 for grid with 2 nodes × 3 DOF).
+"""
+function adapt_grid_result(arr, n::Int=6)
+    if isa(arr, Number)
+        return [arr]
+    elseif length(arr) == n * n
+        return reshape(arr, n, n)
+    else
+        return vec(arr)
+    end
+end
+
+# ═══════════════════════════════════════════════════════════════
 # Fluid Flow 1D — Argument & Result Adapters
 # ═══════════════════════════════════════════════════════════════
 #

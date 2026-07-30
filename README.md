@@ -83,18 +83,17 @@ Additional helpers: `_elementlength(...)`, beam diagram functions.
 | -------------------------------------- | -------------------------------------------------------------------------------------------- |
 | `d1_spring_elementstiffness(k)`        | 2×2 stiffness matrix for spring with stiffness `k`                                           |
 | `d1_spring_elementforce(Ke, u)`        | Nodal force vector (2×1)                                                                     |
-| ~~`d1_spring_elementstress(Ke, u)`~~   | ~~Stress vector (2×1)~~ _(removed — meaningless for 0D spring, identical to `elementforce`)_ |
 | `d1_spring_assemble(K, k, i, j)`       | Assemble into global matrix (1 DOF/node)                                                     |
-| `d1_bar_elementstiffness(E, A, L)`   | 2×2 stiffness for 1D bar (linear bar)                                                        |
-| `d1_bar_elementforces(Ke, u)`        | Nodal force vector (2×1)                                                                     |
-| `d1_bar_elementstress(Ke, u, A)`     | Stress vector (2×1)                                                                          |
-| `d1_bar_elementstrain(L, u)`         | Strain vector (2×1)                                                                          |
-| `d1_bar_assemble(K, k, i, j)`        | Assemble into global matrix (1 DOF/node)                                                     |
-| `d1_quadraticbar_elementlength(x1, x2)` | Length of 3-node 1D element                                                                  |
-| `d1_quadraticbar_elementstiffness(E, A, L)` | 3×3 stiffness matrix                                                                   |
+| `d1_bar_elementstiffness(E, A, L)`   | 2×2 stiffness for 1D bar (linear bar)                                                          |
+| `d1_bar_elementforces(Ke, u)`        | Nodal force vector (2×1)                                                                       |
+| `d1_bar_elementstress(Ke, u, A)`     | Stress vector (2×1)                                                                            |
+| `d1_bar_elementstrain(L, u)`         | Strain vector (2×1)                                                                            |
+| `d1_bar_assemble(K, k, i, j)`        | Assemble into global matrix (1 DOF/node)                                                       |
+| `d1_quadraticbar_elementlength(x1, x2)` | Length of 3-node 1D element                                                                 |
+| `d1_quadraticbar_elementstiffness(E, A, L)` | 3×3 stiffness matrix                                                                    |
 | `d1_quadraticbar_elementforces(Ke, u)` | Nodal force vector (3×1)                                                                     |
-| `d1_quadraticbar_elementstress(Ke, u, A)` | Stress vector (3×1)                                                                      |
-| `d1_quadraticbar_assemble(K, k, i, j, m)` | Assemble into global matrix (1 DOF/node, 3 nodes)                                       |
+| `d1_quadraticbar_elementstress(Ke, u, A)` | Stress vector (3×1)                                                                       |
+| `d1_quadraticbar_assemble(K, k, i, j, m)` | Assemble into global matrix (1 DOF/node, 3 nodes)                                         |
 
 ---
 

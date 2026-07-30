@@ -32,6 +32,9 @@ ToDo/
 node_modules/
 # ci-trigger
 
+# Legacy backup zip
+LibFEM.jl-master.zip
+
 # Plan and todo files (local only, not for commit)
 ImplementationPlan_21072029.md
 OCR_Usage.md

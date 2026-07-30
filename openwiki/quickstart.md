@@ -1,13 +1,13 @@
 ---
 type: Quickstart
 title: "LibFEM.jl — Quickstart"
-description: "Educational Finite Element Method library for Julia with springs, trusses, and beams in 1D, 2D, and 3D. Getting started guide, element reference table, core patterns, and worked examples."
+description: "Educational Finite Element Method library for Julia with springs, trusses/bars, beams, frames, 2D/3D continuum elements, grid structures, and fluid flow in 1D, 2D, and 3D. Getting started guide, element reference table, core patterns, and worked examples."
 tags: ["quickstart", "getting-started", "fem", "julia"]
 ---
 
 # LibFEM.jl — Quickstart
 
-**LibFEM.jl v0.2.0** is an educational Finite Element Method (FEM) library for Julia. It provides element stiffness matrices, assembly functions, force/stress/strain calculations, boundary condition application, and diagram plotting for springs, trusses, and beams in 1D, 2D, and 3D.
+**LibFEM.jl v0.3.0** is an educational Finite Element Method (FEM) library for Julia. It provides element stiffness matrices, assembly functions, force/stress/strain calculations, boundary condition application, and diagram plotting for springs, trusses, beams, 2D/3D continuum elements, grid structures, and fluid flow in 1D, 2D, and 3D.
 
 Inspired by *"MATLAB Guide to Finite Elements — An Interactive Approach"* by Peter I. Kattan (Springer, 2007). The reference MATLAB code is preserved in `Doc/Kattan/M-Files/` as a read-only verification source.
 
@@ -28,10 +28,14 @@ using Pkg; Pkg.activate("."); using LibFEM
 | Domain | 1D (`d1_`) | 2D (`d2_`) | 3D (`d3_`) |
 |--------|-----------|-----------|-----------|
 | **Spring** | `d1_spring_*` — scalar stiffness `k` | `d2_spring_*` — angle `theta` | `d3_spring_*` — angles `thetax, thetay, thetaz` |
-| **Truss** | `d1_truss_*` — `E, A, L` | `d2_truss_*` — `E, A, L, theta` | `d3_truss_*` — `E, A, L, thetax, thetay, thetaz` |
+| **Truss/Bar** | `d1_bar_*` — `E, A, L` (linear bar) | `d2_truss_*` — `E, A, L, theta` | `d3_truss_*` — `E, A, L, thetax, thetay, thetaz` |
 | **Quadratic Bar** | `d1_quadraticbar_*` — `E, A, L` (3 nodes, 1 DOF/node) | (not implemented) | (not implemented) |
-| **Beam** (pure) | (not implemented) | `d2_beam_*` — `E, I, L` (2 DOF/node, bending only) | (not implemented) |
+| **Beam** (pure bending) | (not implemented) | `d2_beam_*` — `E, I, L` (2 DOF/node) | (not implemented) |
 | **Plane/Space Frame** | (not implemented) | `d2_planeframe_*` — `E, A, I, L, theta` (3 DOF/node) | `d3_spaceframe_*` — `E, G, A, Iy, Iz, J` **+ node coords** (6 DOF/node) |
+| **2D Continuum** | (not implemented) | `d2_cst_*` — `E, NU, t` (3 nodes, 2 DOF/node, plane stress/strain)<br>`d2_lst_*` — `E, NU, t` (6 nodes, 2 DOF/node)<br>`d2_q4_*` — `E, NU, h` (4 nodes, 2 DOF/node)<br>`d2_q8_*` — `E, NU, h` (8 nodes, 2 DOF/node) | (not implemented) |
+| **Grid** | (not implemented) | `d2_grid_*` — `E, I, L, theta` (3 DOF/node: out-of-plane bending + torsion) | (not implemented) |
+| **Fluid Flow** | `d1_fluidflow_*` — `E, A, L` (2 nodes, 1 DOF/node) | (not implemented) | (not implemented) |
+| **3D Continuum** | (not implemented) | (not implemented) | `d3_brick_*` — `E, NU` (8 nodes, 3 DOF/node)<br>`d3_tet_*` — `E, NU` (4 nodes, 3 DOF/node) |
 
 ## Core Function Pattern
 
@@ -45,6 +49,12 @@ Additional helpers: `_elementlength(...)` (including new `d1_quadraticbar_elemen
 
 **Solver helper** (new in v0.2.0):
 - **`apply_bc!(K, F, constraints)`** — apply Dirichlet boundary conditions to global system K·u = F by eliminating constrained DOFs. Takes a vector of `dof => value` pairs.
+
+**New in v0.3.0**: 8 new element types added:
+- 2D Continuum: `d2_cst_*` (3-node linear triangle), `d2_lst_*` (6-node quadratic triangle), `d2_q4_*` (4-node bilinear quad), `d2_q8_*` (8-node serendipity quad)
+- Grid: `d2_grid_*` (out-of-plane bending + torsion, 3 DOF/node)
+- 1D Fluid Flow: `d1_fluidflow_*` (velocity/volumetric flow rate)
+- 3D Continuum: `d3_brick_*` (8-node linear brick), `d3_tet_*` (4-node linear tetrahedron)
 
 ### Example: 3D Beam (Space Frame) Workflow
 
@@ -129,7 +139,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `src/beam.jl` | All `d2_beam_*`, `d2_planeframe_*`, and `d3_spaceframe_*` implementations |
 | `src/solver.jl` | `apply_bc!` — Dirichlet boundary condition application |
 | `ext/LibFEMPlotsExt.jl` | Beam diagram functions (Plots weak dependency via extension) |
-| `test/runtests.jl` | Main test suite (~1054 lines, covers all 10 element types, property tests, golden regression) |
+| `test/runtests.jl` | Main test suite (~1054 lines, covers all 17 element types, property tests, golden regression) |
 | `test/property_tests.jl` | PropCheck.jl property-based tests (symmetry, PSD, translational invariants) |
 | `test/golden_regression.jl` | Binary golden regression test runner |
 | `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (12 benchmarks) |

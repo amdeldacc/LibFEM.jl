@@ -119,24 +119,32 @@ Space frame (3D beam) is the most complex structural element — it carries 6 DO
 | `QuadraticBarElementForces.m` | `d1_quadraticbar_elementforces` | Implemented |
 | `QuadraticBarElementStresses.m` | `d1_quadraticbar_elementstress` | Implemented |
 
-The 1-D quadratic bar element (3 nodes, 1 DOF per node) is a higher-order element with a 3×3 stiffness matrix. It uses a custom assembly function `d1_quadraticbar_assemble(K, k, i, j, m)` because the generic `_assemble!` helper only supports 2-node elements. The quadratic bar integrates with 1D spring and linear truss elements for mixed-mesh problems (see `test/runtests.jl` problem_4_2_integration test).
+### Other MATLAB Files (Implemented in v0.3.0+)
 
-### Other MATLAB Files (Not Yet Implemented)
+Kattan covers additional element types beyond springs/trusses/beams. These MATLAB files exist in `Doc/Kattan/M-Files/` and **are now implemented in LibFEM.jl v0.3.0+**:
 
-Kattan covers additional element types beyond springs/trusses/beams. These MATLAB files exist in `Doc/Kattan/M-Files/` but are not yet implemented in LibFEM.jl:
+| Category | MATLAB Files | Julia Functions |
+|----------|-------------|-----------------|
+| **Linear Triangle (CST)** | `LinearTriangleAssemble.m`, `LinearTriangleElementStiffness.m`, `LinearTriangleElementStresses.m`, `LinearTriangleElementPStresses.m`, `LinearTriangleElementArea.m` | `d2_cst_elementarea`, `d2_cst_elementstiffness`, `d2_cst_elementstress`, `d2_cst_elementpstress`, `d2_cst_assemble` |
+| **Bilinear Quad (Q4)** | `BilinearQuadAssemble.m`, `BilinearQuadElementStiffness.m`, `BilinearQuadElementStiffness2.m`, `BilinearQuadElementStresses.m`, `BilinearQuadElementPStresses.m`, `BilinearQuadElementArea.m` | `d2_q4_elementarea`, `d2_q4_elementstiffness`, `d2_q4_elementstress`, `d2_q4_elementpstress`, `d2_q4_assemble` |
+| **Quadratic Triangle (T6/LST)** | `QuadTriangleAssemble.m`, `QuadTriangleElementStiffness.m`, `QuadTriangleElementStresses.m`, `QuadTriangleElementPStresses.m`, `QuadTriangleElementArea.m` | `d2_lst_elementstiffness`, `d2_lst_elementstress`, `d2_lst_elementpstress`, `d2_lst_assemble` |
+| **Quadratic Quad (Q8)** | `QuadraticQuadAssemble.m`, `QuadraticQuadElementStiffness.m`, `QuadraticQuadElementStresses.m`, `QuadraticQuadElementPStresses.m`, `QuadraticQuadElementArea.m` | `d2_q8_elementstiffness`, `d2_q8_elementstress`, `d2_q8_elementpstress`, `d2_q8_assemble` |
+| **Linear Brick (B8)** | `LinearBrickAssemble.m`, `LinearBrickElementStiffness.m`, `LinearBrickElementStresses.m`, `LinearBrickElementPStresses.m`, `LinearBrickElementVolume.m` | `d3_brick_elementvolume`, `d3_brick_elementstiffness`, `d3_brick_elementstress`, `d3_brick_elementpstress`, `d3_brick_assemble` |
+| **Tetrahedron (T4)** | `TetrahedronAssemble.m`, `TetrahedronElementStiffness.m`, `TetrahedronElementStresses.m`, `TetrahedronElementPStresses.m`, `TetrahedronElementVolume.m` | `d3_tet_elementvolume`, `d3_tet_elementstiffness`, `d3_tet_elementstress`, `d3_tet_elementpstress`, `d3_tet_assemble` |
+| **Grid** | `GridAssemble.m`, `GridElementStiffness.m`, `GridElementForces.m`, `GridElementLength.m` | `d2_grid_elementlength`, `d2_grid_elementstiffness`, `d2_grid_elementforces`, `d2_grid_assemble` |
+| **1D Fluid Flow** | `FluidFlow1DAssemble.m`, `FluidFlow1DElementStiffness.m`, `FluidFlow1DElementVFR.m`, `FluidFlow1DElementVelocities.m` | `d1_fluidflow_elementstiffness`, `d1_fluidflow_elementvelocity`, `d1_fluidflow_elementvfr`, `d1_fluidflow_assemble` |
+
+These represent 2D/3D continuum elements (plane stress/strain, solid mechanics), grid structures, and fluid flow — implemented in v0.3.0.
+
+### Remaining Not Implemented
 
 | Category | MATLAB Files |
 |----------|-------------|
-| **Linear Triangle (CST)** | `LinearTriangleAssemble.m`, `LinearTriangleElementStiffness.m`, `LinearTriangleElementStresses.m`, `LinearTriangleElementPStresses.m`, `LinearTriangleElementArea.m` |
-| **Bilinear Quad (Q4)** | `BilinearQuadAssemble.m`, `BilinearQuadElementStiffness.m`, `BilinearQuadElementStiffness2.m`, `BilinearQuadElementStresses.m`, `BilinearQuadElementPStresses.m`, `BilinearQuadElementArea.m` |
-| **Quadratic Triangle (T6)** | `QuadTriangleAssemble.m`, `QuadTriangleElementStiffness.m`, `QuadTriangleElementStresses.m`, `QuadTriangleElementPStresses.m`, `QuadTriangleElementArea.m` |
-| **Quadratic Quad (Q8)** | `QuadraticQuadAssemble.m`, `QuadraticQuadElementStiffness.m`, `QuadraticQuadElementStresses.m`, `QuadraticQuadElementPStresses.m`, `QuadraticQuadElementArea.m` |
-| **Linear Brick (B8)** | `LinearBrickAssemble.m`, `LinearBrickElementStiffness.m`, `LinearBrickElementStresses.m`, `LinearBrickElementPStresses.m`, `LinearBrickElementVolume.m` |
-| **Tetrahedron (T4)** | `TetrahedronAssemble.m`, `TetrahedronElementStiffness.m`, `TetrahedronElementStresses.m`, `TetrahedronElementPStresses.m`, `TetrahedronElementVolume.m` |
-| **Grid** | `GridAssemble.m`, `GridElementStiffness.m`, `GridElementForces.m`, `GridElementLength.m` |
-| **1D Fluid Flow** | `FluidFlow1DAssemble.m`, `FluidFlow1DElementStiffness.m`, `FluidFlow1DElementVFR.m`, `FluidFlow1DElementVelocities.m` |
+| **Plane Truss Inclined Support** | `PlaneTrussInclinedSupport.m` |
+| **Space Truss Inclined Support** | `SpaceTrussInclinedSupport.m` |
+| **Plane Frame Inclined Support** | `PlaneFrameInclinedSupport.m` |
 
-These represent 2D/3D continuum elements (plane stress/strain, solid mechanics), grid structures, and fluid flow — natural extension areas for the library.
+Note: The "Inclined Support" MATLAB files are specialized boundary condition handlers not yet ported.
 
 ## Verification: `test/comparison.jl`
 

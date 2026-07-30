@@ -98,6 +98,18 @@ using LibFEM, Test, LinearAlgebra, PropCheck
             @test Ke ≈ Ke'
         end
 
+        # d2_grid: K ≈ K' for random (E, G, I, J, L, θ)
+        for _ in 1:15
+            e = 1.0 + 100.0 * rand()
+            g = 1.0 + 100.0 * rand()
+            i_val = 0.1 + 10.0 * rand()
+            j_val = 0.1 + 10.0 * rand()
+            l = 0.1 + 10.0 * rand()
+            th = 180.0 * rand()
+            Ke = d2_grid_elementstiffness(e, g, i_val, j_val, l, th)
+            @test Ke ≈ Ke'
+        end
+
         # d2_cst: K ≈ K' for random (E, NU, t, p)
         for _ in 1:15
             e = 1.0 + 100.0 * rand()

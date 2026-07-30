@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture Review — LibFEM.jl</title>
+<style>
+  :root { --bg: #0f1117; --fg: #e4e6ed; --accent: #7aa2f7; --emerald: #7ec8a0; --amber: #e0af68; --slate: #6b7280; --border: #2a2d3a; --code-bg: #1a1c27; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; max-width: 880px; margin: 0 auto; padding: 2rem 1.5rem; }
+  h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.35rem; font-weight: 600; margin: 2rem 0 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+  p, li { margin-bottom: 0.6rem; }
+  .meta { color: var(--slate); font-size: 0.9rem; margin-bottom: 1.5rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  th, td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; }
+  th { background: #1a1c27; font-weight: 600; }
+  code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 4px; }
+  pre { background: var(--code-bg); border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 1rem 0; }
+  pre code { background: none; padding: 0; }
+  blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; margin: 1rem 0; color: #a0a5b8; }
+  .badge { display: inline-block; font-size: 0.8rem; font-weight: 600; padding: 0.15em 0.6em; border-radius: 4px; margin-right: 0.3rem; }
+  .badge-emerald { background: #1a3a2a; color: var(--emerald); }
+  .badge-amber { background: #3a2a1a; color: var(--amber); }
+  .badge-slate { background: #1f2128; color: var(--slate); }
+</style>
+</head>
+<body>
+
+<h1>Architecture Review — LibFEM.jl</h1>
+<p class="meta">
+  <strong>Date:</strong> 2026-07-28<br>
+  <strong>Method:</strong> <code>/improve-codebase-architecture</code> scan<br>
+  <strong>Codebase scope:</strong> <code>src/</code> — types.jl, assembly.jl, utils.jl, truss.jl, spring.jl, beam.jl, quadraticbar.jl, solver.jl, LibFEM.jl<br>
+  <strong>Inputs:</strong> CONTEXT.md, docs/adr/, all source files, recent git history
+</p>
+
+<hr>
+
+<h2>Legend</h2>
+<table>
+  <tr><th>Term</th><th>Meaning</th></tr>
+  <tr><td><strong>module</strong></td><td>A file or coherent group of functions</td></tr>
+  <tr><td><strong>interface</strong></td><td>The public surface area of a module</td></tr>
+  <tr><td><strong>depth</strong></td><td>(interface complexity) / (implementation complexity) — deeper = less interface for more implementation</td></tr>
+  <tr><td><strong>shallow</strong></td><td>Interface nearly as wide as implementation</td></tr>
+  <tr><td><strong>seam</strong></td><td>A place where you can swap implementation without changing callers</td></tr>
+  <tr><td><strong>adapter</strong></td><td>A module on one side of a seam</td></tr>
+  <tr><td><strong>leverage</strong></td><td>Effort invested in one place that pays off at N call sites</td></tr>
+  <tr><td><strong>locality</strong></td><td>The degree to which understanding one concept lives in one place</td></tr>
+</table>
+
+<hr>
+
+<!-- Candidate 1 -->
+<h2>Candidate 1: Remove the unused type hierarchy</h2>
+<p><span class="badge badge-emerald">✦ Strong (emerald)</span> <strong>Category:</strong> in-process</p>
+<p><strong>Files:</strong> <code>src/types.jl</code>, <code>src/LibFEM.jl</code> (include + 15 export lines), <code>CONTEXT.md</code></p>
+
+<h3>Problem</h3>
+<p><code>types.jl</code> exports 15 symbols:</p>
+<ul>
+  <li>4 abstract types (<code>AbstractElement{NDIM}</code>, <code>AbstractSpring{NDIM}</code>, <code>AbstractTruss{NDIM}</code>, <code>AbstractBeam{NDIM}</code>)</li>
+  <li>3 concrete <code>@kwdef</code> structs (<code>Spring{NDIM}</code>, <code>Truss{NDIM}</code>, <code>Beam{NDIM}</code>)</li>
+  <li>8 type aliases (<code>Spring1D</code> … <code>Beam3D</code>)</li>
+  <li>6 <code>Base.show</code> methods</li>
+</ul>
+<p>No function in the codebase dispatches on any of these types.</p>
+<blockquote>"The abstract type hierarchy … and @kwdef concrete structs … are <strong>documentation-only scaffolding</strong>. They are NOT used by any element function, and there are no active plans to refactor functions to dispatch on them." — CONTEXT.md</blockquote>
+<p><strong>The module is perfectly shallow.</strong> Its interface (15 exported names + 167 lines of documentation) is nearly as wide as its implementation. The deletion test: deleting <code>types.jl</code> concentrates zero complexity elsewhere.</p>
+
+<h3>Solution</h3>
+<ol>
+  <li>Delete <code>src/types.jl</code></li>
+  <li>Remove <code>include("types.jl")</code> from <code>src/LibFEM.jl</code></li>
+  <li>Remove all type/struct exports from <code>src/LibFEM.jl</code></li>
+  <li>Remove <code>using Base: @kwdef</code></li>
+  <li>Update <code>CONTEXT.md</code></li>
+  <li><strong>No test changes</strong></li>
+</ol>
+
+<h3>Wins</h3>
+<ul>
+  <li><strong>Locality:</strong> one fewer file; the naming convention tells the story</li>
+  <li><strong>Interface shrinks:</strong> 15 exported symbols eliminated</li>
+  <li><strong>Leverage:</strong> deletion is one change; every future reader has less noise</li>
+  <li><strong>Honest code:</strong> what-you-see matches what-you-get</li>
+</ul>
+
+<h3>ADR conflict</h3>
+<p>CONTEXT.md (2026-07) explicitly decided to keep the type hierarchy. That decision was a tradeoff: ~120 lines for documentation value. The cost is now ~167 lines. The <em>misleading</em> cost — developers reading types.jl and assuming dispatch exists — outweighs the documentation value. <strong>Worth reopening the ADR.</strong></p>
+
+<hr>
+
+<!-- Candidate 2 -->
+<h2>Candidate 2: Deepen the 2D coordinate-based API</h2>
+<p><span class="badge badge-emerald">✦ Strong (emerald)</span> <strong>Category:</strong> in-process</p>
+<p><strong>Files:</strong> <code>src/truss.jl</code>, <code>src/spring.jl</code>, <code>src/beam.jl</code>, <code>src/utils.jl</code></p>
+
+<h3>Problem</h3>
+<p>All 2D element stiffness functions take <strong>angles in degrees</strong> (θ), but users must compute L and θ from coordinates at every call site:</p>
+<pre><code>L = d2_truss_elementlength(x1, y1, x2, y2)
+θ = atan2d(y2 - y1, x2 - x1)
+k = d2_truss_elementstiffness(E, A, L, θ)</code></pre>
+<p>The module is <strong>shallow</strong>: it pushes coordinate→angle transformation to every call site. Meanwhile, <code>d3_spaceframe_elementstiffness</code> already takes coordinates directly — creating an <strong>inconsistent seam</strong>.</p>
+
+<h3>Solution</h3>
+<p>Add coordinate-based overloads. No existing angle-based functions change.</p>
+<pre><code>function d2_truss_elementstiffness(E::Real, A::Real, x1::Real, y1::Real, x2::Real, y2::Real)
+    L = d2_truss_elementlength(x1, y1, x2, y2)
+    C, S = (x2 - x1) / L, (y2 - y1) / L
+    validate_positive(A, "A")
+    w = [C*C C*S; C*S S*S]
+    return E * A / L * [w -w; -w w]
+end</code></pre>
+<p><strong>Same pattern for:</strong></p>
+<ul>
+  <li><code>d2_truss_elementforces</code>, <code>d2_truss_elementstrain</code>, <code>d2_truss_elementstress</code></li>
+  <li><code>d2_spring_elementstiffness</code>, <code>d2_spring_elementforce</code></li>
+  <li><code>d2_planeframe_elementstiffness</code>, <code>d2_planeframe_elementforces</code></li>
+</ul>
+
+<h3>Wins</h3>
+<ul>
+  <li><strong>Locality:</strong> one call replaces 4 lines per call site</li>
+  <li><strong>Leverage:</strong> N call sites, one deepened interface</li>
+  <li><strong>Consistency:</strong> matches the d3_spaceframe coordinate-based pattern</li>
+  <li><strong>Tests cover less boilerplate</strong></li>
+</ul>
+
+<hr>
+
+<!-- Candidate 3 -->
+<h2>Candidate 3: Generalize 3-node assembly</h2>
+<p><span class="badge badge-amber">✦ Worth exploring (amber)</span> <strong>Category:</strong> in-process</p>
+<p><strong>Files:</strong> <code>src/assembly.jl</code>, <code>src/quadraticbar.jl</code></p>
+
+<h3>Problem</h3>
+<p><code>d1_quadraticbar_assemble</code> does not delegate to the shared <code>_assemble!</code> helper. It has 9 individual indexed assignments, manual bounds checking, manual distinctness validation, and <strong>no <code>@views</code></strong>. Every other element delegates to <code>_assemble!</code> with a one-liner.</p>
+
+<h3>Solution</h3>
+<p>Extend <code>_assemble!</code> to support N-node elements via varargs:</p>
+<pre><code>function _assemble!(K::AbstractMatrix, k::AbstractMatrix, ndofs::Integer, indices::Integer...)
+    for (ri, rnode) in enumerate(indices)
+        for (ci, cnode) in enumerate(indices)
+            r_range = (rnode - 1) * ndofs + 1 : rnode * ndofs
+            c_range = (cnode - 1) * ndofs + 1 : cnode * ndofs
+            k_range = (ri - 1) * ndofs + 1 : ri * ndofs,
+                      (ci - 1) * ndofs + 1 : ci * ndofs
+            K[r_range, c_range] .+= @view k[k_range...]
+        end
+    end
+    return K
+end</code></pre>
+
+<h3>Wins</h3>
+<ul>
+  <li><strong>Locality:</strong> one assembly code path for all elements</li>
+  <li><strong>Leverage:</strong> adding future N-node elements is instant</li>
+  <li>Removes the comment explaining why quadraticbar is special</li>
+  <li><code>@views</code> applies uniformly</li>
+</ul>
+
+<hr>
+
+<!-- Candidate 4 -->
+<h2>Candidate 4: Delegate duplicated length functions</h2>
+<p><span class="badge badge-slate">✦ Speculative (slate)</span> <strong>Category:</strong> in-process</p>
+<p><strong>Files:</strong> <code>src/truss.jl</code>, <code>src/beam.jl</code></p>
+
+<h3>Problem</h3>
+<table>
+  <tr><th>Function</th><th>Delegates?</th></tr>
+  <tr><td><code>d2_truss_elementlength</code></td><td>— (primary)</td></tr>
+  <tr><td><code>d3_truss_elementlength</code></td><td>— (primary)</td></tr>
+  <tr><td><code>d3_spaceframe_elementlength</code></td><td style="color:#f87171;">❌ identical to d3_truss</td></tr>
+  <tr><td><code>d2_planeframe_elementlength</code></td><td style="color:#7ec8a0;">✓ calls d2_truss</td></tr>
+</table>
+<p><code>d3_spaceframe_elementlength</code> is identical to <code>d3_truss_elementlength</code>. The earlier pass handled <code>d2_planeframe</code> but missed the 3D version.</p>
+
+<h3>Solution</h3>
+<pre><code>function d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)
+    return d3_truss_elementlength(x1, y1, z1, x2, y2, z2)
+end</code></pre>
+
+<h3>Wins</h3>
+<ul>
+  <li><strong>Locality:</strong> one implementation to check for correctness</li>
+  <li><strong>Consistency:</strong> matches the <code>d2_planeframe_elementlength</code> delegation pattern</li>
+</ul>
+
+<hr>
+
+<!-- Top Recommendation -->
+<h2>Top Recommendation</h2>
+<p><strong>Remove the unused type hierarchy, then deepen the 2D coordinate-based API</strong> — in this order.</p>
+<ol>
+  <li><strong>Delete <code>types.jl</code></strong> — pure simplification. No test changes. No downstream impact.</li>
+  <li><strong>Add coordinate-based overloads</strong> to d2_truss, d2_spring, d2_planeframe — completes the pattern that d3_spaceframe already follows.</li>
+</ol>
+<p>These two changes together make the module depth match the expressed design intent: a function-oriented FEM library where the module absorbs coordinate transformation, and no dead abstractions confuse the structure.</p>
+<p>The other candidates (N-node assembly generalization, elementlength delegation) are worth stacking in a follow-up but address smaller gaps.</p>
+
+</body>
+</html>

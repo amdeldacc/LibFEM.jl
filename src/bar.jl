@@ -1,5 +1,9 @@
 # ═══════════════════════════════════════════════════════════
-# 1-D Bar / Linear Bar Element (d1_bar)
+# Ch3: Linear Bar Element
+# MATLAB: LinearBarElementStiffness.m, LinearBarElementForces.m,
+#         LinearBarElementStresses.m
+# Julia: d1_bar_elementstiffness, d1_bar_elementforces,
+#        d1_bar_elementstress, d1_bar_elementstrain, d1_bar_assemble
 # ═══════════════════════════════════════════════════════════
 
 """

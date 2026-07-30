@@ -1,8 +1,10 @@
 # ═══════════════════════════════════════════════════════════
-# Tetrahedron Element (3D Continuum, 4-node linear tetrahedron)
-# Kattan Ch15 — MATLAB reference: TetrahedronElementStiffness.m
-#
-# 3 DOF/node (ux, uy, uz), 12×12 stiffness matrix.
+# Ch15: Linear Tetrahedron Element (4-node, 3D Continuum)
+# MATLAB: TetrahedronElementStiffness.m, TetrahedronElementVolume.m,
+#         TetrahedronElementStresses.m, TetrahedronElementPStresses.m
+# Julia: d3_tet_elementvolume, d3_tet_elementstiffness, d3_tet_elementstress,
+#        d3_tet_elementpstress, d3_tet_assemble
+# Note: 3 DOF/node (ux, uy, uz), 12×12 stiffness matrix.
 # ═══════════════════════════════════════════════════════════
 
 """
@@ -163,18 +165,7 @@ A tuple `(σ1, σ2, σ3, τ_max)` where:
 Uses eigenvalue decomposition of the 3×3 stress tensor.
 """
 function d3_tet_elementpstress(sigma::AbstractVector)
-    # Build 3×3 stress tensor from Voigt notation
-    σxx, σyy, σzz = sigma[1], sigma[2], sigma[3]
-    τxy, τyz, τzx = sigma[4], sigma[5], sigma[6]
-    tensor = [σxx τxy τzx; τxy σyy τyz; τzx τyz σzz]
-
-    # Eigenvalues are the principal stresses
-    vals = LinearAlgebra.eigvals(tensor)
-    σ1 = max(vals...)
-    σ3 = min(vals...)
-    σ2 = vals[1] + vals[2] + vals[3] - σ1 - σ3
-    τ_max = (σ1 - σ3) / 2
-    return (σ1, σ2, σ3, τ_max)
+    return _d3_principal_stresses(sigma)
 end
 
 """

@@ -147,6 +147,42 @@ function _d3_elasticity_matrix(E::Real, NU::Real)
 end
 
 """
+    _d2_elasticity_matrix(E, NU, p)
+
+Compute the 2D isotropic elasticity (constitutive) matrix D for plane stress or plane strain.
+
+# Arguments
+- `E::Real`: Modulus of elasticity.
+- `NU::Real`: Poisson's ratio.
+- `p::Int`: Plane type (1 = plane stress, 2 = plane strain).
+
+# Returns
+A 3×3 symmetric matrix for 2D stress-strain relation.
+
+# Notes
+Standard 2D isotropic elasticity matrix, matching Kattan's formulation.
+Used by plane quadrilateral and 8-node quadrilateral elements.
+"""
+function _d2_elasticity_matrix(E::Real, NU::Real, p::Int)
+    if p == 1
+        return (E / (1 - NU^2)) * [
+            1    NU    0
+            NU   1     0
+            0    0     (1 - NU) / 2
+        ]
+    elseif p == 2
+        f = E / ((1 + NU) * (1 - 2 * NU))
+        return f * [
+            1 - NU   NU       0
+            NU       1 - NU   0
+            0        0        (1 - 2 * NU) / 2
+        ]
+    else
+        throw(ElementParameterError("p", "p must be 1 (plane stress) or 2 (plane strain), got $p"))
+    end
+end
+
+"""
     _d3_principal_stresses(sigma)
 
 Compute principal stresses from a 6×1 3D stress vector

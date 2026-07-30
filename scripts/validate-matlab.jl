@@ -531,6 +531,62 @@ function test_beam()
 end
 
 # ═════════════════════════════════════════════════════════════════
+# Grid Element (Kattan Ch11)
+# ═════════════════════════════════════════════════════════════════
+
+function test_grid()
+    results = ValidateResult[]
+
+    E, G, I, J, L = 210e6, 84e6, 4e-6, 2e-6, 4.0
+    θ = 0.0
+
+    # Length
+    push!(results, run_validation(
+        "d2_grid_elementlength(x1, y1, x2, y2)",
+        "d2_grid_elementlength",
+        "GridElementLength.m", "GridElementLength";
+        julia_fn = () -> d2_grid_elementlength(0.0, 0.0, 4.0, 0.0),
+        matlab_args_fn = () -> adapt_grid_args(0.0, 0.0, 4.0, 0.0),
+        result_adapter = (r, n) -> [r],
+        dof = 1,
+    ))
+
+    # Stiffness
+    push!(results, run_validation(
+        "d2_grid_elementstiffness(E, G, I, J, L, θ)",
+        "d2_grid_elementstiffness",
+        "GridElementStiffness.m", "GridElementStiffness";
+        julia_fn = () -> d2_grid_elementstiffness(E, G, I, J, L, θ),
+        matlab_args_fn = () -> adapt_grid_args(E, G, I, J, L, θ),
+        result_adapter = adapt_grid_result, dof = 6,
+    ))
+
+    # Forces (zero displacement)
+    u = zeros(6)
+    push!(results, run_validation(
+        "d2_grid_elementforces(E, G, I, J, L, θ, u=0)",
+        "d2_grid_elementforces",
+        "GridElementForces.m", "GridElementForces";
+        julia_fn = () -> d2_grid_elementforces(E, G, I, J, L, θ, u),
+        matlab_args_fn = () -> adapt_grid_args(E, G, I, J, L, θ, u),
+        result_adapter = adapt_grid_result, dof = 6,
+    ))
+
+    # Forces (with unit vertical displacement at node 1)
+    u = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    push!(results, run_validation(
+        "d2_grid_elementforces(E, G, I, J, L, θ, u=[1,0,0,0,0,0])",
+        "d2_grid_elementforces",
+        "GridElementForces.m", "GridElementForces";
+        julia_fn = () -> d2_grid_elementforces(E, G, I, J, L, θ, u),
+        matlab_args_fn = () -> adapt_grid_args(E, G, I, J, L, θ, u),
+        result_adapter = adapt_grid_result, dof = 6,
+    ))
+
+    return results
+end
+
+# ═════════════════════════════════════════════════════════════════
 # Problem Script Validation
 # ═════════════════════════════════════════════════════════════════
 
@@ -856,7 +912,7 @@ end
 function print_usage()
     println("Usage: julia --project=. scripts/validate-matlab.jl [element_type]")
     println()
-    println("element_type: spring | truss | beam | cst | lst | q4 | q8 | tet | brick | fluidflow | problems | all")
+    println("element_type: spring | truss | beam | grid | cst | lst | q4 | q8 | tet | brick | fluidflow | problems | all")
     println()
     println("Exit codes:")
     println("  0 — all tests within tolerance (rtol=$(RTOL))")
@@ -866,7 +922,7 @@ end
 
 function main()
     # ─── Parse args ─────────────────────────────────────────────
-    valid_types = ["spring", "truss", "beam", "cst", "lst", "q4", "q8", "tet", "brick", "fluidflow", "problems", "all"]
+    valid_types = ["spring", "truss", "beam", "grid", "cst", "lst", "q4", "q8", "tet", "brick", "fluidflow", "problems", "all"]
     element_type = length(ARGS) >= 1 ? lowercase(strip(ARGS[1])) : "all"
 
     if element_type ∉ valid_types
@@ -922,6 +978,13 @@ function main()
         print_separator("─", 80)
         r = test_beam()
         print_results(r, "Beam Elements")
+        append!(all_results, r)
+    end
+
+    if element_type ∈ ("grid", "all")
+        print_separator("─", 80)
+        r = test_grid()
+        print_results(r, "Grid Elements")
         append!(all_results, r)
     end
 

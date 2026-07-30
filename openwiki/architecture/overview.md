@@ -24,6 +24,14 @@ LibFEM.jl is a single-module library with multi-file source organization. The mo
 | `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (1-D quadratic bar, 3-node) |
 | `src/beam.jl` | All `d2_beam_*` (pure beam), `d2_planeframe_*` (plane frame), and `d3_spaceframe_*` (space frame) implementations |
 | `src/solver.jl` | `apply_bc!` — Dirichlet boundary condition application |
+| `src/triangle.jl` | 2D constant strain triangle (CST) — `d2_cst_*` |
+| `src/lst.jl` | 2D quadratic triangle (LST) — `d2_lst_*` |
+| `src/quadrilateral.jl` | 2D bilinear quadrilateral (Q4) — `d2_q4_*` |
+| `src/q8.jl` | 2D quadratic quadrilateral (Q8) — `d2_q8_*` |
+| `src/grid.jl` | 2D grid (out-of-plane bending + torsion) — `d2_grid_*` |
+| `src/fluidflow.jl` | 1D fluid flow — `d1_fluidflow_*` |
+| `src/brick.jl` | 3D linear brick (8-node) — `d3_brick_*` |
+| `src/tetrahedron.jl` | 3D linear tetrahedron (4-node) — `d3_tet_*` |
 
 Beam diagram functions used to live in `src/plot.jl`, but with `Plots.jl` moved to a weak dependency (commit 62baa10), they now live in the package extension `ext/LibFEMPlotsExt.jl`. `src/LibFEM.jl` defines stub throwers (`DiagramError`) for every diagram symbol; loading `Plots` activates the extension, which dispatches into the same exported function names and the stubs are replaced.
 
@@ -266,6 +274,141 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d3_spaceframe_elementtorsiondiagram(f, L)` — Plots.jl torsion diagram
 
   **Note**: The 3D space frame uses a 12×12 local stiffness matrix with an embedded 3×3 rotation matrix `Λ` built from node coordinates (not angle parameters). `Iy` governs bending about the y-axis (δz, θy), `Iz` governs bending about the z-axis (δy, θz). The vertical-element degenerate case (`D = y₂ - y₁ = 0` and `z₂ - z₁ = 0`) is handled automatically.
+
+### 1D Bar / Linear Bar (`d1_bar`)
+- `d1_bar_elementstiffness(E, A, L)` — 2×2 matrix (validates `L > 0`, `A > 0`)
+- `d1_bar_assemble(K, k, i, j)` — DOF mapping: 1
+- `d1_bar_elementforces(Ke, u)` — 2-element vector
+- `d1_bar_elementstress(Ke, u, A)` — stress at nodes (validates `A > 0`)
+- `d1_bar_elementstrain(L, u)` — strain at nodes (validates `L > 0`)
+
+### 2D Grid (`d2_grid`)
+- `d2_grid_elementlength(x1, y1, x2, y2)` — element length
+- `d2_grid_elementstiffness(E, I, L, theta)` — 6×6 matrix (out-of-plane bending + torsion; validates `L > 0`)
+- `d2_grid_elementforces(E, I, L, theta, u)` — 6-element force vector
+- `d2_grid_assemble(K, k, i, j)` — DOF mapping: 3
+
+### 1D Fluid Flow (`d1_fluidflow`)
+- `d1_fluidflow_elementstiffness(E, A, L)` — 2×2 matrix (validates `L > 0`, `A > 0`)
+- `d1_fluidflow_elementvelocity(Ke, u)` — 2-element velocity vector
+- `d1_fluidflow_elementvfr(Ke, u)` — volume flow rate
+- `d1_fluidflow_assemble(K, k, i, j)` — DOF mapping: 1
+
+### 2D Constant Strain Triangle (CST, `d2_cst`)
+- `d2_cst_elementarea(x1, y1, x2, y2, x3, y3)` — signed triangle area
+- `d2_cst_elementstiffness(E, NU, t, x1, y1, x2, y2, x3, y3, p)` — 6×6 matrix (plane stress/strain; `p=1` stress, `p=2` strain)
+- `d2_cst_elementstress(E, NU, t, x1, y1, x2, y2, x3, y3, p, u)` — 3-element stress vector
+- `d2_cst_elementpstress(E, NU, t, x1, y1, x2, y2, x3, y3, p, u)` — 3-element principal stress vector
+- `d2_cst_assemble(K, k, i, j, m)` — custom assembly for 3-node element (DOF mapping: 2)
+
+### 2D Linear Strain Triangle (LST, `d2_lst`)
+- `d2_lst_elementstiffness(E, NU, t, x1, y1, ..., x6, y6, p)` — 12×12 matrix (6 nodes, 2 DOF/node; plane stress/strain)
+- `d2_lst_elementstress(E, NU, t, x1, y1, ..., x6, y6, p, u)` — 3-element stress vector
+- `d2_lst_elementpstress(E, NU, t, x1, y1, ..., x6, y6, p, u)` — 3-element principal stress vector
+- `d2_lst_assemble(K, k, i, j, m, n, o)` — custom assembly for 6-node element (DOF mapping: 2)
+
+### 2D Bilinear Quadrilateral (Q4, `d2_q4`)
+- `d2_q4_elementarea(x1, y1, x2, y2, x3, y3, x4, y4)` — quadrilateral area (CCW positive)
+- `d2_q4_elementstiffness(E, NU, h, x1, y1, ..., x4, y4, p)` — 8×8 matrix (4 nodes, 2 DOF/node; 2×2 Gauss quadrature)
+- `d2_q4_elementstress(E, NU, h, x1, y1, ..., x4, y4, p, u)` — 3-element stress vector
+- `d2_q4_elementpstress(E, NU, h, x1, y1, ..., x4, y4, p, u)` — 3-element principal stress vector
+- `d2_q4_assemble(K, k, i, j, m, n)` — custom assembly for 4-node element (DOF mapping: 2)
+
+### 2D Quadratic Quadrilateral (Q8, `d2_q8`)
+- `d2_q8_elementstiffness(E, NU, h, x1, y1, ..., x8, y8, p)` — 16×16 matrix (8 nodes, 2 DOF/node; 3×3 Gauss quadrature, serendipity)
+- `d2_q8_elementstress(E, NU, h, x1, y1, ..., x8, y8, p, u)` — 3-element stress vector
+- `d2_q8_elementpstress(E, NU, h, x1, y1, ..., x8, y8, p, u)` — 3-element principal stress vector
+- `d2_q8_assemble(K, k, i, j, m, n, o, p)` — custom assembly for 8-node element (DOF mapping: 2)
+
+### 3D Linear Brick (B8, `d3_brick`)
+- `d3_brick_elementvolume(x1, y1, z1, ..., x8, y8, z8)` — 8-node hexahedron volume
+- `d3_brick_elementstiffness(E, NU, x1, y1, z1, ..., x8, y8, z8)` — 24×24 matrix (8 nodes, 3 DOF/node; 2×2×2 Gauss quadrature)
+- `d3_brick_elementstress(E, NU, x1, y1, z1, ..., x8, y8, z8, u)` — 6-element stress vector
+- `d3_brick_elementpstress(E, NU, x1, y1, z1, ..., x8, y8, z8, u)` — 6-element principal stress vector
+- `d3_brick_assemble(K, k, i, j, m, n, o, p)` — custom assembly for 8-node element (DOF mapping: 3)
+
+### 3D Linear Tetrahedron (T4, `d3_tet`)
+- `d3_tet_elementvolume(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4)` — 4-node tetrahedron volume
+- `d3_tet_elementstiffness(E, NU, x1, y1, z1, ..., x4, y4, z4)` — 12×12 matrix (4 nodes, 3 DOF/node)
+- `d3_tet_elementstress(E, NU, x1, y1, z1, ..., x4, y4, z4, u)` — 6-element stress vector
+- `d3_tet_elementpstress(E, NU, x1, y1, z1, ..., x4, y4, z4, u)` — 6-element principal stress vector
+- `d3_tet_assemble(K, k, i, j, m, n)` — custom assembly for 4-node element (DOF mapping: 3)
+
+### 1D Spring (`d1_spring`)
+- `d1_spring_elementstiffness(k)` — 2×2 matrix
+- `d1_spring_assemble(K, k, i, j)` — DOF mapping: 1
+- `d1_spring_elementforce(k, u)` — 2-element vector
+
+### 1D Quadratic Bar (`d1_quadraticbar`)
+- `d1_quadraticbar_elementlength(x1, x2)` — element length (absolute difference)
+- `d1_quadraticbar_elementstiffness(E, A, L)` — 3×3 matrix (validates `L > 0`, `A > 0`)
+- `d1_quadraticbar_assemble(K, k, i, j, m)` — custom assembly for 3-node element (DOF mapping: 1)
+- `d1_quadraticbar_elementforces(Ke, u)` — 3-element vector
+- `d1_quadraticbar_elementstress(Ke, u, A)` — 3-element stress vector (validates `A > 0`)
+
+### 2D Spring (`d2_spring`)
+- `d2_spring_elementstiffness(k, theta)` — 4×4 matrix
+- `d2_spring_assemble(K, k, i, j)` — DOF mapping: 2
+- `d2_spring_elementforce(k, theta, u)` — scalar force
+
+### 2D Truss (`d2_truss`)
+- `d2_truss_elementstiffness(E, A, L, theta)` — 4×4 matrix (validates `L > 0`)
+- `d2_truss_assemble(K, k, i, j)` — DOF mapping: 2
+- `d2_truss_elementforces(E, A, L, theta, u)` — scalar force
+- `d2_truss_elementstress(E, L, theta, u)` — scalar stress
+- `d2_truss_elementstrain(L, theta, u)` — scalar strain (validates `L > 0`)
+- `d2_truss_elementlength(x1, y1, x2, y2)` — element length
+
+### 2D Pure Beam (`d2_beam`)
+- `d2_beam_elementstiffness(E, I, L)` — 4×4 matrix (Euler-Bernoulli, bending only; validates `L > 0`)
+- `d2_beam_assemble(K, k, i, j)` — DOF mapping: 2
+- `d2_beam_elementforces(k, u)` — 4-element force vector (shear + moment at nodes)
+- `d2_beam_elementsheardiagram(f, L)` — Plots.jl shear force diagram
+- `d2_beam_elementmomentdiagram(f, L)` — Plots.jl bending moment diagram
+
+### 2D Plane Frame (`d2_planeframe`)
+- `d2_planeframe_elementlength(x1, y1, x2, y2)` — element length
+- `d2_planeframe_elementstiffness(E, A, I, L, theta)` — 6×6 matrix (axial + bending; validates `L > 0`)
+- `d2_planeframe_assemble(K, k, i, j)` — DOF mapping: 3
+- `d2_planeframe_elementforces(E, A, I, L, theta, u)` — 6-element vector
+- `d2_planeframe_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
+- `d2_planeframe_elementsheardiagram(f, L)` — Plots.jl shear force diagram
+- `d2_planeframe_elementmomentdiagram(f, L)` — Plots.jl bending moment diagram
+
+### 3D Spring (`d3_spring`)
+- `d3_spring_elementstiffness(k, thetax, thetay, thetaz)` — 6×6 matrix
+- `d3_spring_assemble(K, k, i, j)` — DOF mapping: 3
+- `d3_spring_elementforce(k, thetax, thetay, thetaz, u)` — scalar force
+
+### 3D Truss (`d3_truss`)
+- `d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)` — 6×6 matrix (validates `L > 0`)
+- `d3_truss_assemble(K, k, i, j)` — DOF mapping: 3
+- `d3_truss_elementforces(E, A, L, thetax, thetay, thetaz, u)` — scalar force
+- `d3_truss_elementstress(E, L, thetax, thetay, thetaz, u)` — scalar stress
+- `d3_truss_elementstrain(L, thetax, thetay, thetaz, u)` — scalar strain (validates `L > 0`)
+- `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)` — element length
+
+### 3D Space Frame (`d3_spaceframe`)
+- `d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)` — 3D Euclidean distance (validates `L > 0`)
+- `d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` — 12×12 matrix (validates `L > 0`)
+- `d3_spaceframe_assemble(K, k, i, j)` — DOF mapping: 6
+- `d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` — 12-element force vector
+- `d3_spaceframe_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
+- `d3_spaceframe_elementshearydiagram(f, L)` — Plots.jl shear force (Y) diagram
+- `d3_spaceframe_elementshearzdiagram(f, L)` — Plots.jl shear force (Z) diagram
+- `d3_spaceframe_elementmomentydiagram(f, L)` — Plots.jl bending moment (Y) diagram
+- `d3_spaceframe_elementmomentzdiagram(f, L)` — Plots.jl bending moment (Z) diagram
+- `d3_spaceframe_elementtorsiondiagram(f, L)` — Plots.jl torsion diagram
+
+  **Note**: The 3D space frame uses a 12×12 local stiffness matrix with an embedded 3×3 rotation matrix `Λ` built from node coordinates (not angle parameters). `Iy` governs bending about the y-axis (δz, θy), `Iz` governs bending about the z-axis (δy, θz). The vertical-element degenerate case (`D = y₂ - y₁ = 0` and `z₂ - z₁ = 0`) is handled automatically.
+
+### Deprecated Aliases (v0.3.0+)
+The 1D linear bar was renamed from `d1_truss_*` to `d1_bar_*` to match the MATLAB `LinearBar` naming convention. Deprecated aliases with `@deprecate`:
+- `d1_truss_elementstiffness` → `d1_bar_elementstiffness`
+- `d1_truss_elementforces` → `d1_bar_elementforces`
+- `d1_truss_elementstress` → `d1_bar_elementstress`
+- `d1_truss_elementstrain` → `d1_bar_elementstrain`
+- `d1_truss_assemble` → `d1_bar_assemble`
 
 ## Dependencies & Runtime Notes
 

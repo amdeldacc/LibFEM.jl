@@ -10,11 +10,11 @@
 
 using LibFEM, Test, LinearAlgebra
 
+_HAS_PROPCHECK = false
 try
     using PropCheck
-    _HAS_PROPCHECK = true
+    global _HAS_PROPCHECK = true
 catch
-    _HAS_PROPCHECK = false
 end
 
 @testset "property-based tests" begin

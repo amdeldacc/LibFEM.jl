@@ -1657,6 +1657,95 @@ end
             @test sig[7] ≈ [2209.08; 446.45; -1384.02]    rtol=1e-2
             @test sig[8] ≈ [900.72; -3267.68; -936.81]    rtol=1e-2
         end
+
+        @testset "problem_13_3_integration" begin
+            # Kattan Problem 13.3 — thin plate on 3 spring supports
+            # 2 Q4 elements + 3 springs; golden from Doc/Kattan/Solutions-Manual/problem_13_3.m
+            E, NU, h, p = 200e6, 0.3, 0.01, 1  # kPa, m, plane stress
+            kspring = d1_spring_elementstiffness(4000)  # kN/m
+
+            # Node coordinates (6 plate nodes; DOFs 1-12; grounds 13-15)
+            X = [0.0, 0.35, 0.7, 0.0, 0.35, 0.7]
+            Y = [0.4, 0.4,  0.4, 0.0, 0.0,  0.0]
+
+            # Q4 elements, CCW: e1 = (4,5,2,1), e2 = (5,6,3,2)
+            K = zeros(15, 15)
+            k1 = d2_q4_elementstiffness(E, NU, h, X[4],Y[4], X[5],Y[5], X[2],Y[2], X[1],Y[1], p)
+            k2 = d2_q4_elementstiffness(E, NU, h, X[5],Y[5], X[6],Y[6], X[3],Y[3], X[2],Y[2], p)
+            K = d2_q4_assemble(K, k1, 4, 5, 2, 1)
+            K = d2_q4_assemble(K, k2, 5, 6, 3, 2)
+            # Springs: bottom nodes 4, 5, 6 (DOFs 8, 10, 12) → ground (13, 14, 15)
+            K = d1_spring_assemble(K, kspring, 8, 13)
+            K = d1_spring_assemble(K, kspring, 10, 14)
+            K = d1_spring_assemble(K, kspring, 12, 15)
+
+            # Free: 1:12 (plate); fixed: 13-15 (spring grounds)
+            kred = K[1:12, 1:12]
+            f = zeros(12)
+            f[2] = 8.75   # node 1, Fy
+            f[4] = 17.5   # node 2, Fy
+            f[6] = 8.75   # node 3, Fy
+
+            u = kred \ f
+            U = [u; 0; 0; 0]
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+
+            # NOTE: plate rests only on vertical springs → x-translation is a
+            # zero-energy mode (reduced K singular). uy, ux-differences,
+            # reactions, and stresses are unique; absolute ux is not.
+
+            # Vertical displacements (m) — near-uniform (plate ≈ rigid vs springs)
+            @test u[2]  ≈ 2.9269e-3 rtol=1e-2   # Uy node 1
+            @test u[4]  ≈ 2.9292e-3 rtol=1e-2   # Uy node 2
+            @test u[6]  ≈ 2.9269e-3 rtol=1e-2   # Uy node 3
+            @test u[8]  ≈ 2.9138e-3 rtol=1e-2   # Uy node 4
+            @test u[10] ≈ 2.9223e-3 rtol=1e-2   # Uy node 5
+            @test u[12] ≈ 2.9138e-3 rtol=1e-2   # Uy node 6
+
+            # Relative horizontal displacements (unique despite x-mode)
+            @test (u[3] - u[1])  ≈ -2.31e-7 atol=1e-9   # Ux2 - Ux1
+            @test (u[5] - u[1])  ≈ -4.61e-7 atol=1e-9   # Ux3 - Ux1
+            @test (u[7] - u[1])  ≈  4.79e-6 atol=1e-9   # Ux4 - Ux1
+            @test (u[9] - u[1])  ≈ -2.31e-7 atol=1e-9   # Ux5 - Ux1
+            @test (u[11] - u[1]) ≈ -5.25e-6 atol=1e-9   # Ux6 - Ux1
+
+            # Reactions at spring grounds (kN)
+            @test F[13] ≈ -11.6553 rtol=1e-2
+            @test F[14] ≈ -11.6894 rtol=1e-2
+            @test F[15] ≈ -11.6553 rtol=1e-2
+
+            # Applied loads
+            @test F[2] ≈  8.75   rtol=1e-6
+            @test F[4] ≈ 17.5    rtol=1e-6
+            @test F[6] ≈  8.75   rtol=1e-6
+
+            # Equilibrium (DOFs 13-15 are y-direction spring grounds)
+            sumfx = F[1] + F[3] + F[5] + F[7] + F[9] + F[11]
+            @test sumfx ≈ 0.0 atol=1e-6
+            @test sum(F) - sumfx ≈ 0.0 atol=1e-6
+
+            # Element stresses at centroid (kPa)
+            u1 = [U[7]; U[8]; U[9]; U[10]; U[3]; U[4]; U[1]; U[2]]  # e1: 4-5-2-1
+            u2 = [U[9]; U[10]; U[11]; U[12]; U[5]; U[6]; U[3]; U[4]] # e2: 5-6-3-2
+            sig1 = d2_q4_elementstress(E, NU, X[4],Y[4], X[5],Y[5], X[2],Y[2], X[1],Y[1], p, u1)
+            sig2 = d2_q4_elementstress(E, NU, X[5],Y[5], X[6],Y[6], X[3],Y[3], X[2],Y[2], p, u2)
+
+            @test abs(sig1[1]) < 1e-2          # σxx ≈ 0 (pure y-stretch)
+            @test sig1[2] ≈ 5000.0  rtol=1e-2  # σyy
+            @test sig1[3] ≈ 726.33  rtol=1e-2  # τxy
+            @test abs(sig2[1]) < 1e-2          # σxx ≈ 0
+            @test sig2[2] ≈ 5000.0  rtol=1e-2  # σyy
+            @test sig2[3] ≈ -726.33 rtol=1e-2  # τxy
+
+            # Spring element forces (kN) — positive = tension
+            fspring3 = d1_spring_elementforce(kspring, [U[8]; U[13]])
+            fspring4 = d1_spring_elementforce(kspring, [U[10]; U[14]])
+            fspring5 = d1_spring_elementforce(kspring, [U[12]; U[15]])
+            @test fspring3 ≈ [11.6553; -11.6553] rtol=1e-2
+            @test fspring4 ≈ [11.6894; -11.6894] rtol=1e-2
+            @test fspring5 ≈ [11.6553; -11.6553] rtol=1e-2
+        end
     end
 
     # ─────────────────────────────────────────────────

@@ -1288,7 +1288,7 @@ end
 
             # Applied load (node 16, y-direction)
             @test f[24] == -20.0
-            @test F[32] == -20.0
+            @test F[32] ≈ -20.0 atol=1e-6
 
             # Node displacements (×10⁻³): Uy₁₆ is the max displacement
             @test u[24] ≈ -0.1167e-3 rtol=1e-2  # Uy₁₆

@@ -5,22 +5,26 @@
 # Reference: P. I. Kattan, "MATLAB Guide to Finite Elements:
 #   An Interactive Approach" (2nd ed., Springer, 2007)
 # ═══════════════════════════════════════════════════════════════
-# =============================================================================
-# PROBLEM OVERVIEW: THIN PLATE SUPPORTED ON THREE SPRINGS
-# =============================================================================
-# Note: Discretized using 1 Quadratic Quadrilateral (Q8) and 3 Spring Elements.
+# ===============================================================================
+# PROBLEM OVERVIEW: THIN PLATE SUPPORTED ON THREE SPRINGS (Fig 14.5)
+# ===============================================================================
+# Note: Discretized using 1 Eight-Node Quadrilateral (Serendipity) Element
+# and 3 Spring Elements.
 #
 #                                  w
 #            +---------------------------------------+
 #            ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^
 #            |   |   |   |   |   |   |   |   |   |   |
 #          1 O===================O===================O 3      - - -
-#            |         2         |         2          |          ^
-#            |                   |                   |          |
-#            |                   |                   |        0.4 m
-#            |         4         |         5          |          |
+#            |                   2                   |          ^
+#            |                                       |          |
+#            |                                       |          |
+#          4 O                                       O 5      0.4 m
+#            |                                       |          |
+#            |                                       |          |
+#            |                   7                   |          v
 #          6 O===================O===================O 8      - - -
-#            |         7         |                   |
+#            |                   |                   |
 #           /                   /                   /
 #           \ k                 \ k                 \ k
 #           /                   /                   /
@@ -30,36 +34,34 @@
 #          -----               -----               -----
 #          /////               /////               /////
 #
-#            |<----- 0.35 m ---->|<----- 0.35 m ---->|
+#            |<--------------- 0.7 m --------------->|
 #
-# =============================================================================
+# ===============================================================================
 # NODE COORDINATES & BOUNDARY CONDITIONS:
-# =============================================================================
+# ===============================================================================
 # Assuming Node 6 is at the origin (0,0) and units are in meters:
 #
-#   Plate Nodes (single Q8 element, 2 DOF each):
-#     Node 1 : ( 0.00,  0.40 )  -> Corner (top-left), loaded
-#     Node 2 : ( 0.35,  0.40 )  -> Mid-side (top), loaded
-#     Node 3 : ( 0.70,  0.40 )  -> Corner (top-right), loaded
-#     Node 4 : ( 0.00,  0.20 )  -> Mid-side (left)
-#     Node 5 : ( 0.70,  0.20 )  -> Mid-side (right)
-#     Node 6 : ( 0.00,  0.00 )  -> Corner (bottom-left),  -> Left Spring
-#     Node 7 : ( 0.35,  0.00 )  -> Mid-side (bottom),     -> Middle Spring
-#     Node 8 : ( 0.70,  0.00 )  -> Corner (bottom-right), -> Right Spring
+#   Plate Nodes (8-Node Quadrilateral):
+#     Node 1 : ( 0.00,  0.40 )
+#     Node 2 : ( 0.35,  0.40 )  -> Mid-edge node
+#     Node 3 : ( 0.70,  0.40 )
+#     Node 4 : ( 0.00,  0.20 )  -> Mid-edge node
+#     Node 5 : ( 0.70,  0.20 )  -> Mid-edge node
+#     Node 6 : ( 0.00,  0.00 )  -> Connected to Left Spring
+#     Node 7 : ( 0.35,  0.00 )  -> Mid-edge node, Connected to Middle Spring
+#     Node 8 : ( 0.70,  0.00 )  -> Connected to Right Spring
 #
-#   Ground Support Nodes (1 DOF each):
+#   Ground Support Nodes:
 #     Node 9  : ( 0.00, -Ls )   -> Fixed Support (Ls = spring un-stretched length)
 #     Node 10 : ( 0.35, -Ls )   -> Fixed Support
 #     Node 11 : ( 0.70, -Ls )   -> Fixed Support
 #
 #   Loads & Elements:
-#     Distributed Load : w (upwards, +Y direction) acting on edge 1-2-3.
-#     Plate Element   : 1 Quadratic Quadrilateral (Nodes 1-2-3-8-7-6-4 in
-#                       global view; assembled as corners 6-8-3-1 and
-#                       mid-sides 7-5-2-4 in local Q8 order).
-#     Spring Elements : 3 Springs of stiffness k (Nodes 6-9, 7-10, and 8-11).
+#     Distributed Load : w (upwards, +Y direction) acting on top edge 1-2-3.
+#     Plate Element    : 1 Eight-Node Quadrilateral Element (Serendipity).
+#     Spring Elements  : 3 Springs of stiffness k (Nodes 6-9, 7-10, and 8-11).
 #
-# =============================================================================
+# ===============================================================================
 # =============================================================================
 # Parameters:
 #   Material:    E = 200 GPa, ν = 0.3

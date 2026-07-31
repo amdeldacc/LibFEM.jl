@@ -1564,6 +1564,99 @@ end
             @test sig[7] ≈ [3000.0; -10.17; 4.235]  rtol=1e-2
             @test sig[8] ≈ [3000.0; 0.4880; -0.8013] rtol=1e-2
         end
+
+        @testset "problem_13_2_integration" begin
+            # Kattan Problem 13.2 — thin plate with central hole, 8 Q4 elements, 16 nodes
+            # Golden values from Doc/Kattan/Solutions-Manual/problem_13_2.m (Octave)
+            E, NU, h, p = 70e6, 0.25, 0.02, 1  # kPa, m, plane stress
+
+            # Node coordinates (4 rows × 4 columns of a 0.9×0.9 plate)
+            X = [0.0, 0.3, 0.6, 0.9,   # row y=0:    nodes 1-4
+                 0.0, 0.3, 0.6, 0.9,   # row y=0.3:  nodes 5-8
+                 0.0, 0.3, 0.6, 0.9,   # row y=0.6:  nodes 9-12
+                 0.0, 0.3, 0.6, 0.9]   # row y=0.9:  nodes 13-16
+            Y = [0.0, 0.0, 0.0, 0.0,
+                 0.3, 0.3, 0.3, 0.3,
+                 0.6, 0.6, 0.6, 0.6,
+                 0.9, 0.9, 0.9, 0.9]
+
+            # Elements: 4 nodes per Q4, CCW; central element (6,7,11,10) is a hole
+            conn = [(1,2,6,5), (2,3,7,6), (3,4,8,7), (5,6,10,9),
+                    (7,8,12,11), (9,10,14,13), (10,11,15,14), (11,12,16,15)]
+
+            K = zeros(32, 32)
+            for (i, j, m, n) in conn
+                k = d2_q4_elementstiffness(E, NU, h,
+                    X[i],Y[i], X[j],Y[j], X[m],Y[m], X[n],Y[n], p)
+                K = d2_q4_assemble(K, k, i, j, m, n)
+            end
+
+            # Fixed: nodes 1, 5, 9, 13 (left edge) → DOFs 1:2, 9:10, 17:18, 25:26
+            free = [3:8; 11:16; 19:24; 27:32]
+            kred = K[free, free]
+            f = zeros(24)
+            f[24] = -20.0  # node 16, Fy (DOF 32 = 24th free DOF)
+
+            u = kred \ f
+            U = zeros(32)
+            U[3:8]   = u[1:6]
+            U[11:16] = u[7:12]
+            U[19:24] = u[13:18]
+            U[27:32] = u[19:24]
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+
+            # Displacements (m)
+            @test u[1]  ≈ -2.9918e-5 rtol=1e-2   # Ux node 2
+            @test u[2]  ≈ -2.8358e-5 rtol=1e-2   # Uy node 2
+            @test u[5]  ≈ -3.8644e-5 rtol=1e-2   # Ux node 4
+            @test u[6]  ≈ -1.1018e-4 rtol=1e-2   # Uy node 4
+            @test u[7]  ≈  1.4762e-6 rtol=1e-2   # Ux node 6 (hole corner)
+            @test u[8]  ≈ -2.0309e-5 rtol=1e-2   # Uy node 6 (hole corner)
+            @test u[11] ≈ -1.2326e-5 rtol=1e-2   # Ux node 8
+            @test u[12] ≈ -1.0881e-4 rtol=1e-2   # Uy node 8
+            @test u[15] ≈ -2.3489e-6 rtol=1e-2   # Ux node 12
+            @test u[16] ≈ -8.2419e-5 rtol=1e-2   # Uy node 12
+            @test u[23] ≈  5.6534e-5 rtol=1e-2   # Ux node 16
+            @test u[24] ≈ -1.5895e-4 rtol=1e-2   # Uy node 16 (max deflection)
+
+            # Reactions at fixed nodes 1, 5, 9, 13 (kN)
+            @test F[1]  ≈ 17.6570  rtol=1e-2
+            @test F[2]  ≈  3.4450  rtol=1e-2
+            @test F[9]  ≈  7.4806  rtol=1e-2
+            @test F[10] ≈  7.0314  rtol=1e-2
+            @test F[17] ≈ -7.9321  rtol=1e-2
+            @test F[18] ≈  6.7416  rtol=1e-2
+            @test F[25] ≈ -17.2054 rtol=1e-2
+            @test F[26] ≈  2.7819  rtol=1e-2
+            @test F[32] ≈ -20.0    rtol=1e-6   # applied load @16
+
+            # Equilibrium
+            @test sum(F[1:2:end]) ≈ 0.0 atol=1e-6
+            @test sum(F[2:2:end]) ≈ 0.0 atol=1e-6
+
+            # Element stresses at centroid (kPa)
+            us = [U[[1,2,3,4,11,12,9,10]],    # e1: 1-2-6-5
+                  U[[3,4,5,6,13,14,11,12]],   # e2: 2-3-7-6
+                  U[[5,6,7,8,15,16,13,14]],   # e3: 3-4-8-7
+                  U[[9,10,11,12,19,20,17,18]], # e4: 5-6-10-9
+                  U[[13,14,15,16,23,24,21,22]], # e5: 7-8-12-11
+                  U[[17,18,19,20,27,28,25,26]], # e6: 9-10-14-13
+                  U[[19,20,21,22,29,30,27,28]], # e7: 10-11-15-14
+                  U[[21,22,23,24,31,32,29,30]]] # e8: 11-12-16-15
+            sig = [d2_q4_elementstress(E, NU, X[i],Y[i], X[j],Y[j],
+                       X[m],Y[m], X[n],Y[n], p, us[e])
+                   for (e, (i, j, m, n)) in enumerate(conn)]
+
+            @test sig[1] ≈ [-3288.97; 116.86; -806.08]    rtol=1e-2
+            @test sig[2] ≈ [-2209.08; -158.45; -1949.31]  rtol=1e-2
+            @test sig[3] ≈ [-592.06; -532.59; -187.44]    rtol=1e-2
+            @test sig[4] ≈ [-27.362; 203.241; -1980.51]   rtol=1e-2
+            @test sig[5] ≈ [-308.67; -1949.31; -2209.09]  rtol=1e-2
+            @test sig[6] ≈ [3316.329; -48.438; -546.742]  rtol=1e-2
+            @test sig[7] ≈ [2209.08; 446.45; -1384.02]    rtol=1e-2
+            @test sig[8] ≈ [900.72; -3267.68; -936.81]    rtol=1e-2
+        end
     end
 
     # ─────────────────────────────────────────────────

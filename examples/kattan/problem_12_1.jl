@@ -5,42 +5,63 @@
 #   An Interactive Approach" (2nd ed., Springer, 2007)
 # ═══════════════════════════════════════════════════════════════
 # =============================================================================
-# PROBLEM OVERVIEW: DISCRETIZATION OF THIN PLATE (Fig 12.x)
+# PROBLEM OVERVIEW: DISCRETIZATION OF THIN PLATE (Fig 12.4)
 # =============================================================================
+# Note: Discretized using 4 Quadratic Triangles (13 nodes total).
 #
-#      y ^
-#        |
-#  0.25 m|  11 --- 12 --- 13 -------> 3.125 kN
-#        |   | \   |   /   |         (uniform 75 kN/m on right edge,
-#        |   |   \ | /     |          1/6 : 2/3 : 1/6 quadratic split)
-#        |   6 --- 7 ---  8 ------> 12.5 kN
-#        |   |   / | \     |
-#        |   | /   |   \   |
-#        |   1 --- 2 ---  3 ------> 3.125 kN
-#        |
-#        |-------- 0.5 m ---------> x
+#               y
+#               ^
+#           11  |             12              13
+#      _  //|---O===============O===============O -----> 3.125 kN
+#      ^  //|   | \                           / |
+#      |  //|   |   \                       /   |
+#      |  //|   |     \  9            10  /     |
+#      |  //|   |       O               O       |
+#      |  //|   |         \           /         |
+#      |  //|   |           \       /           |
+# 0.25 m  //|   |             \   /             |
+#      |  //|---O 6             O 7           8 O -----> 12.5 kN
+#      |  //|   |             /   \             |
+#      |  //|   |           /       \           |
+#      |  //|   |         /           \         |
+#      |  //|   |       O               O       |
+#      v  //|   |     /  4            5   \     |
+#      -  //|   |   /                       \   |
+#         //|   | /                           \ |
+#         //|---O===============O===============O -----> 3.125 kN - - -> x
+#               1               2               3
 #
-#      left edge (x=0) fixed: nodes 1, 6, 11
+#               |<----------- 0.5 m ----------->|
 #
 # =============================================================================
-# NODE COORDINATES & LOADS:
+# NODE COORDINATES & BOUNDARY CONDITIONS:
 # =============================================================================
-# Unit is meters. 13 nodes, 2 DOF per node (ux, uy).
+# Assuming Node 1 is at the origin (0,0) and units are in meters:
 #
-#   Node 1  : (0.000, 0.000)    Node 8  : (0.500, 0.125)  -> Fx = +12.5 kN
-#   Node 2  : (0.250, 0.000)    Node 9  : (0.125, 0.1875)
-#   Node 3  : (0.500, 0.000)  -> Fx = +3.125 kN
-#   Node 4  : (0.125, 0.0625)   Node 10 : (0.375, 0.1875)
-#   Node 5  : (0.375, 0.0625)   Node 11 : (0.000, 0.250)  -> Fixed Support
-#   Node 6  : (0.000, 0.125)  -> Fixed Support
-#   Node 7  : (0.250, 0.125)    Node 12 : (0.250, 0.250)
-#                               Node 13 : (0.500, 0.250)  -> Fx = +3.125 kN
+#   Fixed Wall Nodes (x = 0):
+#     Node 1  : ( 0.000, 0.000 ) -> Fixed Support (Encastrement)
+#     Node 6  : ( 0.000, 0.125 ) -> Fixed Support
+#     Node 11 : ( 0.000, 0.250 ) -> Fixed Support
 #
-# ELEMENTS (4 Quadratic Triangles, node order: corners then mid-edge):
-#   Element 1 : 1-7-11  / 4-9-6
-#   Element 2 : 1-3-7   / 2-5-4
-#   Element 3 : 7-13-11 / 10-12-9
-#   Element 4 : 7-3-13  / 5-8-10
+#   Loaded Nodes (x = 0.5):
+#     Node 3  : ( 0.500, 0.000 ) -> Applied Load: Fx = +3.125 kN
+#     Node 8  : ( 0.500, 0.125 ) -> Applied Load: Fx = +12.50 kN
+#     Node 13 : ( 0.500, 0.250 ) -> Applied Load: Fx = +3.125 kN
+#
+#   Internal & Mid-Edge Nodes:
+#     Node 2  : ( 0.250, 0.000 ) -> Midpoint of edge 1-3
+#     Node 12 : ( 0.250, 0.250 ) -> Midpoint of edge 11-13
+#     Node 7  : ( 0.250, 0.125 ) -> Center Node
+#     Node 4  : ( 0.125, 0.0625) -> Midpoint of diagonal 1-7
+#     Node 5  : ( 0.375, 0.0625) -> Midpoint of diagonal 3-7
+#     Node 9  : ( 0.125, 0.1875) -> Midpoint of diagonal 11-7
+#     Node 10 : ( 0.375, 0.1875) -> Midpoint of diagonal 13-7
+#
+# ELEMENTS (4 Quadratic Triangles - 6 nodes per element, code order):
+#   Element 1 (Left)    : Nodes 1, 7, 11, 4, 9, 6   (Corners, then mid-edges)
+#   Element 2 (Bottom)  : Nodes 1, 3, 7, 2, 5, 4
+#   Element 3 (Top)     : Nodes 7, 13, 11, 10, 12, 9
+#   Element 4 (Right)   : Nodes 7, 3, 13, 5, 8, 10
 #
 # =============================================================================
 # Parameters:

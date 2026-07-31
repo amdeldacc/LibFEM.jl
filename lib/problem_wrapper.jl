@@ -56,6 +56,7 @@ const PROBLEM_VARS = Dict(
     "9.1" => ["K", "k", "f", "u", "U", "F", "f1", "f2"],
     "10.1" => ["K", "k", "f", "u", "U", "F", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8"],
     "11.1" => ["K", "k", "f", "u", "U", "F", "sig1", "sig2", "sig3", "sig4", "s1", "s2", "s3", "s4"],
+    "11.2" => ["K", "k", "f", "u", "U", "F"],
 )
 
 """All known problem names (sorted)."""
@@ -201,7 +202,8 @@ LibFEM.jl Julia functions. Returns `nothing` for problems that
 do not yet have a Julia equivalent.
 
 Implemented: "2.1", "2.2", "3.1", "3.3", "4.2", "5.1", "5.2",
-"6.1", "7.1", "7.2", "7.3", "8.1", "8.2", "8.3", "9.1".
+"6.1", "7.1", "7.2", "7.3", "8.1", "8.2", "8.3", "9.1", "10.1",
+"11.1", "11.2".
 """
 function run_julia_problem(problem_name::AbstractString)
     if problem_name == "2.1"
@@ -238,6 +240,8 @@ function run_julia_problem(problem_name::AbstractString)
         return _problem_10_1_julia()
     elseif problem_name == "11.1"
         return _problem_11_1_julia()
+    elseif problem_name == "11.2"
+        return _problem_11_2_julia()
     else
         return nothing
     end
@@ -286,6 +290,64 @@ function _problem_11_1_julia()
         "K" => K, "k" => k, "f" => f, "u" => u, "U" => U, "F" => F,
         "sig1" => sig1, "sig2" => sig2, "sig3" => sig3, "sig4" => sig4,
         "s1" => collect(s1), "s2" => collect(s2), "s3" => collect(s3), "s4" => collect(s4),
+    )
+end
+
+"""Julia equivalent of Problem 11.2: Thin plate with 16 CST elements (hollow center)."""
+function _problem_11_2_julia()
+    E = 70e6; NU = 0.25; t = 0.02; p = 1
+
+    k1 = d2_cst_elementstiffness(E, NU, t, 0, 0, 0.3, 0.3, 0, 0.3, p)
+    k2 = d2_cst_elementstiffness(E, NU, t, 0, 0, 0.3, 0, 0.3, 0.3, p)
+    k3 = d2_cst_elementstiffness(E, NU, t, 0.3, 0, 0.6, 0.3, 0.3, 0.3, p)
+    k4 = d2_cst_elementstiffness(E, NU, t, 0.3, 0, 0.6, 0, 0.6, 0.3, p)
+    k5 = d2_cst_elementstiffness(E, NU, t, 0.6, 0, 0.9, 0.3, 0.6, 0.3, p)
+    k6 = d2_cst_elementstiffness(E, NU, t, 0.6, 0, 0.9, 0, 0.9, 0.3, p)
+    k7 = d2_cst_elementstiffness(E, NU, t, 0, 0.3, 0.3, 0.6, 0, 0.6, p)
+    k8 = d2_cst_elementstiffness(E, NU, t, 0, 0.3, 0.3, 0.3, 0.3, 0.6, p)
+    k9 = d2_cst_elementstiffness(E, NU, t, 0.6, 0.3, 0.9, 0.6, 0.6, 0.6, p)
+    k10 = d2_cst_elementstiffness(E, NU, t, 0.6, 0.3, 0.9, 0.3, 0.9, 0.6, p)
+    k11 = d2_cst_elementstiffness(E, NU, t, 0, 0.6, 0.3, 0.9, 0, 0.9, p)
+    k12 = d2_cst_elementstiffness(E, NU, t, 0, 0.6, 0.3, 0.6, 0.3, 0.9, p)
+    k13 = d2_cst_elementstiffness(E, NU, t, 0.3, 0.6, 0.6, 0.9, 0.3, 0.9, p)
+    k14 = d2_cst_elementstiffness(E, NU, t, 0.3, 0.6, 0.6, 0.6, 0.6, 0.9, p)
+    k15 = d2_cst_elementstiffness(E, NU, t, 0.6, 0.6, 0.9, 0.9, 0.6, 0.9, p)
+    k16 = d2_cst_elementstiffness(E, NU, t, 0.6, 0.6, 0.9, 0.6, 0.9, 0.9, p)
+
+    K = zeros(32, 32)
+    K = d2_cst_assemble(K, k1, 1, 6, 5)
+    K = d2_cst_assemble(K, k2, 1, 2, 6)
+    K = d2_cst_assemble(K, k3, 2, 7, 6)
+    K = d2_cst_assemble(K, k4, 2, 3, 7)
+    K = d2_cst_assemble(K, k5, 3, 8, 7)
+    K = d2_cst_assemble(K, k6, 3, 4, 8)
+    K = d2_cst_assemble(K, k7, 5, 10, 9)
+    K = d2_cst_assemble(K, k8, 5, 6, 10)
+    K = d2_cst_assemble(K, k9, 7, 12, 11)
+    K = d2_cst_assemble(K, k10, 7, 8, 12)
+    K = d2_cst_assemble(K, k11, 9, 14, 13)
+    K = d2_cst_assemble(K, k12, 9, 10, 14)
+    K = d2_cst_assemble(K, k13, 10, 15, 14)
+    K = d2_cst_assemble(K, k14, 10, 11, 15)
+    K = d2_cst_assemble(K, k15, 11, 16, 15)
+    K = d2_cst_assemble(K, k16, 11, 12, 16)
+
+    k = [K[3:8, 3:8] K[3:8, 11:16] K[3:8, 19:24] K[3:8, 27:32];
+         K[11:16, 3:8] K[11:16, 11:16] K[11:16, 19:24] K[11:16, 27:32];
+         K[19:24, 3:8] K[19:24, 11:16] K[19:24, 19:24] K[19:24, 27:32];
+         K[27:32, 3:8] K[27:32, 11:16] K[27:32, 19:24] K[27:32, 27:32]]
+    f = zeros(24)
+    f[24] = -20.0
+    u = k \ f
+    U = zeros(32)
+    U[3:8] = u[1:6]
+    U[11:16] = u[7:12]
+    U[19:24] = u[13:18]
+    U[27:32] = u[19:24]
+    F = K * U
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "u" => u, "U" => U, "F" => F,
     )
 end
 

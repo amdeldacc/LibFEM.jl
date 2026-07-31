@@ -162,7 +162,8 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `scripts/validate-matlab.jl` | Octave↔Julia validation driver; runs in CI’s `validate` job |
 | `scripts/` (other) | Example scripts using LibFEM |
 | `Doc/Kattan/M-Files/` | Read-only MATLAB reference (80 `.m` files from Kattan) |
-| `Doc/Kattan/Solutions-Manual/` | `.rtf` and `.doc` problem solutions, plus per-problem MATLAB scripts (`problem_2_1.m` … `problem_8_3.m`, `ocr_m_verify.m`) |
+| `Doc/Kattan/Solutions-Manual/` | `.rtf` and `.doc` problem solutions, plus per-problem MATLAB scripts (`problem_2_1.m` … `problem_11_3.m`, `ocr_m_verify.m`) |
+| `examples/kattan/` | Runnable Julia ports of the Kattan textbook problems (one per MATLAB script) |
 | `Doc/Peter_Kattan_*` | Book PDF and text/Markdown transcriptions |
 | `CONTEXT.md` | Domain glossary: MATLAB→Julia mapping and naming conventions |
 | `AGENTS.md`, `CLAUDE.md` | Agent instructions with constraints and conventions (including the framework identity rule) |
@@ -170,6 +171,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 ## Where to Go Next
 
 - **[Architecture Overview](architecture/overview.md)** — Naming conventions, dimension system, `_assemble!` helper, module structure, **git hooks & commit workflow**.
+- **[Kattan Problem Integration](kattan/overview.md)** — Problem registry, problem wrapper, and validation workflow (Octave ↔ Julia for textbook problems 2.1 … 11.3).
 - **[Kattan MATLAB Mapping](reference/kattan-mapping.md)** — Full MATLAB-to-Julia mapping table and reference material index.
 
 ## Backlog

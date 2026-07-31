@@ -1297,6 +1297,56 @@ end
             # Reactions are the only nonzero entries (unconstrained rows ≈ 0)
             @test count(x -> abs(x) > 1e-6, F) == 9
         end
+
+        @testset "problem_11_3_integration" begin
+            # 2 CST triangles + 2 springs (Kattan Problem 11.3)
+            # 5 nodes, plane stress; 17.5 loads at nodes 1 and 2 (y)
+            result = ProblemWrapper.run_julia_problem("11.3")
+            K = result["K"]; k = result["k"]; f = result["f"]; F = result["F"]
+            sigma1 = result["sigma1"]; sigma2 = result["sigma2"]
+            s1 = result["s1"]; s2 = result["s2"]
+            f3 = result["f3"]; f4 = result["f4"]
+            u = k \ f  # wrapper does not return u; y-components are determined
+
+            # Sizes: 5 nodes × 2 DOF
+            @test size(K) == (10, 10)
+            @test size(k) == (8, 8)
+            @test length(f) == 8
+            @test length(F) == 10
+
+            # Symmetry
+            @test K ≈ K'
+            @test k ≈ k'
+
+            # Applied loads (nodes 1 and 2, y-direction)
+            @test f == [0.0; 17.5; 0.0; 17.5; 0.0; 0.0; 0.0; 0.0]
+            @test F[2] ≈ 17.5 rtol=1e-2  # Fy₁ (applied)
+            @test F[4] ≈ 17.5 rtol=1e-2  # Fy₂ (applied)
+
+            # Spring reactions at node 5
+            @test F[9] ≈ -17.5 rtol=1e-2  # Fx₅ (spring reaction)
+            @test F[10] ≈ -17.5 rtol=1e-2 # Fy₅ (spring reaction)
+
+            # x-displacements are NOT tested: the reduced k is singular
+            # (rank 7 — the system has no x-restraint, leaving a rigid-body
+            # x-translation). u[1], u[3], u[5], u[7] are solver-dependent
+            # arbitrary particular solutions; only the determined y-components
+            # (and derived reactions/stresses) are asserted.
+            @test u[2] ≈ 0.0044 rtol=1e-2  # Uy₁
+            @test u[4] ≈ 0.0044 rtol=1e-2  # Uy₂
+            @test u[6] ≈ 0.0044 rtol=1e-2  # Uy₃
+            @test u[8] ≈ 0.0044 rtol=1e-2  # Uy₄
+
+            # Spring forces (k = 4000 × Uy₄ ≈ 0.004375)
+            @test f3 ≈ [17.5; -17.5] rtol=1e-2  # spring 3 nodal forces
+            @test f4 ≈ [17.5; -17.5] rtol=1e-2  # spring 4 nodal forces
+
+            # Element stresses (σyy-dominated; s = [σ₁, σ₂, θ])
+            @test sigma1[2] ≈ 5000.0 rtol=1e-2  # σyy₁
+            @test sigma2[2] ≈ 5000.0 rtol=1e-2  # σyy₂
+            @test s1[1] ≈ 5000.0 rtol=1e-2      # σ₁₁ (principal)
+            @test s2[1] ≈ 5000.0 rtol=1e-2      # σ₁₂ (principal)
+        end
     end
 
     # ─────────────────────────────────────────────────

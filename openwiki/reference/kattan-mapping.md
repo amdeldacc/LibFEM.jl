@@ -182,9 +182,14 @@ Doc/
 │   │   └── FluidFlow1D*.m          # 4 files
 │   └── Solutions-Manual/          # .rtf and .doc solutions +
 │                                 # per-problem MATLAB scripts
-│                                 # (problem_2_1.m … problem_8_3.m,
+│                                 # (problem_2_1.m … problem_11_3.m,
 │                                 #  ocr_m_verify.m)
 └── Peter_Kattan_*                  # Book PDF and transcriptions
 ```
 
 **Important**: The `Doc/Kattan/M-Files/` directory is designated **read-only** (per `AGENTS.md`). These files are reference material — do not modify them.
+
+## Related Topics
+
+- [Kattan Problem Integration](../kattan/overview.md) – how each textbook problem (2.1 … 11.3) is wired into the validation harness and the problem wrapper.
+- [Testing and Validation](../testing/overview.md) – the suite that runs each problem through Octave and compares it against the Julia equivalent.

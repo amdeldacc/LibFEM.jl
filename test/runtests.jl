@@ -1375,6 +1375,81 @@ end
                 0,0,1,0,0,1, 0.5,0,0.5,0.5,0,0.5, 1, u)
             @test sigma ≈ zeros(3)
         end
+
+        @testset "problem_12_1_integration" begin
+            # Thin plate with 4 LST elements (Kattan Problem 12.1)
+            # 13 nodes, 4 elements, plane stress; validated against the
+            # Solutions Manual problem_12_1.m run under Octave (SymPy 1.14.0)
+            E = 210e6; NU = 0.3; t = 0.025; p = 1
+
+            # Element stiffnesses (corners then mid-edge nodes)
+            k1 = d2_lst_elementstiffness(E, NU, t, 0,0, 0.25,0.125, 0,0.25, 0.125,0.0625, 0.125,0.1875, 0,0.125, p)
+            k2 = d2_lst_elementstiffness(E, NU, t, 0,0, 0.5,0, 0.25,0.125, 0.25,0, 0.375,0.0625, 0.125,0.0625, p)
+            k3 = d2_lst_elementstiffness(E, NU, t, 0.25,0.125, 0.5,0.25, 0,0.25, 0.375,0.1875, 0.25,0.25, 0.125,0.1875, p)
+            k4 = d2_lst_elementstiffness(E, NU, t, 0.25,0.125, 0.5,0, 0.5,0.25, 0.375,0.0625, 0.5,0.125, 0.375,0.1875, p)
+
+            K = zeros(26, 26)
+            K = d2_lst_assemble(K, k1, 1,7,11, 4,9,6)
+            K = d2_lst_assemble(K, k2, 1,3,7, 2,5,4)
+            K = d2_lst_assemble(K, k3, 7,13,11, 10,12,9)
+            K = d2_lst_assemble(K, k4, 7,3,13, 5,8,10)
+
+            # Block-ordered reduction [3:10, 13:20, 23:26] (matches Kattan's MATLAB)
+            free = [3:10; 13:20; 23:26]
+            k = K[free, free]
+            f = zeros(20); f[3] = 3.125; f[11] = 12.5; f[19] = 3.125
+            u = k \ f
+            U = zeros(26); U[3:10] = u[1:8]; U[13:20] = u[9:16]; U[23:26] = u[17:20]
+            F = K * U; F[abs.(F) .< 1e-10] .= 0.0
+
+            @test size(K) == (26, 26)
+            @test size(k) == (20, 20)
+            @test K ≈ K'
+            @test k ≈ k'
+
+            # Node displacements (m)
+            @test u[1] ≈ 3.4997e-6 rtol=1e-2  # Ux₂
+            @test u[2] ≈ 5.9026e-7 rtol=1e-2  # Uy₂
+            @test u[3] ≈ 7.0058e-6 rtol=1e-2  # Ux₃
+            @test u[4] ≈ 4.1514e-7 rtol=1e-2  # Uy₃
+            @test u[9] ≈ 3.4535e-6 rtol=1e-2  # Ux₇
+            @test u[10] ≈ 0.0 atol=1e-10       # Uy₇
+            @test u[11] ≈ 7.0799e-6 rtol=1e-2  # Ux₈ (max)
+            @test u[12] ≈ 0.0 atol=1e-10       # Uy₈
+            @test u[19] ≈ 7.0058e-6 rtol=1e-2  # Ux₁₃
+            @test u[20] ≈ -4.1514e-7 rtol=1e-2 # Uy₁₃
+
+            # Reactions at fixed nodes 1, 6, 11
+            @test F[1] ≈ -3.4469 rtol=1e-2  # Fx₁
+            @test F[2] ≈ -1.5335 rtol=1e-2  # Fy₁
+            @test F[11] ≈ -11.8562 rtol=1e-2 # Fx₆
+            @test F[21] ≈ -3.4469 rtol=1e-2 # Fx₁₁
+            @test F[22] ≈ 1.5335 rtol=1e-2  # Fy₁₁
+
+            # Element stresses (at centroid)
+            u1 = [U[1];U[2];U[13];U[14];U[21];U[22];U[7];U[8];U[17];U[18];U[11];U[12]]
+            u2 = [U[1];U[2];U[5];U[6];U[13];U[14];U[3];U[4];U[9];U[10];U[7];U[8]]
+            u3 = [U[13];U[14];U[25];U[26];U[21];U[22];U[19];U[20];U[23];U[24];U[17];U[18]]
+            u4 = [U[13];U[14];U[5];U[6];U[25];U[26];U[9];U[10];U[15];U[16];U[19];U[20]]
+
+            sig1 = d2_lst_elementstress(E, NU, 0,0, 0.25,0.125, 0,0.25, 0.125,0.0625, 0.125,0.1875, 0,0.125, p, u1)
+            sig2 = d2_lst_elementstress(E, NU, 0,0, 0.5,0, 0.25,0.125, 0.25,0, 0.375,0.0625, 0.125,0.0625, p, u2)
+            sig3 = d2_lst_elementstress(E, NU, 0.25,0.125, 0.5,0.25, 0,0.25, 0.375,0.1875, 0.25,0.25, 0.125,0.1875, p, u3)
+            sig4 = d2_lst_elementstress(E, NU, 0.25,0.125, 0.5,0, 0.5,0.25, 0.375,0.0625, 0.5,0.125, 0.375,0.1875, p, u4)
+
+            @test sig1[1] ≈ 2970.2 rtol=1e-2  # σxx₁
+            @test sig1[2] ≈ 506.7 rtol=1e-2   # σyy₁
+            @test sig1[3] ≈ 0.0 atol=1e-10     # τxy₁
+            @test sig2[1] ≈ 3008.8 rtol=1e-2  # σxx₂
+            @test sig2[2] ≈ -21.3 rtol=1e-2   # σyy₂
+            @test sig2[3] ≈ 10.5 rtol=1e-2    # τxy₂
+            @test sig3[1] ≈ 3008.8 rtol=1e-2  # σxx₃
+            @test sig3[2] ≈ -21.3 rtol=1e-2   # σyy₃
+            @test sig3[3] ≈ -10.5 rtol=1e-2   # τxy₃
+            @test sig4[1] ≈ 3012.2 rtol=1e-2  # σxx₄
+            @test sig4[2] ≈ 26.5 rtol=1e-2    # σyy₄
+            @test sig4[3] ≈ 0.0 atol=1e-10     # τxy₄
+        end
     end
 
     # ─────────────────────────────────────────────────

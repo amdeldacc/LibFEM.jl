@@ -57,6 +57,9 @@ const PROBLEM_VARS = Dict(
     "10.1" => ["K", "k", "f", "u", "U", "F", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8"],
     "11.1" => ["K", "k", "f", "u", "U", "F", "sig1", "sig2", "sig3", "sig4", "s1", "s2", "s3", "s4"],
     "11.2" => ["K", "k", "f", "u", "U", "F"],
+    # Note: 11.3's k is singular (unconstrained rigid-body x-translation); u/U are
+    # solver-dependent, so they are excluded from comparison.
+    "11.3" => ["K", "k", "f", "F", "sigma1", "sigma2", "s1", "s2", "f3", "f4"],
 )
 
 """All known problem names (sorted)."""
@@ -203,7 +206,7 @@ do not yet have a Julia equivalent.
 
 Implemented: "2.1", "2.2", "3.1", "3.3", "4.2", "5.1", "5.2",
 "6.1", "7.1", "7.2", "7.3", "8.1", "8.2", "8.3", "9.1", "10.1",
-"11.1", "11.2".
+"11.1", "11.2", "11.3".
 """
 function run_julia_problem(problem_name::AbstractString)
     if problem_name == "2.1"
@@ -242,6 +245,8 @@ function run_julia_problem(problem_name::AbstractString)
         return _problem_11_1_julia()
     elseif problem_name == "11.2"
         return _problem_11_2_julia()
+    elseif problem_name == "11.3"
+        return _problem_11_3_julia()
     else
         return nothing
     end
@@ -348,6 +353,61 @@ function _problem_11_2_julia()
 
     return Dict{String,Any}(
         "K" => K, "k" => k, "f" => f, "u" => u, "U" => U, "F" => F,
+    )
+end
+
+"""Julia equivalent of Problem 11.3: 2 CST triangles + 2 springs (singular k)."""
+function _problem_11_3_julia()
+    E = 200e6; NU = 0.3; t = 0.01; p = 1
+
+    k1 = d2_cst_elementstiffness(E, NU, t, 0, 0.4, 0, 0, 0.7, 0.4, p)
+    k2 = d2_cst_elementstiffness(E, NU, t, 0.7, 0.4, 0, 0, 0.7, 0, p)
+    k3 = d1_spring_elementstiffness(4000)
+    k4 = d1_spring_elementstiffness(4000)
+
+    K = zeros(10, 10)
+    K = d2_cst_assemble(K, k1, 1, 3, 2)
+    K = d2_cst_assemble(K, k2, 2, 3, 4)
+    K = d1_spring_assemble(K, k3, 6, 9)
+    K = d1_spring_assemble(K, k4, 8, 10)
+
+    k = K[1:8, 1:8]
+    f = [0.0; 17.5; 0.0; 17.5; 0.0; 0.0; 0.0; 0.0]
+    u = k \ f
+    U = zeros(10)
+    U[1:8] = u
+    F = K * U
+    F[abs.(F) .< 1e-10] .= 0.0
+
+    u1 = [U[1]; U[2]; U[5]; U[6]; U[3]; U[4]]
+    u2 = [U[3]; U[4]; U[5]; U[6]; U[7]; U[8]]
+    u3 = [U[6]; U[9]]
+    u4 = [U[8]; U[10]]
+
+    sigma1 = d2_cst_elementstress(E, NU, 0, 0.4, 0, 0, 0.7, 0.4, p, u1)
+    sigma2 = d2_cst_elementstress(E, NU, 0.7, 0.4, 0, 0, 0.7, 0, p, u2)
+
+    # Principal stresses with the reference's single-arg atan convention
+    # (LinearTriangleElementPStresses.m): two-arg atan (as in
+    # d2_cst_elementpstress) would flip θ to 90° for this σyy-dominated
+    # stress state, failing the Octave comparison.
+    function pstress(sigma)
+        R = (sigma[1] + sigma[2]) / 2
+        Q = ((sigma[1] - sigma[2]) / 2)^2 + sigma[3] * sigma[3]
+        M = 2 * sigma[3] / (sigma[1] - sigma[2])
+        return [R + sqrt(Q); R - sqrt(Q); (atan(M) / 2) * 180 / pi]
+    end
+    s1 = pstress(sigma1)
+    s2 = pstress(sigma2)
+
+    f3 = d1_spring_elementforce(k3, u3)
+    f4 = d1_spring_elementforce(k4, u4)
+
+    return Dict{String,Any}(
+        "K" => K, "k" => k, "f" => f, "F" => F,
+        "sigma1" => sigma1, "sigma2" => sigma2,
+        "s1" => s1, "s2" => s2,
+        "f3" => f3, "f4" => f4,
     )
 end
 

@@ -10,6 +10,10 @@ using Plots
 using Test
 using LinearAlgebra
 
+# Problem runner wrapper — Kattan problem solutions computed via LibFEM
+include(joinpath(@__DIR__, "..", "lib", "problem_wrapper.jl"))
+using .ProblemWrapper
+
 # ─────────────────────────────────────────────────
 # Helper: physical invariant checks for stiffness matrices
 # ─────────────────────────────────────────────────
@@ -1262,6 +1266,36 @@ end
             @test sig2[1] ≈ 3000.0 rtol=1e-2  # σxx₂
             @test sig4[1] ≈ 2980.8 rtol=1e-2  # σxx₄
             @test sig4[2] ≈ -305.1 rtol=1e-2  # σyy₄
+        end
+
+        @testset "problem_11_2_integration" begin
+            # Thin plate with 16 CST elements, hollow center (Kattan Problem 11.2)
+            # 16 nodes, 16 elements, plane stress; -20.0 load at node 16 (y)
+            result = ProblemWrapper.run_julia_problem("11.2")
+            K = result["K"]; k = result["k"]; f = result["f"]
+            u = result["u"]; U = result["U"]; F = result["F"]
+
+            # Sizes: 16 nodes × 2 DOF
+            @test size(K) == (32, 32)
+            @test size(k) == (24, 24)
+            @test length(u) == 24
+            @test length(U) == 32
+            @test length(F) == 32
+
+            # Symmetry
+            @test K ≈ K'
+            @test k ≈ k'
+
+            # Applied load (node 16, y-direction)
+            @test f[24] == -20.0
+            @test F[32] == -20.0
+
+            # Node displacements (×10⁻³): Uy₁₆ is the max displacement
+            @test u[24] ≈ -0.1167e-3 rtol=1e-2  # Uy₁₆
+            @test maximum(abs.(u)) ≈ 0.1167e-3 rtol=1e-2
+
+            # Reactions are the only nonzero entries (unconstrained rows ≈ 0)
+            @test count(x -> abs(x) > 1e-6, F) == 9
         end
     end
 

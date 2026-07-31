@@ -6,56 +6,54 @@
 #   An Interactive Approach" (2nd ed., Springer, 2007)
 # ═══════════════════════════════════════════════════════════════
 # =============================================================================
-# PROBLEM OVERVIEW: THIN PLATE ON THREE SPRING SUPPORTS (Fig 13.11)
+# PROBLEM OVERVIEW: THIN PLATE SUPPORTED ON THREE SPRINGS (Fig 13.10)
 # =============================================================================
-# Note: Discretized using 2 Bilinear Quadrilaterals. The bottom edge
-#       (nodes 4, 5, 6) rests on three vertical springs (k = 4000 kN/m)
-#       anchored to the ground.
+# Note: Discretized using 2 Bilinear Quadrilaterals and 3 Spring Elements.
 #
-#                    8.75 kN   17.5 kN   8.75 kN
-#                      |         |         |
-#                      v         v         v
-#             1==============O==============O==============3
-#             |              |              |              |
-#             |  Element 1   |  Element 2   |              |
-#             |  (4,5,2,1)   |  (5,6,3,2)   |              |
-#             |              |              |              |
-#             4==============O==============O==============6
-#                         5  |              |
-#                            v              v
-#                           /\/\           /\/\
-#                           k=4000         k=4000
-#                            |              |
-#                          GROUND         GROUND
+#                                  w
+#            +---------------------------------------+
+#            ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^
+#            |   |   |   |   |   |   |   |   |   |   |
+#          1 O===================O===================O 3      - - -
+#            |                     2                 |          ^
+#            |                   |                   |          |
+#            |                   |                   |        0.4 m
+#            |                     5                 |          |
+#          4 O===================O===================O 6      - - -
+#            |                   |                   |
+#           /                   /                   /
+#           \ k                 \ k                 \ k
+#           /                   /                   /
+#           \                   \                   \
+#            |                   |                   |
+#          7 O                 8 O                 9 O
+#          -----               -----               -----
+#          /////               /////               /////
 #
-#             |<--- 0.35 m -->|<--- 0.35 m -->|
+#            |<----- 0.35 m ---->|<----- 0.35 m ---->|
 #
 # =============================================================================
 # NODE COORDINATES & BOUNDARY CONDITIONS:
 # =============================================================================
 # Assuming Node 4 is at the origin (0,0) and units are in meters:
 #
-#   Top Row (y = 0.4):
-#     Node 1 : ( 0.0, 0.4 )  -> Applied Load: Fy = +8.75 kN
-#     Node 2 : ( 0.35, 0.4 ) -> Applied Load: Fy = +17.5 kN
-#     Node 3 : ( 0.7, 0.4 )  -> Applied Load: Fy = +8.75 kN
+#   Plate Nodes:
+#     Node 1 : ( 0.00,  0.40 )
+#     Node 2 : ( 0.35,  0.40 )
+#     Node 3 : ( 0.70,  0.40 )
+#     Node 4 : ( 0.00,  0.00 )  -> Connected to Left Spring
+#     Node 5 : ( 0.35,  0.00 )  -> Connected to Middle Spring
+#     Node 6 : ( 0.70,  0.00 )  -> Connected to Right Spring
 #
-#   Bottom Row (y = 0.0):
-#     Node 4 : ( 0.0, 0.0 )  -> Spring support (k = 4000) to ground
-#     Node 5 : ( 0.35, 0.0 ) -> Spring support (k = 4000) to ground
-#     Node 6 : ( 0.7, 0.0 )  -> Spring support (k = 4000) to ground
+#   Ground Support Nodes:
+#     Node 7 : ( 0.00, -Ls )    -> Fixed Support (Ls = spring un-stretched length)
+#     Node 8 : ( 0.35, -Ls )    -> Fixed Support
+#     Node 9 : ( 0.70, -Ls )    -> Fixed Support
 #
-#   Spring ground nodes (fixed): DOFs 13, 14, 15
-#     Spring 3 : between node 4 (DOF 8)  and ground (DOF 13)
-#     Spring 4 : between node 5 (DOF 10) and ground (DOF 14)
-#     Spring 5 : between node 6 (DOF 12) and ground (DOF 15)
-#
-# ELEMENTS (2 Bilinear Quadrilaterals + 3 Springs):
-#   Element 1 : Nodes 4, 5, 2, 1   (Q4, bottom-left half of plate)
-#   Element 2 : Nodes 5, 6, 3, 2   (Q4, bottom-right half of plate)
-#   Element 3 : Spring k=4000, DOFs 8  <-> 13  (supports node 4)
-#   Element 4 : Spring k=4000, DOFs 10 <-> 14  (supports node 5)
-#   Element 5 : Spring k=4000, DOFs 12 <-> 15  (supports node 6)
+#   Loads & Elements:
+#     Distributed Load : w (upwards, +Y direction) acting on edge 1-2-3.
+#     Plate Elements   : 2 Bilinear Quadrilaterals (Nodes 1-2-5-4 and 2-3-6-5).
+#     Spring Elements  : 3 Springs of stiffness k (Nodes 4-7, 5-8, and 6-9).
 #
 # =============================================================================
 # =============================================================================

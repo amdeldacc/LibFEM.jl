@@ -5,6 +5,55 @@
 #   An Interactive Approach" (2nd ed., Springer, 2007)
 # ═══════════════════════════════════════════════════════════════
 # =============================================================================
+# PROBLEM OVERVIEW: THIN PLATE SUPPORTED ON TWO SPRINGS (Fig 11.9)
+# =============================================================================
+#
+#                                  w
+#            +---------------------------+
+#            ^   ^   ^   ^   ^   ^   ^   ^
+#            |   |   |   |   |   |   |   |
+#          1 O===========================O 2    - - -
+#            |                       /   |        ^
+#            |                   /       |        |
+#            |               /           |      0.4 m
+#            |           /               |        |
+#            |       /                   |        |
+#            |   /                       |        v
+#          3 O===========================O 4    - - -
+#            |                           |
+#           /                           /
+#           \ k                         \ k
+#           /                           /
+#           \                           \
+#            |                           |
+#          5 O                           O 6
+#          -----                       -----
+#          /////                       /////
+#
+#            |<--------- 0.7 m --------->|
+#
+# =============================================================================
+# NODE COORDINATES & BOUNDARY CONDITIONS:
+# =============================================================================
+# Assuming Node 3 is at the origin (0,0) and units are in meters:
+#
+#   Plate Nodes:
+#     Node 1 : ( 0.0,  0.4 )
+#     Node 2 : ( 0.7,  0.4 )
+#     Node 3 : ( 0.0,  0.0 )  -> Connected to Left Spring
+#     Node 4 : ( 0.7,  0.0 )  -> Connected to Right Spring
+#
+#   Ground Support Nodes:
+#     Node 5 : ( 0.0, -Ls )   -> Fixed Support (Ls = spring un-stretched length)
+#     Node 6 : ( 0.7, -Ls )   -> Fixed Support
+#
+#   Loads & Elements:
+#     Distributed Load : w (upwards, +Y direction) acting on top edge 1-2.
+#     Plate Elements   : 2 Linear Triangles (e.g., Nodes 1-3-2 and Nodes 3-4-2).
+#     Spring Elements  : 2 Springs of stiffness k (Nodes 3-5 and Nodes 4-6).
+#
+# =============================================================================
+# =============================================================================
 # PROBLEM OVERVIEW: MIXED CST + SPRING MODEL
 # =============================================================================
 # Two CST triangles (plane stress) carry two point loads; two springs

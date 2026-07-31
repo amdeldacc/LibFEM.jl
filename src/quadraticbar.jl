@@ -1,5 +1,10 @@
 # ═══════════════════════════════════════════════════════════
-# 1-D Quadratic Bar Element (d1_quadraticbar)
+# Ch4: Quadratic Bar Element
+# MATLAB: QuadraticBarElementStiffness.m, QuadraticBarElementForces.m,
+#         QuadraticBarElementStresses.m
+# Julia: d1_quadraticbar_elementlength, d1_quadraticbar_elementstiffness,
+#        d1_quadraticbar_elementforces, d1_quadraticbar_elementstress,
+#        d1_quadraticbar_assemble
 # ═══════════════════════════════════════════════════════════
 
 """

@@ -1,5 +1,9 @@
 # ═══════════════════════════════════════════════════════════
-# 2-D Quadratic Triangular Element (LST — Linear Strain Triangle)
+# Ch12: Quadratic Triangular Element (LST — Linear Strain Triangle)
+# MATLAB: QuadTriangleElementStiffness.m, QuadTriangleElementStress.m,
+#         QuadTriangleElementPStresses.m
+# Julia: d2_lst_elementstiffness, d2_lst_elementstress,
+#        d2_lst_elementpstress, d2_lst_assemble
 # ═══════════════════════════════════════════════════════════
 
 """
@@ -109,21 +113,7 @@ function d2_lst_elementstiffness(
     A = 0.5 * abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1))
 
     # Material constitutive matrix D (3×3)
-    if p == 1
-        # Plane stress
-        D = (E / (1 - NU^2)) * [
-            1    NU    0
-            NU   1     0
-            0    0     (1 - NU) / 2
-        ]
-    else
-        # Plane strain
-        D = (E / ((1 + NU) * (1 - 2 * NU))) * [
-            1 - NU   NU       0
-            NU       1 - NU   0
-            0        0        (1 - 2 * NU) / 2
-        ]
-    end
+    D = _d2_elasticity_matrix(E, NU, p)
 
     # Numerical integration over 3 Gauss points
     k = zeros(Float64, 12, 12)
@@ -240,19 +230,7 @@ function d2_lst_elementstress(
     end
 
     # D matrix (3×3)
-    if p == 1
-        D = (E / (1 - NU^2)) * [
-            1    NU    0
-            NU   1     0
-            0    0     (1 - NU) / 2
-        ]
-    else
-        D = (E / ((1 + NU) * (1 - 2 * NU))) * [
-            1 - NU   NU       0
-            NU       1 - NU   0
-            0        0        (1 - 2 * NU) / 2
-        ]
-    end
+    D = _d2_elasticity_matrix(E, NU, p)
 
     return D * B * u
 end

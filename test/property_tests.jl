@@ -8,7 +8,14 @@
 # 4. PropCheck.jl integration — demonstrate property-based checking
 # ═══════════════════════════════════════════════════════════════
 
-using LibFEM, Test, LinearAlgebra, PropCheck
+using LibFEM, Test, LinearAlgebra
+
+_HAS_PROPCHECK = false
+try
+    using PropCheck
+    global _HAS_PROPCHECK = true
+catch
+end
 
 @testset "property-based tests" begin
 
@@ -246,24 +253,15 @@ using LibFEM, Test, LinearAlgebra, PropCheck
         end
     end
 
-    # ─────────────────────────────────────────────────
-    # 4. PropCheck.jl Integration Demo
-    # ─────────────────────────────────────────────────
-    @testset "PropCheck.check integration" begin
-        # Demonstrate PropCheck.jl usage: property-based check
-        # for stiffness symmetry on d1_spring with random values.
-        gen_k = PropCheck.map(x -> Float64(x), PropCheck.isample(1:10000))
-
-        # check(predicate, generator; ntests=N) returns true if the
-        # predicate holds for all generated values, or the failing
-        # counterexample value if a counterexample is found.
-        ok = PropCheck.check(k -> begin
-            Ke = d1_spring_elementstiffness(k)
-            return Ke ≈ Ke'
-        end, gen_k; ntests=20)
-
-        # true means all 20 random tests passed
-        @test ok == true
+    if _HAS_PROPCHECK
+        @testset "PropCheck.check integration" begin
+            gen_k = PropCheck.map(x -> Float64(x), PropCheck.isample(1:10000))
+            ok = PropCheck.check(k -> begin
+                Ke = d1_spring_elementstiffness(k)
+                return Ke ≈ Ke'
+            end, gen_k; ntests=20)
+            @test ok == true
+        end
     end
 
 end # @testset "property-based tests"

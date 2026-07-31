@@ -51,16 +51,14 @@ function _assemble_n!(K::AbstractMatrix, k::AbstractMatrix, nodes::AbstractVecto
     for i in 1:length(nodes), j in i+1:length(nodes)
         nodes[i] == nodes[j] && throw(AssemblyError("Duplicate node indices in assembly: $(nodes)"))
     end
-    @views begin
-        n_nodes = length(nodes)
-        dof_ranges = [((nodes[n] - 1) * ndofs + 1):(nodes[n] * ndofs) for n in 1:n_nodes]
-        total_dofs = n_nodes * ndofs
-        for a in 1:total_dofs
-            global_a = dof_ranges[(a - 1) ÷ ndofs + 1][(a - 1) % ndofs + 1]
-            for b in 1:total_dofs
-                global_b = dof_ranges[(b - 1) ÷ ndofs + 1][(b - 1) % ndofs + 1]
-                K[global_a, global_b] += k[a, b]
-            end
+    n_nodes = length(nodes)
+    @views for a in 1:n_nodes
+        global_a = (nodes[a] - 1) * ndofs + 1:nodes[a] * ndofs
+        local_a  = (a - 1) * ndofs + 1:a * ndofs
+        for b in 1:n_nodes
+            global_b = (nodes[b] - 1) * ndofs + 1:nodes[b] * ndofs
+            local_b  = (b - 1) * ndofs + 1:b * ndofs
+            K[global_a, global_b] += k[local_a, local_b]
         end
     end
     return K

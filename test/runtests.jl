@@ -1472,6 +1472,98 @@ end
             K = d2_q4_assemble(K, k, 1,2,3,4)
             @test K ≈ k
         end
+
+        @testset "problem_13_1_integration" begin
+            # Kattan Problem 13.1 — thin plate, 8 Q4 elements, 15 nodes
+            # Golden values from Doc/Kattan/Solutions-Manual/problem_13_1.m (Octave)
+            E, NU, h, p = 210e6, 0.3, 0.025, 1  # kPa, m, plane stress
+
+            # Node coordinates (3 rows × 5 columns of a 0.5×0.25 plate)
+            X = [0.0, 0.125, 0.25, 0.375, 0.5,   # row y=0:   nodes 1-5
+                 0.0, 0.125, 0.25, 0.375, 0.5,   # row y=0.125: nodes 6-10
+                 0.0, 0.125, 0.25, 0.375, 0.5]   # row y=0.25: nodes 11-15
+            Y = [0.0, 0.0, 0.0, 0.0, 0.0,
+                 0.125, 0.125, 0.125, 0.125, 0.125,
+                 0.25, 0.25, 0.25, 0.25, 0.25]
+
+            # Elements: 4 nodes per Q4, CCW from bottom-left
+            conn = [(1,2,7,6), (2,3,8,7), (3,4,9,8), (4,5,10,9),
+                    (6,7,12,11), (7,8,13,12), (8,9,14,13), (9,10,15,14)]
+
+            K = zeros(30, 30)
+            for (i, j, m, n) in conn
+                k = d2_q4_elementstiffness(E, NU, h,
+                    X[i],Y[i], X[j],Y[j], X[m],Y[m], X[n],Y[n], p)
+                K = d2_q4_assemble(K, k, i, j, m, n)
+            end
+
+            # Fixed: nodes 1, 6, 11 (left edge) → DOFs 1:2, 11:12, 21:22
+            free = [3:10; 13:20; 23:30]
+            kred = K[free, free]
+            f = zeros(24)
+            f[7]  = 4.6875  # node 5,  Fx
+            f[15] = 9.375   # node 10, Fx
+            f[23] = 4.6875  # node 15, Fx
+
+            u = kred \ f
+            U = zeros(30)
+            U[3:10]  = u[1:8]
+            U[13:20] = u[9:16]
+            U[23:30] = u[17:24]
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+
+            # Displacements (m)
+            @test u[1]  ≈ 1.7679e-6  rtol=1e-2   # Ux node 2
+            @test u[2]  ≈ 5.5217e-7  rtol=1e-2   # Uy node 2
+            @test u[3]  ≈ 3.4997e-6  rtol=1e-2   # Ux node 3
+            @test u[7]  ≈ 7.0706e-6  rtol=1e-2   # Ux node 5 (max)
+            @test u[10] ≈ 0.0        atol=1e-10  # Uy node 8 (symmetry)
+            @test u[14] ≈ 0.0        atol=1e-10  # Uy node 13 (symmetry)
+            @test u[17] ≈ 1.7679e-6  rtol=1e-2   # Ux node 12
+            @test u[18] ≈ -5.5217e-7 rtol=1e-2   # Uy node 12
+            @test u[23] ≈ 7.0706e-6  rtol=1e-2   # Ux node 15 (max)
+
+            # Reactions at fixed nodes 1, 6, 11 (kN)
+            @test F[1]  ≈ -4.9836  rtol=1e-2
+            @test F[2]  ≈ -1.2580  rtol=1e-2
+            @test F[11] ≈ -8.7829  rtol=1e-2
+            @test F[21] ≈ -4.9836  rtol=1e-2
+            @test F[22] ≈  1.2580  rtol=1e-2
+            @test F[9]  ≈  4.6875  rtol=1e-6   # applied load @5
+            @test F[19] ≈  9.3750  rtol=1e-6   # applied load @10
+            @test F[29] ≈  4.6875  rtol=1e-6   # applied load @15
+
+            # Equilibrium
+            @test sum(F[1:2:end]) ≈ 0.0 atol=1e-6
+            @test sum(F[2:2:end]) ≈ 0.0 atol=1e-6
+
+            # Element stresses at centroid (kPa)
+            us = [U[[1,2,3,4,13,14,11,12]],   # e1: 1-2-7-6
+                  U[[3,4,5,6,15,16,13,14]],   # e2: 2-3-8-7
+                  U[[5,6,7,8,17,18,15,16]],   # e3: 3-4-9-8
+                  U[[7,8,9,10,19,20,17,18]],  # e4: 4-5-10-9
+                  U[[11,12,13,14,23,24,21,22]], # e5: 6-7-12-11
+                  U[[13,14,15,16,25,26,23,24]], # e6: 7-8-13-12
+                  U[[15,16,17,18,27,28,25,26]], # e7: 8-9-14-13
+                  U[[17,18,19,20,29,30,27,28]]] # e8: 9-10-15-14
+            sig = [d2_q4_elementstress(E, NU, X[i],Y[i], X[j],Y[j],
+                       X[m],Y[m], X[n],Y[n], p, us[e])
+                   for (e, (i, j, m, n)) in enumerate(conn)]
+
+            # σxx = 3000 kPa uniform (uniaxial tension)
+            for e in 1:8
+                @test sig[e][1] ≈ 3000.0 rtol=1e-2
+            end
+            @test sig[1] ≈ [3000.0; 436.2; 139.6]   rtol=1e-2
+            @test sig[2] ≈ [3000.0; -23.92; -41.44] rtol=1e-2
+            @test sig[3] ≈ [3000.0; -10.17; -4.235] rtol=1e-2
+            @test sig[4] ≈ [3000.0; 0.4880; 0.8013] rtol=1e-2
+            @test sig[5] ≈ [3000.0; 436.2; -139.6]  rtol=1e-2
+            @test sig[6] ≈ [3000.0; -23.92; 41.44]  rtol=1e-2
+            @test sig[7] ≈ [3000.0; -10.17; 4.235]  rtol=1e-2
+            @test sig[8] ≈ [3000.0; 0.4880; -0.8013] rtol=1e-2
+        end
     end
 
     # ─────────────────────────────────────────────────

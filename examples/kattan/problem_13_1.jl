@@ -5,24 +5,23 @@
 #   An Interactive Approach" (2nd ed., Springer, 2007)
 # ═══════════════════════════════════════════════════════════════
 # =============================================================================
-# PROBLEM OVERVIEW: DISCRETIZATION OF THIN PLATE (Fig 13.4)
+# PROBLEM OVERVIEW: DISCRETIZATION OF THIN PLATE (Fig 13.7)
 # =============================================================================
-# Note: Discretized using 8 Bilinear Quadrilateral elements (15 nodes total).
+# Note: Discretized using 8 Bilinear Quadrilaterals (15 nodes total).
 #
-#               y
-#               ^
-#           11 ------- 12 ------- 13 ------- 14 ------- 15 -----> 4.6875 kN
-#           |          |          |          |          |
-#           |    e5    |    e6    |    e7    |    e8    |
-#           |          |          |          |          |
-#           6 -------  7 -------  8 -------  9 ------- 10 -----> 9.375 kN
-#           |          |          |          |          |
-#           |    e1    |    e2    |    e3    |    e4    |
-#           |          |          |          |          |
-#           1 -------  2 -------  3 -------  4 -------  5 -----> 4.6875 kN
-#  Fixed    |<------------------- 0.5 m ------------------->|
-#  Wall
-#  (x = 0)
+#             11             12             13             14             15
+#       - //|-O==============O==============O==============O==============O -----> 4.6875 kN
+#       ^ //| |              |              |              |              |
+# 0.125m| //| |              |              |              |              |
+#       v //| |              |              |              |              |
+#       - //|-O==============O==============O==============O==============O -----> 9.375 kN
+#       ^ //| | 6            | 7            | 8            | 9            | 10
+# 0.125m| //| |              |              |              |              |
+#       v //| |              |              |              |              |
+#       - //|-O==============O==============O==============O==============O -----> 4.6875 kN
+#             1              2              3              4              5
+#
+#             |<-- 0.125m -->|<-- 0.125m -->|<-- 0.125m -->|<-- 0.125m -->|
 #
 # =============================================================================
 # NODE COORDINATES & BOUNDARY CONDITIONS:
@@ -30,28 +29,26 @@
 # Assuming Node 1 is at the origin (0,0) and units are in meters:
 #
 #   Fixed Wall Nodes (x = 0):
-#     Node 1  : ( 0.000, 0.000 ) -> Fixed Support
+#     Node 1  : ( 0.000, 0.000 ) -> Fixed Support (Encastrement)
 #     Node 6  : ( 0.000, 0.125 ) -> Fixed Support
 #     Node 11 : ( 0.000, 0.250 ) -> Fixed Support
 #
-#   Loaded Nodes (x = 0.5) — uniform traction, split 1:2:1:
+#   Loaded Nodes (x = 0.500):
 #     Node 5  : ( 0.500, 0.000 ) -> Applied Load: Fx = +4.6875 kN
-#     Node 10 : ( 0.500, 0.125 ) -> Applied Load: Fx = +9.375  kN
+#     Node 10 : ( 0.500, 0.125 ) -> Applied Load: Fx = +9.3750 kN
 #     Node 15 : ( 0.500, 0.250 ) -> Applied Load: Fx = +4.6875 kN
 #
-#   Remaining Nodes (free):
-#     Node 2  : ( 0.125, 0.000 )    Node 3  : ( 0.250, 0.000 )
-#     Node 4  : ( 0.375, 0.000 )    Node 7  : ( 0.125, 0.125 )
-#     Node 8  : ( 0.250, 0.125 )    Node 9  : ( 0.375, 0.125 )
-#     Node 12 : ( 0.125, 0.250 )    Node 13 : ( 0.250, 0.250 )
-#     Node 14 : ( 0.375, 0.250 )
+#   Internal & Boundary Nodes (Grid dx=0.125, dy=0.125):
+#     Row 1 (y=0.000): N2(0.125), N3(0.250), N4(0.375)
+#     Row 2 (y=0.125): N7(0.125), N8(0.250), N9(0.375)
+#     Row 3 (y=0.250): N12(0.125), N13(0.250), N14(0.375)
 #
-# ELEMENTS (8 Q4 elements, 4 nodes per element, CCW from bottom-left):
-#   Element 1 : Nodes 1, 2, 7, 6     Element 2 : Nodes 2, 3, 8, 7
-#   Element 3 : Nodes 3, 4, 9, 8     Element 4 : Nodes 4, 5, 10, 9
-#   Element 5 : Nodes 6, 7, 12, 11   Element 6 : Nodes 7, 8, 13, 12
-#   Element 7 : Nodes 8, 9, 14, 13   Element 8 : Nodes 9, 10, 15, 14
+# ELEMENTS (8 Bilinear Quadrilaterals - 4 nodes per element):
+#   Element 1 : Nodes 1, 2, 7, 6
+#   Element 2 : Nodes 2, 3, 8, 7
+#   ... and so on ...
 #
+# =============================================================================
 # =============================================================================
 # Parameters:
 #   Material:    E = 210 GPa, ν = 0.3

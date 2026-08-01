@@ -1888,6 +1888,109 @@ end
             @test abs(p[1] - 100) < 1e-10  # σ1 = 100
             @test abs(p[2]) < 1e-10       # σ2 = 0
         end
+
+        @testset "problem_15_1_integration" begin
+            # Kattan Problem 15.1 — 3D block (0.025×0.5×0.25 m), 6 tetrahedra,
+            # bottom face fixed, upward loads on top face. Golden values from
+            # Doc/Kattan/Solutions-Manual/problem_15_1.m under Octave (long g).
+            E, NU = 210e6, 0.3
+            # Node coordinates (global)
+            x1,y1,z1 = 0.0,   0.0,  0.00
+            x2,y2,z2 = 0.025, 0.0,  0.00
+            x3,y3,z3 = 0.0,   0.5,  0.00
+            x4,y4,z4 = 0.025, 0.5,  0.00
+            x5,y5,z5 = 0.0,   0.0,  0.25
+            x6,y6,z6 = 0.025, 0.0,  0.25
+            x7,y7,z7 = 0.0,   0.5,  0.25
+            x8,y8,z8 = 0.025, 0.5,  0.25
+            k1 = d3_tet_elementstiffness(E, NU, x1,y1,z1, x2,y2,z2, x4,y4,z4, x8,y8,z8)
+            k2 = d3_tet_elementstiffness(E, NU, x1,y1,z1, x2,y2,z2, x8,y8,z8, x5,y5,z5)
+            k3 = d3_tet_elementstiffness(E, NU, x2,y2,z2, x8,y8,z8, x5,y5,z5, x6,y6,z6)
+            k4 = d3_tet_elementstiffness(E, NU, x1,y1,z1, x3,y3,z3, x7,y7,z7, x4,y4,z4)
+            k5 = d3_tet_elementstiffness(E, NU, x1,y1,z1, x7,y7,z7, x5,y5,z5, x8,y8,z8)
+            k6 = d3_tet_elementstiffness(E, NU, x1,y1,z1, x8,y8,z8, x4,y4,z4, x7,y7,z7)
+            K = zeros(24, 24)
+            K = d3_tet_assemble(K, k1, 1,2,4,8)
+            K = d3_tet_assemble(K, k2, 1,2,8,5)
+            K = d3_tet_assemble(K, k3, 2,8,5,6)
+            K = d3_tet_assemble(K, k4, 1,3,7,4)
+            K = d3_tet_assemble(K, k5, 1,7,5,8)
+            K = d3_tet_assemble(K, k6, 1,8,4,7)
+            free = [7:12; 19:24]
+            fixed = [1:6; 13:18]
+            f = zeros(12)
+            f[2], f[5], f[8], f[11] = 3.125, 6.25, 6.25, 3.125
+            u = K[free, free] \ f
+            U = zeros(24); U[free] = u
+            F = K * U; F[abs.(F) .< 1e-10] .= 0.0
+            # Golden free displacements (m)
+            u_gold = [1.846590992634907e-07, 6.709937720724766e-06, 1.485208020455631e-06,
+                      9.07262051068782e-08,  6.698777435174929e-06, 1.489155301206617e-06,
+                      1.831613663252598e-07, 5.809126841859452e-06, 3.188325752472113e-07,
+                      7.408420903751547e-08, 5.794544023355245e-06, 3.173716316460239e-07]
+            @test u ≈ u_gold rtol=1e-4
+            # Golden reactions (kN) at fixed DOFs 1:6, 13:18
+            F_gold = [-51.19249793433492, -3.056522511152604, -4.484218066705922,
+                       51.20900702348261, -6.318477488847259, -3.036817407557082,
+                      -29.25534696033375,  -6.318477488848091,  4.649308958182774,
+                       29.23883787118602,  -3.056522511151611,  2.871726516080239]
+            @test F[fixed] ≈ F_gold rtol=1e-6
+            # Applied loads echoed at free DOFs
+            @test F[8]  ≈ 3.125 rtol=1e-6
+            @test F[11] ≈ 6.25  rtol=1e-6
+            @test F[20] ≈ 6.25  rtol=1e-6
+            @test F[23] ≈ 3.125 rtol=1e-6
+            # Element nodal displacement vectors (local node order)
+            u1 = [U[1:6];  U[10:12]; U[22:24]]
+            u2 = [U[1:6];  U[22:24]; U[13:15]]
+            u3 = [U[4:6];  U[22:24]; U[13:15]; U[16:18]]
+            u4 = [U[1:3];  U[7:9];   U[19:21]; U[10:12]]
+            u5 = [U[1:3];  U[19:21]; U[13:15]; U[22:24]]
+            u6 = [U[1:3];  U[22:24]; U[10:12]; U[19:21]]
+            sig1 = d3_tet_elementstress(E, NU, x1,y1,z1, x2,y2,z2, x4,y4,z4, x8,y8,z8, u1)
+            sig2 = d3_tet_elementstress(E, NU, x1,y1,z1, x2,y2,z2, x8,y8,z8, x5,y5,z5, u2)
+            sig3 = d3_tet_elementstress(E, NU, x2,y2,z2, x8,y8,z8, x5,y5,z5, x6,y6,z6, u3)
+            sig4 = d3_tet_elementstress(E, NU, x1,y1,z1, x3,y3,z3, x7,y7,z7, x4,y4,z4, u4)
+            sig5 = d3_tet_elementstress(E, NU, x1,y1,z1, x7,y7,z7, x5,y5,z5, x8,y8,z8, u5)
+            sig6 = d3_tet_elementstress(E, NU, x1,y1,z1, x8,y8,z8, x4,y4,z4, x7,y7,z7, u6)
+            # Golden element stresses (kPa, Voigt [σxx;σyy;σzz;τxy;τyz;τzx])
+            sig1_gold = [1055.300907889945, 3219.521310023383, 298.1483829431006,
+                         14.65577159418802, -51.58109208529072, -5.376644883947961]
+            sig2_gold = [1404.06259027454, 3276.146043973927, 1404.06259027454,
+                         11.96744915221404, 51.26772511205002, 0.0]
+            sig4_gold = [-1.53822504246682, 2773.238816203646, -148.2451966267186,
+                         -6.226760356908926, -51.11298832903799, 12.26887024621828]
+            sig5_gold = [174.1851869660662, 2755.786259887622, 878.9914340561063,
+                         -17.52611599182273, 51.50372369378029, -4.719971634605372]
+            sig6_gold = [-174.5764954185288, 2699.161525937078, -226.9227732753332,
+                         -14.83779354984654, -51.34509350356047, -10.09661651855333]
+            @test sig1 ≈ sig1_gold rtol=1e-4
+            @test sig2 ≈ sig2_gold rtol=1e-4
+            @test sig3 ≈ sig2_gold rtol=1e-4  # elements 2 & 3 are mirrored
+            @test sig4 ≈ sig4_gold rtol=1e-4
+            @test sig5 ≈ sig5_gold rtol=1e-4
+            @test sig6 ≈ sig6_gold rtol=1e-4
+            # Stress invariants: I1 = trace, I2 = Σ principal minors, I3 = det
+            invariants(s) = (s[1]+s[2]+s[3],
+                             s[1]*s[2]+s[1]*s[3]+s[2]*s[3]-s[4]^2-s[5]^2-s[6]^2,
+                             det([s[1] s[4] s[6]; s[4] s[2] s[5]; s[6] s[5] s[3]]))
+            # Golden invariants [I1; I2; I3] from TetrahedronElementPStresses (Octave)
+            @test invariants(sig1)[1] ≈ 4572.970600856429   rtol=1e-4
+            @test invariants(sig1)[2] ≈ 4669190.78406686    rtol=1e-4
+            @test invariants(sig1)[3] ≈ 1010021416.625032   rtol=1e-4
+            @test invariants(sig2)[1] ≈ 6084.271224523007   rtol=1e-4
+            @test invariants(sig2)[2] ≈ 11168448.35917051   rtol=1e-4
+            @test invariants(sig2)[3] ≈ 6454675808.015096   rtol=1e-4
+            @test invariants(sig4)[1] ≈ 2623.455394534461   rtol=1e-4
+            @test invariants(sig4)[2] ≈ -417958.9998204918  rtol=1e-4
+            @test invariants(sig4)[3] ≈ 232527.890274289    rtol=1e-4
+            @test invariants(sig5)[1] ≈ 3808.962880909794   rtol=1e-4
+            @test invariants(sig5)[2] ≈ 3052454.872302094   rtol=1e-4
+            @test invariants(sig5)[3] ≈ 421146041.2244004   rtol=1e-4
+            @test invariants(sig6)[1] ≈ 2297.662257243216   rtol=1e-4
+            @test invariants(sig6)[2] ≈ -1047054.416670724  rtol=1e-4
+            @test invariants(sig6)[3] ≈ 107147973.668339    rtol=1e-4
+        end
     end
 
     # ─────────────────────────────────────────────────

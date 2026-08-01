@@ -113,6 +113,12 @@ jobs:
             core.setOutput('head_sha', pullRequest.head.sha);
 
       - name: Run OpenCodeReview
+        # Skip fork PRs: the `pull_request` event does not expose secrets to
+        # fork PRs, so OCR has no LLM endpoint there and would fail the job.
+        # Same-repo PRs and /open-code-review comments are unaffected.
+        if: |
+          github.event_name != 'pull_request'
+          || github.event.pull_request.head.repo.full_name == github.repository
         uses: alibaba/open-code-review@a13b27e5c91ac6559355212bc85bbfdc8adf32c4
         with:
           llm_url: ${{ secrets.OCR_LLM_URL }}

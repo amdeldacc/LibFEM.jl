@@ -146,12 +146,17 @@ display(F)
 println("Sum Fz (should be ~0): ", sum(F[1:3:end]))  # sum Z-forces only
 
 # ─── Self-validation ─────────────────────────────────────────
-# Expected values from Kattan's MATLAB/Solutions-Manual output
-@assert isapprox(u, [-0.0048, 0.0, -0.0018]; rtol=5e-2) "u mismatch at node 1: $(u)"
-@assert isapprox(F[1], -10.0; rtol=1e-2) "Fz₁ mismatch: $(F[1])"
-@assert isapprox(F[4], 5.0; rtol=1e-2) "Fz₂ mismatch: $(F[4])"
-@assert isapprox(F[5], -13.8905; rtol=1e-2) "Mx₂ mismatch: $(F[5])"
-@assert isapprox(F[6], 20.0; rtol=1e-2) "My₂ mismatch: $(F[6])"
-@assert isapprox(F[7], 5.0; rtol=1e-2) "Fz₃ mismatch: $(F[7])"
-@assert isapprox(F[8], 13.8905; rtol=1e-2) "Mx₃ mismatch: $(F[8])"
-@assert isapprox(F[9], 20.0; rtol=1e-2) "My₃ mismatch: $(F[9])"
+# Goldens from full-precision Julia solve, verified against the
+# Octave reference (Doc/Kattan/Solutions-Manual/problem_9_1.m).
+# Book prints u ≈ [-0.0048, 0, -0.0018] (rounded); exact solve below.
+# Margin: rtol=1e-6 vs machine error ~1e-13 (≈7 orders of headroom).
+@assert isapprox(u, [-0.004762198271813656, 0.0, -0.0017610594533671458]; rtol=1e-6) "u mismatch at node 1: $(u)"
+@assert isapprox(F[1], -10.0; rtol=1e-6) "Fz₁ mismatch: $(F[1])"
+@assert isapprox(F[4], 5.0; rtol=1e-6) "Fz₂ mismatch: $(F[4])"
+@assert isapprox(F[5], -13.890532544378685; rtol=1e-6) "Mx₂ mismatch: $(F[5])"
+@assert isapprox(F[6], 20.0; rtol=1e-6) "My₂ mismatch: $(F[6])"
+@assert isapprox(F[7], 5.0; rtol=1e-6) "Fz₃ mismatch: $(F[7])"
+@assert isapprox(F[8], 13.890532544378692; rtol=1e-6) "Mx₃ mismatch: $(F[8])"
+@assert isapprox(F[9], 20.0; rtol=1e-6) "My₃ mismatch: $(F[9])"
+
+println("\nAll golden assertions passed ✓")

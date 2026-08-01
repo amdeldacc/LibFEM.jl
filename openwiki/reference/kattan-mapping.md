@@ -191,5 +191,5 @@ Doc/
 
 ## Related Topics
 
-- [Kattan Problem Integration](../kattan/overview.md) – how each textbook problem (2.1 … 11.3) is wired into the validation harness and the problem wrapper.
+- [Kattan Problem Integration](../kattan/overview.md) – how each textbook problem (2.1 … 16.1) is wired into the validation harness and the problem wrapper.
 - [Testing and Validation](../testing/overview.md) – the suite that runs each problem through Octave and compares it against the Julia equivalent.

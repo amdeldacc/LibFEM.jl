@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/amdeldacc/LibFEM.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/amdeldacc/LibFEM.jl/actions/workflows/ci.yml)
 
-An educational Finite Element Method library in Julia, for springs, trusses, and beams in 1D, 2D, and 3D.
+A simple educational Finite Element Method library in Julia covering 16 element families in 1D, 2D, and 3D — from springs, bars, trusses, and beams to frames, grids, triangles, quadrilaterals, tetrahedra, bricks, and fluid flow.
 
 Inspired by **Peter Kattan's _MATLAB Guide to Finite Elements: An Interactive Approach_** (2nd ed., Springer, 2007). The reference MATLAB code is preserved in `Doc/Kattan/M-Files/` as a read-only verification source.
 

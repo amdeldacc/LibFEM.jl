@@ -2013,6 +2013,92 @@ end
             K = d3_brick_assemble(K, k, 1,2,3,4, 5,6,7,8)
             @test K ≈ k
         end
+
+        @testset "problem_16_1_integration" begin
+            # Kattan Problem 16.1 — cantilever plate (0.5×0.25×0.025 m) modeled
+            # with two 8-node linear bricks along X, left face (nodes 1–4) fixed,
+            # Fx = 4.6875 kN at nodes 9–12. Golden values from Julia solve
+            # (node-major; the book's RTF transcript is singular — see
+            # docs/adr/2026-08-01-problem-16-1-port-plan.md).
+            E, NU = 210e6, 0.3
+            # Node coordinates (m)
+            x1,y1,z1 = 0.0,   0.0,  0.025
+            x2,y2,z2 = 0.0,   0.0,  0.0
+            x3,y3,z3 = 0.0,   0.25, 0.0
+            x4,y4,z4 = 0.0,   0.25, 0.025
+            x5,y5,z5 = 0.25,  0.0,  0.025
+            x6,y6,z6 = 0.25,  0.0,  0.0
+            x7,y7,z7 = 0.25,  0.25, 0.0
+            x8,y8,z8 = 0.25,  0.25, 0.025
+            x9,y9,z9 = 0.5,   0.0,  0.025
+            x10,y10,z10 = 0.5, 0.0,  0.0
+            x11,y11,z11 = 0.5, 0.25, 0.0
+            x12,y12,z12 = 0.5, 0.25, 0.025
+            # Local (J-order) node lists for brick element node numbering
+            e1n = [2,6,7,3,1,5,8,4]
+            e2n = [6,10,11,7,5,9,12,8]
+            k1 = d3_brick_elementstiffness(E, NU,
+                x2,y2,z2, x6,y6,z6, x7,y7,z7, x3,y3,z3,
+                x1,y1,z1, x5,y5,z5, x8,y8,z8, x4,y4,z4)
+            k2 = d3_brick_elementstiffness(E, NU,
+                x6,y6,z6, x10,y10,z10, x11,y11,z11, x7,y7,z7,
+                x5,y5,z5, x9,y9,z9, x12,y12,z12, x8,y8,z8)
+            K = zeros(36, 36)
+            K = d3_brick_assemble(K, k1, e1n...)
+            K = d3_brick_assemble(K, k2, e2n...)
+            free = 13:36
+            fixed = 1:12
+            f = zeros(24)
+            f[[13, 16, 19, 22]] .= 4.6875  # kN at global DOFs 25,28,31,34
+            u = K[free, free] \ f
+            U = zeros(36); U[free] = u
+            F = K * U; F[abs.(F) .< 1e-10] .= 0.0
+            # Golden free displacements (m), nodes 5–12 [Ux;Uy;Uz]
+            u_gold = [3.1958828389624026e-6, 6.072461518759357e-7, -6.593376152285259e-8,
+                      3.195882838962374e-6,  6.0724615187595e-7,   6.593376152252052e-8,
+                      3.1958828389625005e-6, -6.072461518760465e-7, 6.593376152266689e-8,
+                      3.1958828389625064e-6, -6.072461518760609e-7, -6.593376152271287e-8,
+                      6.8214927696327516e-6, 5.197306274629394e-7, -4.829659198604257e-8,
+                      6.821492769632714e-6,  5.197306274629792e-7,  4.829659198502911e-8,
+                      6.821492769632977e-6,  -5.197306274634197e-7, 4.829659198543291e-8,
+                      6.821492769632987e-6,  -5.197306274634598e-7, -4.829659198564395e-8]
+            @test u ≈ u_gold rtol=1e-6
+            # Golden reactions (kN) at fixed DOFs 1:12
+            F_gold = [-4.687500000000182, -1.474035604056745, 13.379026616555146,
+                      -4.687499999999687, -1.4740356040567458, -13.379026616555135,
+                      -4.687499999999884, 1.4740356040567403,  -13.379026616555302,
+                      -4.687500000000153, 1.4740356040567467,  13.379026616555304]
+            @test F[fixed] ≈ F_gold rtol=1e-6
+            # Applied loads echoed at free DOFs (global 25,28,31,34)
+            @test F[25] ≈ 4.6875 rtol=1e-6
+            @test F[28] ≈ 4.6875 rtol=1e-6
+            @test F[31] ≈ 4.6875 rtol=1e-6
+            @test F[34] ≈ 4.6875 rtol=1e-6
+            # Global force balance (kN)
+            @test abs(sum(F[1:3:36])) < 1e-8
+            @test abs(sum(F[2:3:36])) < 1e-8
+            @test abs(sum(F[3:3:36])) < 1e-8
+            # Element stresses (kPa, Voigt) at centroids
+            u1 = vcat([U[3n-2:3n] for n in e1n]...)
+            u2 = vcat([U[3n-2:3n] for n in e2n]...)
+            sig1 = d3_brick_elementstress(E, NU,
+                x2,y2,z2, x6,y6,z6, x7,y7,z7, x3,y3,z3,
+                x1,y1,z1, x5,y5,z5, x8,y8,z8, x4,y4,z4, u1)
+            sig2 = d3_brick_elementstress(E, NU,
+                x6,y6,z6, x10,y10,z10, x11,y11,z11, x7,y7,z7,
+                x5,y5,z5, x9,y9,z9, x12,y12,z12, x8,y8,z8, u2)
+            @test sig1 ≈ [3000.0, 542.5935751505255, 508.9344757545714, 0.0, 0.0, 0.0] rtol=1e-6
+            @test sig2 ≈ [3000.0, -70.9021818523695, -80.8056240248061, 0.0, 0.0, 0.0] rtol=1e-6
+            # Principal stresses (kPa) — σ1, σ2, σ3 (tuple) + pstress 4th value
+            p1 = d3_brick_elementpstress(sig1)
+            p2 = d3_brick_elementpstress(sig2)
+            @test p1[1] ≈ 3000.0 rtol=1e-6
+            @test p1[2] ≈ 542.5935751505252 rtol=1e-6
+            @test p1[3] ≈ 508.9344757545714 rtol=1e-6
+            @test p2[1] ≈ 3000.0 rtol=1e-6
+            @test p2[2] ≈ -70.90218185236901 rtol=1e-6
+            @test p2[3] ≈ -80.8056240248059 rtol=1e-6
+        end
     end
 
     # ─────────────────────────────────────────────────

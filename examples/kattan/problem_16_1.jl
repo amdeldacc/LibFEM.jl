@@ -5,65 +5,57 @@
 # Reference: P. I. Kattan, "MATLAB Guide to Finite Elements:
 #   An Interactive Approach" (2nd ed., Springer, 2007)
 # ═══════════════════════════════════════════════════════════════
-# ═══════════════════════════════════════════════════════════════
-#  THIN PLATE (0.5 x 0.25 x 0.025 m) DISCRETIZED INTO 2 BRICKS ALONG X
-# ═══════════════════════════════════════════════════════════════
-#   * The 3-D view below is an OBLIQUE projection of the plate.
-#       - vertical  direction on screen = Y  (height)
-#       - horizontal direction on screen = X  (length)
-#       - up-left   slant  on screen     = Z  (thickness / depth)
-#   * Each corner is labelled by its NODE NUMBER (1..12).
-#   * '///'  = hatched rigid wall  ->  ENCASTREMENT at face X = 0
+# ===============================================================================
+# PROBLEM OVERVIEW: DISCRETIZATION INTO TWO LINEAR BRICKS (Fig 16.5)
+# ===============================================================================
+# Note: Isometric view (Isoview) of a 3D plate discretized into 2 Hexahedral
+# (Brick) elements. The exact connectivity is provided in the table below.
 #
-#                4_______________8_______________12        <- back  face (Z=T)
-#               ///|            /|              /|
-#              /// |           / |             / |
-#             ///  |          /  |            /  |
-#            ///   |         /   |           /   |
-#            3_____|_________7___|___________11__|        <- front face (Z=0)
-#           ///    |        /    |          /    |
-#           ///    |       /     |         /     |
-#           ///    1______/______5_________/______9        <- back  face (Z=T)
-#           ///   /       |     /         |     /
-#           ///  /        |    /          |    /
-#           ////         |   /           |   /
-#           2____________|__6____________|__10             <- front face (Z=0)
-#                       /               /
-#                      /               /
-#        ^^^^          (element 1)     (element 2)
-#   FIXED FACE X = 0        X = 0.25         X = 0.5
-#   (nodes 1, 2, 3, 4)      (nodes 5..8)     (nodes 9..12, loaded)
+#               Y (Up)
+#               ^
+#               | 3                   7                   11 (Top-Back)
+#         //|---O===================O===================O
+#         //|  /|                 / |                 / |
+#         //| / |               /   |               /   |
+#         //|/  |             /     |             /     |
+#       4 //O===================O===================O 12 (Top-Front)
+#         //|   |             8 |   |               |   |
+#         //|   |               |   |               |   |
+#         //|   |   2           |   |   6           |   |   10 (Bottom-Back)
+#         //|   O - - - - - - - |- -O - - - - - - - |- -O ----> X (Right)
+#         //|  /                |  /                |  /
+#         //| /                 | /                 | /
+#         //|/                  |/                  |/
+#       1 //O===================O===================O 9 (Bottom-Front)
+#          /                    5
+#         v Z (Forward)
 #
-#   Axis triad :        Y
-#                       ^
-#                       |
-#                       |
-#                       +-------> X
-#                      /
-#                     Z
+# ===============================================================================
+# NODE COORDINATES & BOUNDARY CONDITIONS:
+# ===============================================================================
+# Assuming Node 2 is at the origin (0,0,0) and the block dimensions are (L, H, W):
 #
-#   Let L = 0.5 m (length), H = 0.25 m (height), T = 0.025 m (thickness).
+#   Fixed Wall Nodes (Left Face, X = 0):
+#     Node 1 : ( 0, 0, W ) -> Fixed Support (Encastrement)
+#     Node 2 : ( 0, 0, 0 ) -> Fixed Support
+#     Node 3 : ( 0, H, 0 ) -> Fixed Support
+#     Node 4 : ( 0, H, W ) -> Fixed Support
 #
-#   node |   ( X ,  Y ,  Z )     |  support / load
-#   -----+-----------------------+-----------------------------
-#     1  |   ( 0 , 0 , 0.025 )   |  FIXED  (encastrement)
-#     2  |   ( 0 , 0 , 0.000 )   |  FIXED
-#     3  |   ( 0 , 0.25 , 0 )    |  FIXED
-#     4  |   ( 0 , 0.25 , 0.025 )|  FIXED
-#     5  |   ( 0.25 , 0 , 0.025 )|  free
-#     6  |   ( 0.25 , 0 , 0 )    |  free
-#     7  |   ( 0.25 , 0.25 , 0 ) |  free
-#     8  |   ( 0.25 , 0.25 , 0.025 )|  free
-#     9  |   ( 0.5 , 0 , 0.025 ) |  Fx = 4.6875 kN
-#    10  |   ( 0.5 , 0 , 0 )     |  Fx = 4.6875 kN
-#    11  |   ( 0.5 , 0.25 , 0 )  |  Fx = 4.6875 kN
-#    12  |   ( 0.5 , 0.25 , 0.025 ) |  Fx = 4.6875 kN
+#   Middle Nodes (X = L/2):
+#     Nodes 5, 6, 7, 8
 #
-#   Fixed face = {1,2,3,4}  (the whole wall X = 0)
-#   The two bricks:
-#     Brick 1 : nodes 1,2,3,4,5,6,7,8     ( X in [0, 0.25] )
-#     Brick 2 : nodes 5,6,7,8,9,10,11,12  ( X in [0.25, 0.5] )
-# ═══════════════════════════════════════════════════════════════
+#   Right Face Nodes (X = L):
+#     Nodes 9, 10, 11, 12
+#
+# ===============================================================================
+# ELEMENT CONNECTIVITY (TABLE 16.2):
+# ===============================================================================
+# Element    Node i  Node j  Node m  Node n  Node p  Node q  Node r  Node s
+# Number
+# -------------------------------------------------------------------------------
+#    1          1       2       3       4       5       6       7       8
+#    2          5       6       7       8       9      10      11      12
+# ===============================================================================
 # Parameters:
 #   Material:  E = 210 GPa, ν = 0.3
 #   Type:      3D (linear brick, 8-node trilinear hexahedron)

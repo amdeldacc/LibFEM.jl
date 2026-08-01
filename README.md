@@ -212,7 +212,7 @@ LibFEM.jl/
 │   └── LibFEMPlotsExt.jl  # Julia extension for Plots.jl diagram functions
 ├── test/
 │   ├── Project.toml       # Test-only dependencies
-│   ├── runtests.jl        # Main test suite (~1315 lines, covers all element types + deprecation aliases)
+│   ├── runtests.jl        # Main test suite (~2181 lines, covers all element types + deprecation aliases + Kattan problem integration)
 │   ├── benchmark.jl       # BenchmarkTools.jl suite (14 benchmarks)
 │   ├── property_tests.jl  # PropCheck.jl property-based tests
 │   ├── golden_regression.jl  # Binary golden regression tests for Kattan problems
@@ -251,11 +251,11 @@ julia -e 'using Pkg; Pkg.test()'
 
 **Test suite includes**:
 
-- **Unit tests** (`runtests.jl`, ~1315 lines) — per-element correctness: stiffness matrix shape/symmetry, force/stress/strain numeric validation, assembly correctness, deprecation alias validation.
+- **Unit tests** (`runtests.jl`, ~2181 lines) — per-element correctness: stiffness matrix shape/symmetry, force/stress/strain numeric validation, assembly correctness, deprecation alias validation, plus 13 Kattan problem integration testsets (4.2, 9.1–16.1).
 - **Property-based tests** (`property_tests.jl`, ~237 lines) — PropCheck.jl random-input invariants (symmetry, positive semi-definiteness).
-- **Golden regression** (`golden_regression.jl`, ~114 lines) — binary snapshot regression for Kattan problems 2.1–8.3.
+- **Golden regression** (`golden_regression.jl`, ~114 lines) — binary snapshot regression for individual element functions (function-level, not problem-level; see `test/golden/manifests.toml`).
 - **Octave validation** (`scripts/validate-matlab.jl`) — runs separately from `Pkg.test()`; comparisons across 4 test groups (spring, truss, beam, Kattan problems) against Kattan MATLAB reference. Run manually with `julia --project=. scripts/validate-matlab.jl all`. Octave >= 8.0 required.
-- **Benchmarks** (`benchmark.jl`, ~221 lines, 14 benchmarks) — Stiffness construction (12 element types), assembly (500-element chains), solve (random SPD), d3_spaceframe forces. Run manually: `julia --project=. test/benchmark.jl`.
+- **Benchmarks** (`benchmark.jl`, ~240 lines, 14 benchmarks) — Stiffness construction (12 element types), assembly (500-element chains), solve (random SPD), d3_spaceframe forces. Run manually: `julia --project=. test/benchmark.jl`.
 
 **CI**: GitHub Actions (`.github/workflows/ci.yml`) has two jobs: `test` runs unit tests, property tests, and golden regression on Julia 1.12; `validate` runs Octave validation. Other workflows: `benchmarks.yml`, `ocr-review.yml`, `openwiki-update.yml`, `openwiki-stale-check.yml`, `opencode.yml`, `super-linter.yml`.
 
@@ -388,7 +388,7 @@ julia --project=. scripts/validate-matlab.jl all
 | `spring` | Validate 1D spring stiffness and forces (2 comparisons) |
 | `truss`  | Validate 1D/2D/3D truss length, stiffness, forces, stress (11 comparisons) |
 | `beam`   | Validate 2D/3D beam length, stiffness, forces (7 comparisons) |
-| `problems` | Validate Kattan textbook solution problems (2.1–8.3) via Octave |
+| `problems` | Validate Kattan textbook solution problems (2.1–11.3, 19 problems) via Octave |
 | `all`    | Run every validation comparison across all families (default) |
 
 **Exit codes:**

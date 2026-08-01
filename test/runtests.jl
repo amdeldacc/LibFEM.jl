@@ -145,6 +145,72 @@ end
         end
     end
 
+        @testset "problem_2_1_integration" begin
+            # Problem 2.1: two springs in series (Fig 2.4).
+            # Nodes 1 and 3 fixed; load at node 2. Reference: Doc/Kattan/Solutions-Manual/problem_2_1.m.
+            k1 = d1_spring_elementstiffness(200.0)
+            k2 = d1_spring_elementstiffness(250.0)
+            K = zeros(3, 3)
+            K = d1_spring_assemble(K, k1, 1, 2)
+            K = d1_spring_assemble(K, k2, 2, 3)
+            k = K[2:2, 2:2]
+            f = [10.0]
+            u = k \ f
+            U = [0.0; u; 0.0]
+            F = K * U
+            u1 = [0.0; u]
+            f1 = d1_spring_elementforce(k1, u1)
+            u2 = [u; 0.0]
+            f2 = d1_spring_elementforce(k2, u2)
+            @test size(K) == (3, 3)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(K, [200 -200 0; -200 450 -250; 0 -250 250]; rtol=1e-10)
+            @test isapprox(u, [0.022222222222222223]; rtol=1e-10)
+            @test isapprox(F, [-4.444444444444445; 10.0; -5.555555555555555]; rtol=1e-10)
+            @test isapprox(f1, [-4.444444444444445; 4.444444444444445]; rtol=1e-10)
+            @test isapprox(f2, [5.555555555555555; -5.555555555555555]; rtol=1e-10)
+        end
+
+        @testset "problem_2_2_integration" begin
+            # Problem 2.2: four springs, double spring between nodes 2-3 (Fig 2.5).
+            # Node 1 fixed; load at node 4. Reference: Doc/Kattan/Solutions-Manual/problem_2_2.m.
+            k1 = d1_spring_elementstiffness(170.0)
+            k2 = d1_spring_elementstiffness(170.0)
+            k3 = d1_spring_elementstiffness(170.0)
+            k4 = d1_spring_elementstiffness(170.0)
+            K = zeros(4, 4)
+            K = d1_spring_assemble(K, k1, 1, 2)
+            K = d1_spring_assemble(K, k2, 2, 3)
+            K = d1_spring_assemble(K, k3, 2, 3)
+            K = d1_spring_assemble(K, k4, 3, 4)
+            k = K[2:4, 2:4]
+            f = [0.0; 0.0; 25.0]
+            u = k \ f
+            U = [0.0; u]
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+            u1 = [0.0; U[2]]
+            f1 = d1_spring_elementforce(k1, u1)
+            u2 = [U[2]; U[3]]
+            f2 = d1_spring_elementforce(k2, u2)
+            u3 = [U[2]; U[3]]
+            f3 = d1_spring_elementforce(k3, u3)
+            u4 = [U[3]; U[4]]
+            f4 = d1_spring_elementforce(k4, u4)
+            @test size(K) == (4, 4)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [0.14705882352941177; 0.22058823529411764; 0.36764705882352944]; rtol=1e-10)
+            @test isapprox(F, [-25.0; 0.0; 0.0; 25.0]; rtol=1e-10)
+            @test isapprox(f1, [-25.0, 25.0]; rtol=1e-10)
+            @test isapprox(f2, [-12.5, 12.5]; rtol=1e-10)
+            @test isapprox(f3, [-12.5, 12.5]; rtol=1e-10)
+            @test isapprox(f4, [-25.0, 25.0]; rtol=1e-10)
+        end
+
     # ─────────────────────────────────────────────────
     # 1-D Truss / Linear Bar (d1_bar)
     # ─────────────────────────────────────────────────
@@ -227,6 +293,104 @@ end
             @test d1_bar_elementstiffness(-1.0, 1.0, 1.0) == -[1 -1; -1 1]
         end
     end
+
+        @testset "problem_3_1_integration" begin
+            # Problem 3.1: three-bar structure (Fig 3.5).
+            # Node 1 fixed; loads at nodes 2-4. Reference: Doc/Kattan/Solutions-Manual/problem_3_1.m.
+            E, A = 70e6, 0.005
+            L1, L2, L3 = 1.0, 2.0, 1.0
+            k1 = d1_bar_elementstiffness(E, A, L1)
+            k2 = d1_bar_elementstiffness(E, A, L2)
+            k3 = d1_bar_elementstiffness(E, A, L3)
+            K = zeros(4, 4)
+            K = d1_bar_assemble(K, k1, 1, 2)
+            K = d1_bar_assemble(K, k2, 2, 3)
+            K = d1_bar_assemble(K, k3, 3, 4)
+            k = K[2:4, 2:4]
+            f = [-10.0; 0.0; 15.0]
+            u = k \ f
+            U = [0.0; u]
+            F = K * U
+            u1 = [0.0; U[2]]
+            sigma1 = d1_bar_elementstress(k1, u1, A)
+            u2 = [U[2]; U[3]]
+            sigma2 = d1_bar_elementstress(k2, u2, A)
+            u3 = [U[3]; U[4]]
+            sigma3 = d1_bar_elementstress(k3, u3, A)
+            @test size(K) == (4, 4)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [1.4285714285714285e-5, 0.0001, 0.00014285714285714287]; rtol=1e-10)
+            @test isapprox(F, [-5.0; -10.0; 0.0; 15.0]; rtol=1e-10)
+            @test isapprox(sigma1, [-1000.0, 1000.0]; rtol=1e-10)
+            @test isapprox(sigma2, [-3000.0, 3000.0]; rtol=1e-10)
+            @test isapprox(sigma3, [-3000.0, 3000.0]; rtol=1e-10)
+        end
+
+        @testset "problem_3_2_integration" begin
+            # Problem 3.2: tapered bar (Fig 3.4) with 10 linear bar elements.
+            # Node 1 (x=0, thin end) free with load F1=-18; node 11 (x=3, thick end) fixed.
+            # A(x) = 0.002 + 0.01x/3 evaluated at each element midpoint.
+            # Reference: book Answers 3.2 (free end -0.04582 mm).
+            E, P, L = 210e6, 18.0, 3.0
+            n = 10
+            Le = L / n
+            K = zeros(n + 1, n + 1)
+            for e in 1:n
+                A = 0.002 + 0.01 * (e - 0.5) * Le / 3
+                ke = d1_bar_elementstiffness(E, A, Le)
+                K = d1_bar_assemble(K, ke, e, e + 1)
+            end
+            k = K[1:n, 1:n]
+            f = [-P; zeros(n - 1)]
+            u = k \ f
+            U = [u; 0.0]
+            F = K * U
+            @test size(K) == (n + 1, n + 1)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (full-precision Julia solve, matches book 1e-4*[-0.4582,...,-0.0224])
+            @test isapprox(u, [-4.582386027333433e-5, -3.553814598762005e-5, -2.8191207212109848e-5, -2.247692149782414e-5, -1.7801596822499466e-5, -1.3845552866455513e-5, -1.0416981437884084e-5, -7.391771353850469e-6, -4.685004436557234e-6, -2.236024844720498e-6]; rtol=1e-6)
+            # Reaction at fixed node 11 balances the applied load
+            @test F[end] ≈ P
+            # Every element carries the full load: element forces = [-P, P]
+            for e in 1:n
+                A = 0.002 + 0.01 * (e - 0.5) * Le / 3
+                ke = d1_bar_elementstiffness(E, A, Le)
+                ue = [U[e]; U[e + 1]]
+                @test isapprox(d1_bar_elementforces(ke, ue), [-P, P]; rtol=1e-6)
+                @test isapprox(d1_bar_elementstress(ke, ue, A), [-P / A, P / A]; rtol=1e-6)
+            end
+        end
+
+        @testset "problem_3_3_integration" begin
+            # Problem 3.3: linear bar + spring (Fig 3.6).
+            # Node 1 fixed, node 3 spring ground. Reference: Doc/Kattan/Solutions-Manual/problem_3_3.m.
+            E, A, L = 200e6, 0.01, 2.0
+            k1 = d1_bar_elementstiffness(E, A, L)
+            k2 = d1_spring_elementstiffness(1000.0)
+            K = zeros(3, 3)
+            K = d1_bar_assemble(K, k1, 1, 2)
+            K = d1_spring_assemble(K, k2, 2, 3)
+            k = K[2:2, 2:2]
+            f = [25.0]
+            u = k \ f
+            U = [0.0; u; 0.0]
+            F = K * U
+            u1 = [0.0; u]
+            sigma1 = d1_bar_elementstress(k1, u1, A)
+            u2 = [u; 0.0]
+            f_spring = d1_spring_elementforce(k2, u2)
+            @test size(K) == (3, 3)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [2.4975024975024975e-5]; rtol=1e-10)
+            @test isapprox(F, [-24.975024975024976; 25.0; -0.024975024975024976]; rtol=1e-10)
+            @test isapprox(sigma1, [-2497.5024975024976, 2497.5024975024976]; rtol=1e-10)
+            @test isapprox(f_spring, [0.024975024975024976, -0.024975024975024976]; rtol=1e-10)
+        end
 
     # ─────────────────────────────────────────────────
     # d1_truss → d1_bar deprecation aliases
@@ -311,6 +475,9 @@ end
         end
 
         @testset "problem_4_2_integration" begin
+            # Problem 4.2: quadratic bar (E=70e6, A=0.001, L=4) + spring (k=2000).
+            # Node 1 fixed; loads f2=10 kN, f3=5 kN. DOF order: [node1, node2, node3(mid), node4].
+            # Reference: Doc/Kattan/Solutions-Manual/problem_4_2.m.
             E, A, L = 70e6, 0.001, 4.0
             k1 = d1_spring_elementstiffness(2000)
             k2 = d1_quadraticbar_elementstiffness(E, A, L)
@@ -328,6 +495,48 @@ end
             @test all(isfinite, U)
             # Verify equilibrium: F should have reaction at node 1
             @test F[1] ≈ -15.0  # sum of applied forces = 10 + 5 = 15
+            # Displacement goldens (full-precision Julia solve, matches Octave ref rtol≈1e-15)
+            @test isapprox(u, [0.0075, 0.007892857142857201, 0.00807142857142863]; rtol=1e-6)
+            # Spring element force: f1 = k1 * [0; U2] = [-15; 15] (reaction -15 at fixed node 1)
+            u1 = [0.0, U[2]]
+            f1 = d1_spring_elementforce(k1, u1)
+            @test isapprox(f1, [-15.0, 15.0]; rtol=1e-6)
+            # Quadratic bar element forces (local DOFs: node2, node4, node3)
+            u2 = [U[2], U[4], U[3]]
+            fq = d1_quadraticbar_elementforces(k2, u2)
+            @test isapprox(fq, [-15.0, 5.0, 10.0]; rtol=1e-6)
+        end
+
+        @testset "problem_4_1_integration" begin
+            # Problem 4.1: tapered bar (Fig 3.4) with 2 quadratic bar elements, 5 nodes.
+            # Node 1 (x=0, thin end) free with load F1=-18; node 5 (x=3, thick end) fixed.
+            # Element 1 = nodes (1,3,2), A=A(0.75)=0.0045; element 2 = nodes (3,5,4), A=A(2.25)=0.0095.
+            # Reference: book Answers 4.1 (free end -0.04211 mm).
+            E, P, L = 210e6, 18.0, 1.5
+            A1 = 0.002 + 0.01 * 0.75 / 3
+            A2 = 0.002 + 0.01 * 2.25 / 3
+            k1 = d1_quadraticbar_elementstiffness(E, A1, L)
+            k2 = d1_quadraticbar_elementstiffness(E, A2, L)
+            K = zeros(5, 5)
+            K = d1_quadraticbar_assemble(K, k1, 1, 3, 2)
+            K = d1_quadraticbar_assemble(K, k2, 3, 5, 4)
+            k = K[1:4, 1:4]
+            f = [-P; 0.0; 0.0; 0.0]
+            u = k \ f
+            U = [u; 0.0]
+            F = K * U
+            @test size(K) == (5, 5)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (full-precision Julia solve, matches book 1e-4*[-0.4211,-0.2782,-0.1353,-0.0677])
+            @test isapprox(u, [-4.210526315789471e-5, -2.7819548872180435e-5, -1.3533834586466162e-5, -6.766917293233081e-6]; rtol=1e-6)
+            # Reaction at fixed node 5 balances the applied load
+            @test F[end] ≈ P
+            # Element forces (local DOFs: endpoints then mid node)
+            ue1 = [U[1], U[3], U[2]]
+            ue2 = [U[3], U[5], U[4]]
+            @test isapprox(d1_quadraticbar_elementforces(k1, ue1), [-P, P, 0.0]; rtol=1e-6)
+            @test isapprox(d1_quadraticbar_elementforces(k2, ue2), [-P, P, 0.0]; rtol=1e-6)
         end
     end
 
@@ -397,6 +606,112 @@ end
             @test p isa Plots.Plot
         end
     end
+
+        @testset "problem_7_1_integration" begin
+            # Problem 7.1: two-span beam with 3 supports (Fig 7.5).
+            # Free DOFs are the rotations at nodes 1, 2, 3 (DOFs 2, 4, 6).
+            # Reference: Doc/Kattan/Solutions-Manual/problem_7_1.m.
+            E, I = 200e6, 70e-5
+            L1, L2 = 3.5, 2.0
+            k1 = d2_beam_elementstiffness(E, I, L1)
+            k2 = d2_beam_elementstiffness(E, I, L2)
+            K = zeros(6, 6)
+            K = d2_beam_assemble(K, k1, 1, 2)
+            K = d2_beam_assemble(K, k2, 2, 3)
+            k = K[[2, 4, 6], [2, 4, 6]]
+            f = [0.0; -15.0; 0.0]
+            u = k \ f
+            U = zeros(6)
+            U[[2, 4, 6]] = u
+            F = K * U
+            @test size(K) == (6, 6)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [2.272727272727273e-5, -4.545454545454546e-5, 2.2727272727272733e-5]; rtol=1e-8)
+            @test isapprox(F[4], -15.0; rtol=1e-10)
+            u1 = [U[1]; U[2]; U[3]; U[4]]
+            f1 = d2_beam_elementforces(k1, u1)
+            u2 = [U[3]; U[4]; U[5]; U[6]]
+            f2 = d2_beam_elementforces(k2, u2)
+            @test isapprox(f1, [-1.5584415584415587, 0.0, 1.5584415584415587, -5.454545454545455]; rtol=1e-8, atol=1e-14)
+            @test isapprox(f2, [-4.7727272727272725, -9.545454545454545, 4.7727272727272725, 0.0]; rtol=1e-8, atol=1e-14)
+        end
+
+        @testset "problem_7_2_integration" begin
+            # Problem 7.2: beam with distributed load (Fig 7.16).
+            # Free DOFs are rotations at nodes 2, 3, 4 (DOFs 4, 6, 8).
+            # Reference: Doc/Kattan/Solutions-Manual/problem_7_2.m.
+            E, I = 210e6, 50e-6
+            L1, L2, L3 = 3.0, 3.0, 4.0
+            k1 = d2_beam_elementstiffness(E, I, L1)
+            k2 = d2_beam_elementstiffness(E, I, L2)
+            k3 = d2_beam_elementstiffness(E, I, L3)
+            K = zeros(8, 8)
+            K = d2_beam_assemble(K, k1, 1, 2)
+            K = d2_beam_assemble(K, k2, 2, 3)
+            K = d2_beam_assemble(K, k3, 3, 4)
+            k = K[[4, 6, 8], [4, 6, 8]]
+            f = [7.5; -15.0; 15.0]  # fixed-end reaction adjustments from MATLAB
+            u = k \ f
+            U = zeros(8)
+            U[[4, 6, 8]] = u
+            F = K * U
+            @test size(K) == (8, 8)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [0.0005706521739130435, -0.0012111801242236026, 0.0020341614906832298]; rtol=1e-8)
+            @test isapprox(F[4], 7.5; rtol=1e-10)
+            @test isapprox(F[8], 15.0; rtol=1e-10)
+            u1 = [U[1]; U[2]; U[3]; U[4]]
+            f1 = d2_beam_elementforces(k1, u1)
+            f1 = f1 - [-15.0; -7.5; -15.0; 7.5]  # subtract fixed-end forces (distributed load)
+            u2 = [U[3]; U[4]; U[5]; U[6]]
+            f2 = d2_beam_elementforces(k2, u2)
+            u3 = [U[5]; U[6]; U[7]; U[8]]
+            f3 = d2_beam_elementforces(k3, u3)
+            f3 = f3 - [-15.0; -15.0; -15.0; 15.0]  # point load adjustment
+            @test isapprox(f1, [18.994565217391305, 11.494565217391305, 11.005434782608695, 0.4891304347826093]; rtol=1e-8)
+            @test isapprox(f2, [-4.483695652173914, -0.489130434782609, 4.483695652173914, -12.961956521739133]; rtol=1e-8)
+            @test isapprox(f3, [18.24048913043478, 12.961956521739129, 11.759510869565219, 0.0]; rtol=1e-8, atol=1e-14)
+        end
+
+        @testset "problem_7_3_integration" begin
+            # Problem 7.3: beam with spring (Fig 7.17).
+            # DOFs: node1=1,2 fixed; node2=3,4 free; node3=5,6 roller (v3=0); node4=7 spring ground.
+            # Free DOFs 3,4,6. Reference: Doc/Kattan/Solutions-Manual/problem_7_3.m.
+            E, I = 70e6, 40e-6
+            L1, L2 = 3.0, 3.0
+            k1 = d2_beam_elementstiffness(E, I, L1)
+            k2 = d2_beam_elementstiffness(E, I, L2)
+            k3 = d1_spring_elementstiffness(5000.0)
+            K = zeros(7, 7)
+            K = d2_beam_assemble(K, k1, 1, 2)
+            K = d2_beam_assemble(K, k2, 2, 3)
+            K = d1_spring_assemble(K, k3, 3, 7)
+            k = vcat(hcat(K[3:4, 3:4], K[3:4, 6:6]), hcat(K[6:6, 3:4], K[6:6, 6:6]))
+            f = [-10.0; 0.0; 0.0]
+            u = k \ f
+            U = [0.0; 0.0; u[1]; u[2]; 0.0; u[3]; 0.0]
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+            @test size(K) == (7, 7)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [-0.0015570934256055363, -0.00022244191794364802, 0.0008897676717745921]; rtol=1e-8)
+            @test isapprox(F[3], -10.0; rtol=1e-10)
+            u1 = [U[1]; U[2]; U[3]; U[4]]
+            f1 = d2_beam_elementforces(k1, u1)
+            u2 = [U[3]; U[4]; U[5]; U[6]]
+            f2 = d2_beam_elementforces(k2, u2)
+            u3 = [U[3]; U[7]]
+            f3 = d1_spring_elementforce(k3, u3)
+            @test isapprox(f1, [1.5224913494809695, 2.4913494809688586, -1.5224913494809695, 2.076124567474049]; rtol=1e-8)
+            @test isapprox(f2, [-0.6920415224913501, -2.076124567474049, 0.6920415224913501, 0.0]; rtol=1e-8, atol=1e-14)
+            @test isapprox(f3, [-7.7854671280276815, 7.7854671280276815]; rtol=1e-8)
+        end
 
     # ─────────────────────────────────────────────────
     # 2-D Plane Frame (d2_planeframe) — Axial + Bending, 3 DOF/node
@@ -495,6 +810,120 @@ end
         @test_throws ElementParameterError d2_planeframe_elementforces(1.0, 0.0, 1.0, 1.0, 0.0, zeros(6))
         @test_throws ElementParameterError d2_planeframe_elementforces(1.0, -1.0, 1.0, 1.0, 0.0, zeros(6))
     end
+
+        @testset "problem_8_1_integration" begin
+            # Problem 8.1: plane frame with two elements (Fig 8.21).
+            # Reference: Doc/Kattan/Solutions-Manual/problem_8_1.m.
+            E, A, I, L = 210e6, 4e-2, 4e-6, 4.0
+            k1 = d2_planeframe_elementstiffness(E, A, I, L, 90.0)  # vertical
+            k2 = d2_planeframe_elementstiffness(E, A, I, L, 0.0)   # horizontal
+            K = zeros(9, 9)
+            K = d2_planeframe_assemble(K, k1, 1, 2)
+            K = d2_planeframe_assemble(K, k2, 2, 3)
+            # Free DOFs 4,5,6,7,9 (node 3 uy is a roller)
+            k = vcat(hcat(K[4:7, 4:7], K[4:7, 9:9]), hcat(K[9:9, 4:7], K[9:9, 9:9]))
+            f = [0.0; 0.0; 15.0; 20.0; 0.0]
+            u = k \ f
+            U = [0.0; 0.0; 0.0; u[1:4]; 0.0; u[5]]
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+            @test size(K) == (9, 9)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [0.18650877355691653, 2.23213239400011e-6, -0.02976232328658555, 0.1865182973664403, 0.014880324593645022]; rtol=1e-8)
+            @test isapprox(F[6], 15.0; rtol=1e-10)
+            @test isapprox(F[7], 20.0; rtol=1e-10)
+            u1 = [U[1]; U[2]; U[3]; U[4]; U[5]; U[6]]
+            f1 = d2_planeframe_elementforces(E, A, I, L, 90.0, u1)
+            u2 = [U[4]; U[5]; U[6]; U[7]; U[8]; U[9]]
+            f2 = d2_planeframe_elementforces(E, A, I, L, 0.0, u2)
+            @test isapprox(f1, [-4.687478027424214, 19.999999999939906, 46.25008789006278, 4.687478027424214, -19.999999999939906, 33.74991210969685]; rtol=1e-8)
+            @test isapprox(f2, [-19.999999999941792, -4.687478027424212, -18.749912109696844, 19.999999999941792, 4.687478027424212, 0.0]; rtol=1e-8, atol=1e-14)
+        end
+
+        @testset "problem_8_2_integration" begin
+            # Problem 8.2: plane frame with distributed load (Fig 8.22).
+            # Reference: Doc/Kattan/Solutions-Manual/problem_8_2.m.
+            E, A, I = 210e6, 1e-2, 9e-5
+            x = [0.0, 2.0, 7.0, 9.0]
+            y = [0.0, 3.0, 3.0, 0.0]
+            L1 = d2_planeframe_elementlength(x[1], y[1], x[2], y[2])
+            L2 = d2_planeframe_elementlength(x[2], y[2], x[3], y[3])
+            L3 = d2_planeframe_elementlength(x[3], y[3], x[4], y[4])
+            theta1 = atan(y[2] - y[1], x[2] - x[1]) * 180 / pi
+            theta2 = 0.0
+            theta3 = 360.0 - theta1
+            k1 = d2_planeframe_elementstiffness(E, A, I, L1, theta1)
+            k2 = d2_planeframe_elementstiffness(E, A, I, L2, theta2)
+            k3 = d2_planeframe_elementstiffness(E, A, I, L3, theta3)
+            K = zeros(12, 12)
+            K = d2_planeframe_assemble(K, k1, 1, 2)
+            K = d2_planeframe_assemble(K, k2, 2, 3)
+            K = d2_planeframe_assemble(K, k3, 3, 4)
+            # Free DOFs: nodes 2 and 3 = 4:9
+            k = K[4:9, 4:9]
+            f = [20.0; -12.5; -10.417; 0.0; -12.5; 10.417]  # fixed-end forces adjusted
+            u = k \ f
+            U = [0.0; 0.0; 0.0; u; 0.0; 0.0; 0.0]
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+            @test size(K) == (12, 12)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [0.001266805055356551, -0.0008612904923449313, -0.0005086369150586481, 0.0012143567179613013, 0.0007558660483844769, 0.0002528970796484738]; rtol=1e-8)
+            @test isapprox(F[4], 20.0; rtol=1e-10)
+            @test isapprox(F[5], -12.5; rtol=1e-8)
+            @test isapprox(F[6], -10.417; rtol=1e-8)
+            u1 = [U[1]; U[2]; U[3]; U[4]; U[5]; U[6]]
+            f1 = d2_planeframe_elementforces(E, A, I, L1, theta1, u1)
+            u2 = [U[4]; U[5]; U[6]; U[7]; U[8]; U[9]]
+            f2 = d2_planeframe_elementforces(E, A, I, L2, theta2, u2)
+            f2 = f2 - [0.0; -12.5; -10.417; 0.0; -12.5; 10.417]  # subtract fixed-end forces
+            u3 = [U[7]; U[8]; U[9]; U[10]; U[11]; U[12]]
+            f3 = d2_planeframe_elementforces(E, A, I, L3, theta3, u3)
+            @test isapprox(f1, [8.119143790427122, 2.9750472592473303, 8.029575137851968, -8.119143790427122, -2.9750472592473303, 2.6971103022928897]; rtol=1e-8)
+            @test isapprox(f2, [22.02830170600481, 8.405795279080012, -2.697110302292895, -22.02830170600481, 16.59420472091999, -17.77391330230705]; rtol=1e-8)
+            @test isapprox(f3, [26.026316201173262, 9.123846303348216, 17.77391330230705, -26.026316201173262, -9.123846303348216, 15.12258237386751]; rtol=1e-8)
+        end
+
+        @testset "problem_8_3_integration" begin
+            # Problem 8.3: plane frame with a spring (Fig 8.23).
+            # Mixed element types: frame (3 DOF/node) + truss-as-spring (2 DOF/node).
+            # Reference: Doc/Kattan/Solutions-Manual/problem_8_3.m.
+            E1, A1, I, L1 = 70e6, 1e-2, 1e-5, 4.0
+            E2, A2, L2 = 2500.0, 10.0, 5.0  # equivalent truss for spring k=5000
+            theta1 = 0.0
+            theta2 = atan(3.0, 4.0) * 180 / pi
+            k1 = d2_planeframe_elementstiffness(E1, A1, I, L1, theta1)
+            k2 = d2_truss_elementstiffness(E2, A2, L2, theta2)
+            K = zeros(8, 8)
+            K = d2_planeframe_assemble(K, k1, 1, 2)  # frame nodes 1-2
+            K = d2_truss_assemble(K, k2, 1, 3)       # truss nodes 1-3
+            # Free DOFs: node 1 (ux, uy, theta) = 1,2,3
+            k = K[1:3, 1:3]
+            f = [0.0; -10.0; 0.0]
+            u = k \ f
+            U = [u; 0.0; 0.0; 0.0; 0.0; 0.0]
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+            @test size(K) == (8, 8)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [7.48019647203546e-5, -0.005554045880486329, 0.002082767205182374]; rtol=1e-8)
+            @test isapprox(F[2], -10.0; rtol=1e-10)
+            @test isapprox(F[4], -13.090343826062055; rtol=1e-8)
+            @test isapprox(F[5], 13.272585956515513; rtol=1e-8)
+            @test isapprox(F[6], 9.088789347732712; rtol=1e-8)
+            u1 = [U[1]; U[2]; U[3]; U[4]; U[5]; U[6]]
+            f1 = d2_planeframe_elementforces(E1, A1, I, L1, theta1, u1)
+            u2 = [U[1]; U[2]; U[7]; U[8]]
+            f2 = d2_truss_elementforces(E2, A2, L2, theta2, u2)  # scalar (tension)
+            @test isapprox(f1, [13.090343826062055, -0.1822421304534576, 0.0, -13.090343826062055, 0.1822421304534576, -0.7289685218138305]; rtol=1e-8, atol=1e-14)
+            @test isapprox(f2, 16.36292978257757; rtol=1e-8)
+        end
 
     # ─────────────────────────────────────────────────
     # 2-D Spring (d2_spring)
@@ -652,6 +1081,104 @@ end
         @test_throws ElementParameterError d2_truss_elementforces(1.0, -1.0, 1.0, 0.0, [1.0;0.0;0.0;0.0])
     end
 
+        @testset "problem_5_1_integration" begin
+            # Problem 5.1: plane truss with 9 elements (Fig 5.5).
+            # Nodes 1 and 6 fixed; loads at node 3. Reference: Doc/Kattan/Solutions-Manual/problem_5_1.m.
+            E, A = 210e6, 0.005
+            coords = [(0.0, 0.0), (5.0, 7.0), (5.0, 0.0), (10.0, 7.0), (10.0, 0.0), (15.0, 0.0)]
+            elements = [(1, 2), (1, 3), (2, 3), (3, 5), (2, 5), (2, 4), (4, 5), (5, 6), (4, 6)]
+            K = zeros(12, 12)
+            sigmas = Float64[]
+            for (n1, n2) in elements
+                x1, y1 = coords[n1]
+                x2, y2 = coords[n2]
+                L = sqrt((x2 - x1)^2 + (y2 - y1)^2)
+                theta = atan(y2 - y1, x2 - x1) * 180 / pi
+                k = d2_truss_elementstiffness(E, A, L, theta)
+                d2_truss_assemble(K, k, n1, n2)
+            end
+            k = K[3:10, 3:10]
+            f = [20.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0]
+            u = k \ f
+            U = [0.0; 0.0; u; 0.0; 0.0]
+            F = K * U
+            # Element stresses
+            for (n1, n2) in elements
+                x1, y1 = coords[n1]
+                x2, y2 = coords[n2]
+                L = sqrt((x2 - x1)^2 + (y2 - y1)^2)
+                theta = atan(y2 - y1, x2 - x1) * 180 / pi
+                u_elem = [U[2*n1-1]; U[2*n1]; U[2*n2-1]; U[2*n2]]
+                push!(sigmas, d2_truss_elementstress(E, L, theta, u_elem))
+            end
+            @test size(K) == (12, 12)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [0.00020834281842258584, -3.3338372385991406e-5, 1.0582010582010574e-5, -3.333837238599142e-5, 0.0001765967866765541, 1.0662635424540202e-5, 2.1164021164021147e-5, -5.155958679768199e-5]; rtol=1e-8)
+            @test isapprox(F[1], -8.888888888888882; rtol=1e-10)
+            @test isapprox(F[2], -9.333333333333329; rtol=1e-10)
+            @test isapprox(F[3], 20.0; rtol=1e-10)
+            @test isapprox(F[11], -11.1111111111111; rtol=1e-10)
+            @test isapprox(F[12], 9.333333333333323; rtol=1e-10)
+            @test isapprox(sigmas[1], 2293.953404544699; rtol=1e-8)
+            @test isapprox(sigmas[2], 444.4444444444441; rtol=1e-8)
+            @test isapprox(sigmas[3], 0.0; rtol=1e-8, atol=1e-12)
+            @test isapprox(sigmas[4], 444.4444444444441; rtol=1e-8)
+            @test isapprox(sigmas[5], -2293.953404544699; rtol=1e-8)
+            @test isapprox(sigmas[6], -1333.3333333333335; rtol=1e-8)
+            @test isapprox(sigmas[7], 1866.6666666666665; rtol=1e-8)
+            @test isapprox(sigmas[8], -888.8888888888882; rtol=1e-8)
+            @test isapprox(sigmas[9], -2293.953404544698; rtol=1e-8)
+        end
+
+        @testset "problem_5_2_integration" begin
+            # Problem 5.2: plane truss + spring (Fig 5.6).
+            # Nodes 1,2,3 fixed; free DOFs 7,8,9. Reference: Doc/Kattan/Solutions-Manual/problem_5_2.m.
+            E, A = 70e6, 0.01
+            x = [0.0, 0.0, 0.0, 4.0]
+            y = [0.0, 3.0, 7.0, 3.0]
+            L1 = d2_truss_elementlength(x[1], y[1], x[4], y[4])
+            L2 = d2_truss_elementlength(x[2], y[2], x[4], y[4])
+            L3 = d2_truss_elementlength(x[3], y[3], x[4], y[4])
+            theta1 = atan(y[4] - y[1], x[4] - x[1]) * 180 / pi
+            theta2 = 0.0
+            theta3 = atan(y[4] - y[3], x[4] - x[3]) * 180 / pi
+            theta3 += 360.0  # normalize negative angle (=-45 → 315)
+            k1 = d2_truss_elementstiffness(E, A, L1, theta1)
+            k2 = d2_truss_elementstiffness(E, A, L2, theta2)
+            k3 = d2_truss_elementstiffness(E, A, L3, theta3)
+            k4 = d1_spring_elementstiffness(3000.0)
+            K = zeros(9, 9)
+            d2_truss_assemble(K, k1, 1, 4)
+            d2_truss_assemble(K, k2, 2, 4)
+            d2_truss_assemble(K, k3, 3, 4)
+            d1_spring_assemble(K, k4, 7, 9)
+            k = K[7:9, 7:9]
+            f = [0.0; 0.0; 10.0]
+            u = k \ f
+            U = [0.0; 0.0; 0.0; 0.0; 0.0; 0.0; u]
+            F = K * U
+            u1_vec = [U[1]; U[2]; U[7]; U[8]]
+            sigma1 = d2_truss_elementstress(E, L1, theta1, u1_vec)
+            u2_vec = [U[3]; U[4]; U[7]; U[8]]
+            sigma2 = d2_truss_elementstress(E, L2, theta2, u2_vec)
+            u3_vec = [U[5]; U[6]; U[7]; U[8]]
+            sigma3 = d2_truss_elementstress(E, L3, theta3, u3_vec)
+            u4_vec = [U[7]; U[9]]
+            f4 = d1_spring_elementforce(k4, u4_vec)
+            @test size(K) == (9, 9)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [3.065425546488906e-5, -1.4547785990662422e-6, 0.0033639875887982226]; rtol=1e-8)
+            @test isapprox(F[9], 10.0; rtol=1e-10)
+            @test isapprox(sigma1, 331.1075209746011; rtol=1e-8)
+            @test isapprox(sigma2, 536.4494706355586; rtol=1e-8)
+            @test isapprox(sigma3, 280.95404805960874; rtol=1e-8)
+            @test isapprox(f4, [-10.0, 10.0]; rtol=1e-10)
+        end
+
     # ─────────────────────────────────────────────────
     # 3-D Spring (d3_spring)
     # ─────────────────────────────────────────────────
@@ -797,6 +1324,56 @@ end
         @test_throws ElementParameterError d3_truss_elementforces(1.0, -1.0, 1.0, 0, 0, 0, ones(6))
     end # Test.collected_logs()
     end
+
+        @testset "problem_6_1_integration" begin
+            # Problem 6.1: 3-D space truss (Fig 6.3).
+            # Nodes 1-4 fixed, node 5 free. Reference: Doc/Kattan/Solutions-Manual/problem_6_1.m.
+            E, A = 200e6, 0.003
+            coords = Dict(1 => (0.0, 0.0, -3.0), 2 => (-3.0, 0.0, 0.0),
+                          3 => (0.0, 0.0, 3.0), 4 => (4.0, 0.0, 0.0), 5 => (0.0, 5.0, 0.0))
+            elem_pairs = [(1, 5), (2, 5), (3, 5), (4, 5)]
+            ks = Vector{Any}(undef, 4)
+            thetas = Vector{Tuple{Float64,Float64,Float64}}(undef, 4)
+            K = zeros(15, 15)
+            for (idx, (n1, n2)) in enumerate(elem_pairs)
+                x1, y1, z1 = coords[n1]
+                x2, y2, z2 = coords[n2]
+                L = d3_truss_elementlength(x1, y1, z1, x2, y2, z2)
+                tx = acos((x2 - x1) / L) * 180 / pi
+                ty = acos((y2 - y1) / L) * 180 / pi
+                tz = acos((z2 - z1) / L) * 180 / pi
+                thetas[idx] = (tx, ty, tz)
+                ks[idx] = d3_truss_elementstiffness(E, A, L, tx, ty, tz)
+                d3_truss_assemble(K, ks[idx], n1, n2)
+            end
+            k = K[13:15, 13:15]
+            f = [15.0; 0.0; -20.0]
+            u = k \ f
+            U = [zeros(12); u]
+            F = K * U
+            F[abs.(F) .< 1e-10] .= 0.0
+            @test size(K) == (15, 15)
+            @test K ≈ K'  # global symmetry
+            @test all(isfinite, U)
+            # Displacement goldens (Octave-verified)
+            @test isapprox(u, [0.00023509062547027082, 2.587463432376072e-7, -0.00036713400819396355]; rtol=1e-8)
+            @test isapprox(F[13], 15.0; rtol=1e-10)
+            @test isapprox(F[15], -20.0; rtol=1e-10)
+            for (idx, (n1, n2)) in enumerate(elem_pairs)
+                L = d3_truss_elementlength(coords[n1]..., coords[n2]...)
+                u_elem = [U[3*n1-2]; U[3*n1-1]; U[3*n1]; U[3*n2-2]; U[3*n2-1]; U[3*n2]]
+                sigma = d3_truss_elementstress(E, L, thetas[idx]..., u_elem)
+                if idx == 1
+                    @test isapprox(sigma, -6471.22525215119; rtol=1e-8)
+                elseif idx == 2
+                    @test isapprox(sigma, 4156.268283100001; rtol=1e-8)
+                elseif idx == 3
+                    @test isapprox(sigma, 6486.445625282813; rtol=1e-8)
+                else
+                    @test isapprox(sigma, -4580.823269097052; rtol=1e-8)
+                end
+            end
+        end
 
     # ─────────────────────────────────────────────────
     # 3-D Beam / Space Frame (d3_spaceframe)

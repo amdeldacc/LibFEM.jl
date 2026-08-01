@@ -191,31 +191,34 @@ println("  Fy: ", sum(F[2:6:end]))
 println("  Fz: ", sum(F[3:6:end]))
 
 # ─── Self-validation ─────────────────────────────────────────
-# Expected values from Kattan's MATLAB/Solutions-Manual output
-# (verified against Octave reference with rtol=1e-8)
+# Goldens from full-precision Julia solve, verified against the
+# Octave reference (Doc/Kattan/Solutions-Manual/problem_10_1.m,
+# rtol=1e-8 agreement). Book prints rounded values (e.g. u ≈
+# [-0.0004, -0.0006, -0.0021, 0.0006]); exact solve values below.
+# Margin: rtol=1e-6 vs machine error ~1e-13 (≈7 orders of headroom).
 # Node 5 displacements (×10⁻³)
-@assert isapprox(u[1], -0.0004; rtol=1e-1) "Ux5 mismatch: $(u[1])"
-@assert isapprox(u[3], -0.0006; rtol=1e-1) "Uz5 mismatch: $(u[3])"
+@assert isapprox(u[1], -0.0003989809313828602; rtol=1e-6) "Ux5 mismatch: $(u[1])"
+@assert isapprox(u[3], -0.0005893458738371708; rtol=1e-6) "Uz5 mismatch: $(u[3])"
 
 # Node 7 displacements (load point)
-@assert isapprox(u[13], -0.0021; rtol=1e-1) "Ux7 mismatch: $(u[13])"
-@assert isapprox(u[15], 0.0006; rtol=1e-1) "Uz7 mismatch: $(u[15])"
+@assert isapprox(u[13], -0.0021320523257627485; rtol=1e-6) "Ux7 mismatch: $(u[13])"
+@assert isapprox(u[15], 0.000589345873837151; rtol=1e-6) "Uz7 mismatch: $(u[15])"
 
 # Node 1 reactions
-@assert isapprox(F[1], 1.1599; rtol=1e-2) "Fx₁ mismatch: $(F[1])"
-@assert isapprox(F[2], 2.5054; rtol=1e-2) "Fy₁ mismatch: $(F[2])"
-@assert isapprox(F[6], -3.2737; rtol=1e-2) "Rz₁ mismatch: $(F[6])"
+@assert isapprox(F[1], 1.1598654556901022; rtol=1e-6) "Fx₁ mismatch: $(F[1])"
+@assert isapprox(F[2], 2.5054380271529157; rtol=1e-6) "Fy₁ mismatch: $(F[2])"
+@assert isapprox(F[6], -3.2736850222632468; rtol=1e-6) "Rz₁ mismatch: $(F[6])"
 
 # Node 2 reactions
-@assert isapprox(F[7], 6.3324; rtol=1e-2) "Fx₂ mismatch: $(F[7])"
-@assert isapprox(F[12], -17.6937; rtol=1e-2) "Rz₂ mismatch: $(F[12])"
+@assert isapprox(F[7], 6.33238870616126; rtol=1e-6) "Fx₂ mismatch: $(F[7])"
+@assert isapprox(F[12], -17.693714045819316; rtol=1e-6) "Rz₂ mismatch: $(F[12])"
 
 # Element 1 forces
-@assert isapprox(f1[1], 2.5054; rtol=1e-2) "f1[1] axial mismatch: $(f1[1])"
-@assert isapprox(f1[6], -3.2737; rtol=1e-2) "f1[6] moment mismatch: $(f1[6])"
+@assert isapprox(f1[1], 2.5054380271529157; rtol=1e-6) "f1[1] axial mismatch: $(f1[1])"
+@assert isapprox(f1[6], -3.2736850222632468; rtol=1e-6) "f1[6] moment mismatch: $(f1[6])"
 
 # Element 5 forces (roof beam 5→6)
-@assert isapprox(f5[1], 0.0; atol=1e-4) "f5[1] axial mismatch: $(f5[1])"
-@assert isapprox(f5[2], 1.1494; rtol=1e-2) "f5[2] shear mismatch: $(f5[2])"
+@assert isapprox(f5[1], 0.0; atol=1e-9) "f5[1] axial mismatch: $(f5[1])"
+@assert isapprox(f5[2], 1.1494403625749396; rtol=1e-6) "f5[2] shear mismatch: $(f5[2])"
 
 println("\nAll golden assertions passed ✓")

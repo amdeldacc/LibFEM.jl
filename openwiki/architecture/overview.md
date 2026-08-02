@@ -20,7 +20,8 @@ LibFEM.jl is a single-module library with multi-file source organization. The mo
 | `src/utils.jl` | `_direction_cosines`, validation helpers (`validate_positive`) |
 | `src/assembly.jl` | `_assemble!` private helper (2-node), `_assemble_n!` (N-node continuum) |
 | `src/spring.jl` | All `d1/d2/d3_spring_*` implementations |
-| `src/truss.jl` | All `d1/d2/d3_truss_*` implementations |
+| `src/planetruss.jl` | All `d2_truss_*` implementations (2D plane truss) |
+| `src/spacetruss.jl` | All `d3_truss_*` implementations (3D space truss) |
 | `src/bar.jl` | All `d1_bar_*` implementations (1D linear bar, renamed from `d1_truss_*`) |
 | `src/quadraticbar.jl` | All `d1_quadraticbar_*` implementations (1-D quadratic bar, 3-node) |
 | `src/beam.jl` | All `d2_beam_*` (pure 2D beam, bending only) |
@@ -28,15 +29,15 @@ LibFEM.jl is a single-module library with multi-file source organization. The mo
 | `src/spaceframe.jl` | All `d3_spaceframe_*` (space frame) + `_d3_spaceframe_kprime`, `_spaceframe_transform` private helpers |
 | `src/solver.jl` | `apply_bc!` — Dirichlet boundary condition application |
 | `src/triangle.jl` | 2D constant strain triangle (CST) — `d2_cst_*` |
-| `src/lst.jl` | 2D quadratic triangle (LST) — `d2_lst_*` |
+| `src/quadratictriangle.jl` | 2D quadratic triangle (LST) — `d2_lst_*` |
 | `src/quadrilateral.jl` | 2D bilinear quadrilateral (Q4) — `d2_q4_*` |
-| `src/q8.jl` | 2D quadratic quadrilateral (Q8) — `d2_q8_*` |
+| `src/quadraticquadrilateral.jl` | 2D quadratic quadrilateral (Q8, serendipity) — `d2_q8_*` |
 | `src/grid.jl` | 2D grid (out-of-plane bending + torsion) — `d2_grid_*` |
 | `src/fluidflow.jl` | 1D fluid flow — `d1_fluidflow_*` |
 | `src/brick.jl` | 3D linear brick (8-node) — `d3_brick_*` |
 | `src/tetrahedron.jl` | 3D linear tetrahedron (4-node) — `d3_tet_*` |
 
-Beam diagram functions used to live in `src/plot.jl`, but with `Plots.jl` moved to a weak dependency (commit 62baa10), they now live in the package extension `ext/LibFEMPlotsExt.jl`. `src/LibFEM.jl` defines stub throwers (`DiagramError`) for every diagram symbol; loading `Plots` activates the extension, which dispatches into the same exported function names and the stubs are replaced.
+Beam diagram functions live in the package extension `ext/LibFEMPlotsExt.jl`, made possible by declaring `Plots` as a weak dependency (`[weakdeps]` in `Project.toml`, with `LibFEMPlotsExt = ["Plots"]` in `[extensions]`). `src/LibFEM.jl` defines stub throwers (`DiagramError`) for every diagram symbol; loading `Plots` activates the extension, which dispatches into the same exported function names and the stubs are replaced.
 
 ```julia
 module LibFEM

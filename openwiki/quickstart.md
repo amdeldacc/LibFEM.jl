@@ -7,7 +7,7 @@ tags: ["quickstart", "getting-started", "fem", "julia"]
 
 # LibFEM.jl — Quickstart
 
-**LibFEM.jl v0.4.0** is an educational Finite Element Method (FEM) library for Julia. It provides element stiffness matrices, assembly functions, force/stress/strain calculations, boundary condition application, and diagram plotting for springs, trusses, beams, 2D/3D continuum elements, grid structures, and fluid flow in 1D, 2D, and 3D.
+**LibFEM.jl v0.5.0** is an educational Finite Element Method (FEM) library for Julia. It provides element stiffness matrices, assembly functions, force/stress/strain calculations, boundary condition application, and diagram plotting for springs, trusses, beams, 2D/3D continuum elements, grid structures, and fluid flow in 1D, 2D, and 3D.
 
 Inspired by *"MATLAB Guide to Finite Elements — An Interactive Approach"* by Peter I. Kattan (Springer, 2007). The reference MATLAB code is preserved in `Doc/Kattan/M-Files/` as a read-only verification source.
 
@@ -152,7 +152,7 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `src/fluidflow.jl` | All `d1_fluidflow_*` implementations (1-D fluid flow) |
 | `src/solver.jl` | `apply_bc!` — Dirichlet boundary condition application |
 | `ext/LibFEMPlotsExt.jl` | Beam diagram functions (Plots weak dependency via extension) |
-| `test/runtests.jl` | Main test suite (covers all 17 element types, 13 `problem_*_integration` Kattan ports, property tests, golden regression) |
+| `test/runtests.jl` | Main test suite (covers all 17 element types, 28 `problem_*_integration` Kattan ports spanning problems 2.1–16.1, property tests, golden regression) |
 | `test/property_tests.jl` | PropCheck.jl property-based tests (symmetry, PSD, translational invariants) |
 | `test/golden_regression.jl` | Binary golden regression test runner |
 | `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (12 benchmarks) |

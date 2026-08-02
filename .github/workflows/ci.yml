@@ -10,10 +10,6 @@ on:
       - "openwiki/**"
   pull_request:
     branches: [master]
-    paths-ignore:
-      - "Doc/**"
-      - "**.md"
-      - "openwiki/**"
   workflow_dispatch:
 
 permissions:

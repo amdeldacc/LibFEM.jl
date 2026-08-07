@@ -146,24 +146,18 @@ These represent 2D/3D continuum elements (plane stress/strain, solid mechanics),
 
 Note: The "Inclined Support" MATLAB files are specialized boundary condition handlers not yet ported.
 
-## Verification: `test/comparison.jl`
+## Verification: `lib/problem_wrapper.jl`
 
-The file `test/comparison.jl` contains Julia transcriptions of selected MATLAB functions using the original PascalCase naming. This enables side-by-side verification that the Julia implementations produce identical results. Transcribed functions include:
+Earlier versions of the project kept hand-transcribed MATLAB transcriptions in `test/comparison.jl` for side-by-side verification. That file was removed (per `CONTEXT.md`) because the same role is now played by **`lib/problem_wrapper.jl`**, which actually executes the original Kattan `.m` files via GNU Octave ≥ 8.0 and compares against Julia outputs. The Octave path is preferred because it tests against the real MATLAB reference rather than a hand-translated copy that could re-introduce the same bug.
 
-- `SpringElementStiffness`, `SpringElementForces`, `SpringAssemble`
-- `LinearBarElementStiffness`, `LinearBarElementForces`, `LinearBarElementStresses`, `LinearBarAssemble`
-- `PlaneTrussElementLength`, `PlaneTrussElementStiffness`, `PlaneTrussElementForce`, `PlaneTrussElementStress`, `PlaneTrussAssemble`
-- `PlaneFrameElementLength`, `PlaneFrameElementStiffness`, `PlaneFrameElementForces`, `PlaneFrameAssemble` (and diagram functions)
-
-Note: these transcriptions use MATLAB-style explicit index assignment (16 lines per 4×4 assemble) rather than the refactored `_assemble!` helper — they serve as algorithmic ground truth, not as reusable code.
+The remaining MATLAB↔Julia adapters live in `test/matlab_adapters.jl` (functions like `adapt_result`, `adapt_scalar`, `adapt_vector`); they normalize type differences (Julia scalar vs. MATLAB 1-element vector, etc.) before tolerance comparison.
 
 ## Doc/ Directory Structure
 
 ```
 Doc/
 ├── Kattan/
-│   ├── Kattan_CD.doc               # Book companion CD contents
-│   ├── M-Files/                    # 80 MATLAB function files (read-only)
+│   ├── M-Files/                    # ~80 MATLAB function files (read-only algorithm ground truth)
 │   │   ├── Spring*.m               # 3 files
 │   │   ├── LinearBar*.m            # 4 files
 │   │   ├── PlaneTruss*.m           # 6 files
@@ -180,16 +174,15 @@ Doc/
 │   │   ├── Tetrahedron*.m          # 5 files
 │   │   ├── Grid*.m                 # 4 files
 │   │   └── FluidFlow1D*.m          # 4 files
-│   └── Solutions-Manual/          # .rtf and .doc solutions +
-│                                 # per-problem MATLAB scripts
-│                                 # (problem_2_1.m … problem_11_3.m,
+│   └── Solutions-Manual/          # 24 per-problem MATLAB scripts
+│                                 # (problem_2_1.m … problem_16_1.m,
 │                                 #  ocr_m_verify.m)
-└── Peter_Kattan_*                  # Book PDF and transcriptions
+└── kattan-fem-analysis.md         # Markdown analysis of the textbook
 ```
 
-**Important**: The `Doc/Kattan/M-Files/` directory is designated **read-only** (per `AGENTS.md`). These files are reference material — do not modify them.
+**Important**: The `Doc/Kattan/M-Files/` directory is designated **read-only** (per `AGENTS.md`). These files are reference material — do not modify them. The Solutions-Manual scripts are the textbook's worked examples and are also treated as reference material; if you need to fix a discrepancy in `Doc/Kattan/Solutions-Manual/`, do it on the Julia side in `lib/problem_wrapper.jl` or `examples/kattan/`, not on the MATLAB file.
 
 ## Related Topics
 
 - [Kattan Problem Integration](../kattan/overview.md) – how each textbook problem (2.1 … 16.1) is wired into the validation harness and the problem wrapper.
-- [Testing and Validation](../testing/overview.md) – the suite that runs each problem through Octave and compares it against the Julia equivalent.
+- [Architecture Overview](../architecture/overview.md#testing) – broader test-suite description (unit tests, property tests, golden regression, Octave driver, benchmarks).

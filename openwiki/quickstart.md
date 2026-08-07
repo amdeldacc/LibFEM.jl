@@ -152,26 +152,30 @@ sigma = d2_truss_elementstress(E, L, theta, u)    # element stress
 | `src/fluidflow.jl` | All `d1_fluidflow_*` implementations (1-D fluid flow) |
 | `src/solver.jl` | `apply_bc!` — Dirichlet boundary condition application |
 | `ext/LibFEMPlotsExt.jl` | Beam diagram functions (Plots weak dependency via extension) |
-| `test/runtests.jl` | Main test suite (covers all 17 element types, 28 `problem_*_integration` Kattan ports spanning problems 2.1–16.1, property tests, golden regression) |
-| `test/property_tests.jl` | PropCheck.jl property-based tests (symmetry, PSD, translational invariants) |
-| `test/golden_regression.jl` | Binary golden regression test runner |
-| `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (12 benchmarks) |
-| `test/golden/` | Binary golden files (`v1/*.bin`) + `manifests.toml` + `params_common.jl` for regression testing |
+| `test/runtests.jl` | Main test suite (covers all 17 element types, 28 `problem_*_integration` Kattan ports spanning problems 2.1–16.1, deprecation-alias tests, physical-invariant macros, parameter-validation contracts) |
+| `test/property_tests.jl` | PropCheck.jl property-based tests (symmetry, zero row-sum, assembly linearity, plus a `PropCheck.check` smoke test) |
+| `test/golden_regression.jl` | Binary golden regression test runner (28 fixtures in `test/golden/v1/*.bin`, paired with `test/golden/manifests.toml`) |
+| `test/benchmark.jl` | Standalone BenchmarkTools.jl suite (22 benchmarks: stiffness for 10 element types, assembly for 8, dense solve, d3_spaceframe forces) |
+| `test/golden/generate_golden.jl` | Helper to regenerate the `v1/*.bin` fixtures after a verified math change |
+| `test/golden/params_common.jl` | Shared parameter ordering for the manifest |
+| `test/octave_runner.jl` | `OctaveRunner` module — subprocess bridge that runs `.m` scripts via GNU Octave ≥ 8.0 |
+| `test/matlab_adapters.jl` | MATLAB↔Julia argument/result adapters used by `scripts/validate-matlab.jl` |
 | `scripts/setup-dev.jl` | Loads Revise, instantiates the project, and pre-loads LibFEM for interactive sessions |
-| `lib/problem_definitions.jl` | `PROBLEM_REGISTRY` — canonical Kattan reference problems with MATLAB file, family, and tolerances |
-| `scripts/validate-matlab.jl` | Octave↔Julia validation driver; runs in CI’s `validate` job |
-| `scripts/` (other) | Example scripts using LibFEM |
-| `Doc/Kattan/M-Files/` | Read-only MATLAB reference (80 `.m` files from Kattan) |
+| `lib/problem_definitions.jl` | `PROBLEM_REGISTRY` (14 problems 2.1–8.3) plus `ProblemDef` struct, `resolve_problem_path`, `problem_by_name` |
+| `lib/problem_wrapper.jl` | `ProblemWrapper` module: `build_problem_wrapper`, `run_problem_via_octave`, `run_julia_problem`, `validate_problem`, and 20 `_problem_*_julia()` Julia ports |
+| `scripts/validate-matlab.jl` | Octave↔Julia validation driver; CLI `{spring,truss,beam,problems,all}`; runs in CI’s `validate` job |
+| `examples/kattan/` | Runnable Julia ports of the Kattan textbook problems (`problem_2_1.jl` … `problem_16_1.jl`) |
+| `examples/mtk/` | ModelingToolkit integration examples (`linear_truss_mtk.jl`, `linear_truss_mtk_2.jl`); illustrative only, not part of the LibFEM API |
+| `Doc/Kattan/M-Files/` | Read-only MATLAB reference (80 `.m` files from Kattan) — algorithm ground truth, never edit |
 | `Doc/Kattan/Solutions-Manual/` | `.rtf` and `.doc` problem solutions, plus per-problem MATLAB scripts (`problem_2_1.m` … `problem_16_1.m`, `ocr_m_verify.m`) |
-| `examples/kattan/` | Runnable Julia ports of the Kattan textbook problems (one per MATLAB script) |
 | `Doc/Peter_Kattan_*` | Book PDF and text/Markdown transcriptions |
-| `CONTEXT.md` | Domain glossary: MATLAB→Julia mapping and naming conventions |
-| `AGENTS.md`, `CLAUDE.md` | Agent instructions with constraints and conventions (including the framework identity rule) |
+| `CONTEXT.md` | Domain glossary: design decisions, MATLAB→Julia mapping, naming conventions |
+| `AGENTS.md`, `CLAUDE.md` | Agent instructions with constraints and conventions (including the framework identity rule and OpenWiki handling note) |
 
 ## Where to Go Next
 
-- **[Architecture Overview](architecture/overview.md)** — Naming conventions, dimension system, `_assemble!` helper, module structure, **git hooks & commit workflow**.
-- **[Kattan Problem Integration](kattan/overview.md)** — Problem registry, problem wrapper, and validation workflow (Octave ↔ Julia for textbook problems 2.1 … 16.1).
+- **[Architecture Overview](architecture/overview.md)** — Naming conventions, dimension system, `_assemble!` helper, module structure, **git hooks & commit workflow**, type hierarchy, testing.
+- **[Kattan Problem Integration](kattan/overview.md)** — Problem registry, problem wrapper, Octave ↔ Julia validation workflow, how problems 2.1 … 16.1 are wired through three layers (unit tests, Octave driver, runnable examples).
 - **[Kattan MATLAB Mapping](reference/kattan-mapping.md)** — Full MATLAB-to-Julia mapping table and reference material index.
 
 ## Backlog

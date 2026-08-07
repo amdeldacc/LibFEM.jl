@@ -76,6 +76,53 @@ end
 
 **Exports**: All public functions are exported in grouped blocks. `deg2rad` is imported from `Base` into the module namespace (`import Base: deg2rad` in `src/LibFEM.jl`). The private helpers (`_assemble!`, `_assemble_n!`, `_d2_planeframe_kprime`, `_d3_spaceframe_kprime`, `_spaceframe_transform`, `_beamdiagram`) remain private (underscore prefix, not exported) and live next to the elements they support: assembly helpers in `src/assembly.jl`, plane-frame helper in `src/planeframe.jl`, space-frame helpers in `src/spaceframe.jl`. Diagram functions (`d2_beam_elementsheardiagram`, etc.) are *also* exported — the extension re-exports them with Plots-backed implementations; without `Plots`, calling them throws `DiagramError`. The solver helper `apply_bc!` is exported for applying Dirichlet boundary conditions.
 
+### Typical FEM Workflow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant L as LibFEM.jl
+    participant P as Plots.jl (optional)
+    participant S as Solver (user code)
+
+    U->>L: k = d{N}_{domain}_elementstiffness(...)
+    Note over L: validate_positive(E, A, L, ...)<br/>uses _direction_cosines(θ)<br/>returns element matrix k
+    U->>L: K = d{N}_{domain}_assemble(K, k, i, j)
+    Note over L: delegates to _assemble!(K, k, i, j, ndofs)<br/>uses @views for in-place .+=
+    U->>S: solve K·u = F  (boundary conditions, partition, etc.)
+    Note over S: optionally: apply_bc!(K, F, constraints)
+    U->>L: f = d{N}_{domain}_elementforces(..., u)
+    alt beam element + Plots loaded
+        U->>P: d{N}_beam_element*diagram(f, L)
+        P-->>U: rendered Plot
+    else Plots not loaded
+        L-->>U: throws DiagramError
+    end
+```
+
+The diagram shows the canonical pattern: **element stiffness → assemble → solve → element forces → optional diagram plot**. The user supplies the global solve; LibFEM owns the per-element math, the assembly, and (with Plots.jl loaded via the extension) beam-diagram rendering.
+
+---
+
+## Type Hierarchy
+
+`src/types.jl` defines an abstract type tree keyed on spatial dimension:
+
+```text
+AbstractElement{NDIM}
+├── AbstractSpring{NDIM}      → Spring{NDIM}
+├── AbstractTruss{NDIM}       → Truss{NDIM}
+├── AbstractBeam{NDIM}        → Beam{NDIM}
+├── AbstractTriangle{NDIM}    → Triangle{NDIM}
+├── AbstractQuadrilateral{NDIM}→ Quadrilateral{NDIM}
+├── AbstractTetrahedron{NDIM} → Tetrahedron{NDIM}
+└── AbstractBrick{NDIM}       → Brick{NDIM}
+```
+
+Type aliases (`Spring1D = Spring{1}`, `Beam2D = Beam{2}`, `Tet3D = Tetrahedron{3}`, `Brick3D = Brick{3}`) and per-struct `Base.show` methods round out the hierarchy. Per `CONTEXT.md`, the type tree is **documentation scaffolding**: it documents the domain model (dimension + element family) in code form but the `d{N}_{domain}_*` functions do not currently dispatch on the abstract types. They are kept because they provide a natural extension point if the library grows.
+
+The `Beam{NDIM}` type intentionally does not equal its DOF count: `Beam{2}` has 3 DOF/node (axial + bending), `Beam{3}` has 6 DOF/node (3 translations + 3 rotations). `Beam{NDIM}` consolidates 2D plane-frame and 3D space-frame properties into one type.
+
 ---
 
 ## Git Hooks & Commit Workflow
@@ -117,11 +164,18 @@ This is a translation from the MATLAB naming convention in `Doc/Kattan/M-Files/`
 
 | Prefix | DOF per node | Typical elements | Global matrix indexing |
 |--------|-------------|------------------|----------------------|
-| `d1_` | 1 | 1D spring, linear bar, quadratic bar | Node `i` → row `i` |
+| `d1_` | 1 | 1D spring, linear bar, quadratic bar, 1D fluid flow | Node `i` → row `i` |
 | `d2_` | 2 | 2D spring, plane truss | Node `i` → rows `2i-1, 2i` |
-| `d2_planeframe` | **3** | Plane frame (2D beam with axial) | Node `i` → rows `3i-2, 3i-1, 3i` |
-| `d3_` | 3 (`d3_spring`, `d3_truss`) | 3D spring, space truss | Node `i` → rows `3i-2, 3i-1, 3i` |
+| `d2_beam` | 2 | Pure beam (bending only) | Node `i` → rows `2i-1, 2i` |
+| `d2_planeframe` | **3** | Plane frame (axial + bending) | Node `i` → rows `3i-2, 3i-1, 3i` |
+| `d2_grid` | 3 | 2D grid (out-of-plane bending + torsion) | Node `i` → rows `3i-2, 3i-1, 3i` |
+| `d2_cst` / `d2_lst` | 2 | 2D continuum triangles | Node `i` → rows `2i-1, 2i` |
+| `d2_q4` / `d2_q8` | 2 | 2D continuum quads | Node `i` → rows `2i-1, 2i` |
+| `d3_` (`d3_spring`, `d3_truss`) | 3 | 3D spring, space truss | Node `i` → rows `3i-2, 3i-1, 3i` |
+| `d3_brick` / `d3_tet` | 3 | 3D continuum | Node `i` → rows `3i-2, 3i-1, 3i` |
 | `d3_spaceframe` | **6** | Space frame (3D beam) | Node `i` → rows `6i-5, 6i-4, 6i-3, 6i-2, 6i-1, 6i` |
+
+The 2D continuum triangles and quads (`d2_cst`, `d2_lst`, `d2_q4`, `d2_q8`) and the 3D continuum elements (`d3_brick`, `d3_tet`) all use the **`_assemble_n!`** generic helper (in `src/assembly.jl`) because they have variable node counts (3 / 6 / 4 / 8 / 4 / 8). The 2-node 2D/3D trusses and beams still use the simpler `_assemble!` helper.
 
 ### Beam elements: two variants (2D)
 
@@ -288,15 +342,19 @@ The helper is private (underscore prefix, not exported). Adding new element type
 
 ### 2D Grid (`d2_grid`)
 - `d2_grid_elementlength(x1, y1, x2, y2)` — element length
-- `d2_grid_elementstiffness(E, I, L, theta)` — 6×6 matrix (out-of-plane bending + torsion; validates `L > 0`)
-- `d2_grid_elementforces(E, I, L, theta, u)` — 6-element force vector
+- `d2_grid_elementstiffness(E, G, I, J, L, azi)` — 6×6 matrix (out-of-plane bending + torsion; validates `L > 0`)
+- `d2_grid_elementforces(E, G, I, J, L, azi, u)` — 6-element force vector in local frame
 - `d2_grid_assemble(K, k, i, j)` — DOF mapping: 3
 
+  **Note**: The grid combines torsional stiffness (`GJ/L`) with out-of-plane bending (`EI`). DOF order is `[UZ₁, RX₁, RY₁, UZ₂, RX₂, RY₂]`; elements lie in the XY plane and carry loads in Z. The `azi` parameter is the azimuth angle in degrees.
+
 ### 1D Fluid Flow (`d1_fluidflow`)
-- `d1_fluidflow_elementstiffness(E, A, L)` — 2×2 matrix (validates `L > 0`, `A > 0`)
-- `d1_fluidflow_elementvelocity(Ke, u)` — 2-element velocity vector
-- `d1_fluidflow_elementvfr(Ke, u)` — volume flow rate
+- `d1_fluidflow_elementstiffness(Kxx, A, L)` — 2×2 matrix (validates `L > 0`, `A > 0`; `Kxx` is hydraulic conductivity)
+- `d1_fluidflow_elementvelocity(Kxx, L, p)` — scalar seepage velocity (`p` is the nodal head vector)
+- `d1_fluidflow_elementvfr(Kxx, L, p, A)` — scalar volumetric flow rate
 - `d1_fluidflow_assemble(K, k, i, j)` — DOF mapping: 1
+
+  **Note**: Fluid-flow signatures differ from the structural `d1_bar_*` family — the material parameter is `Kxx` (hydraulic conductivity, not Young's modulus), and velocity/VFR take the nodal head vector `p` rather than displacements `u`.
 
 ### 2D Constant Strain Triangle (CST, `d2_cst`)
 - `d2_cst_elementarea(x1, y1, x2, y2, x3, y3)` — signed triangle area
@@ -338,74 +396,6 @@ The helper is private (underscore prefix, not exported). Adding new element type
 - `d3_tet_elementpstress(E, NU, x1, y1, z1, ..., x4, y4, z4, u)` — 6-element principal stress vector
 - `d3_tet_assemble(K, k, i, j, m, n)` — custom assembly for 4-node element (DOF mapping: 3)
 
-### 1D Spring (`d1_spring`)
-- `d1_spring_elementstiffness(k)` — 2×2 matrix
-- `d1_spring_assemble(K, k, i, j)` — DOF mapping: 1
-- `d1_spring_elementforce(k, u)` — 2-element vector
-
-### 1D Quadratic Bar (`d1_quadraticbar`)
-- `d1_quadraticbar_elementlength(x1, x2)` — element length (absolute difference)
-- `d1_quadraticbar_elementstiffness(E, A, L)` — 3×3 matrix (validates `L > 0`, `A > 0`)
-- `d1_quadraticbar_assemble(K, k, i, j, m)` — custom assembly for 3-node element (DOF mapping: 1)
-- `d1_quadraticbar_elementforces(Ke, u)` — 3-element vector
-- `d1_quadraticbar_elementstress(Ke, u, A)` — 3-element stress vector (validates `A > 0`)
-
-### 2D Spring (`d2_spring`)
-- `d2_spring_elementstiffness(k, theta)` — 4×4 matrix
-- `d2_spring_assemble(K, k, i, j)` — DOF mapping: 2
-- `d2_spring_elementforce(k, theta, u)` — scalar force
-
-### 2D Truss (`d2_truss`)
-- `d2_truss_elementstiffness(E, A, L, theta)` — 4×4 matrix (validates `L > 0`)
-- `d2_truss_assemble(K, k, i, j)` — DOF mapping: 2
-- `d2_truss_elementforces(E, A, L, theta, u)` — scalar force
-- `d2_truss_elementstress(E, L, theta, u)` — scalar stress
-- `d2_truss_elementstrain(L, theta, u)` — scalar strain (validates `L > 0`)
-- `d2_truss_elementlength(x1, y1, x2, y2)` — element length
-
-### 2D Pure Beam (`d2_beam`)
-- `d2_beam_elementstiffness(E, I, L)` — 4×4 matrix (Euler-Bernoulli, bending only; validates `L > 0`)
-- `d2_beam_assemble(K, k, i, j)` — DOF mapping: 2
-- `d2_beam_elementforces(k, u)` — 4-element force vector (shear + moment at nodes)
-- `d2_beam_elementsheardiagram(f, L)` — Plots.jl shear force diagram
-- `d2_beam_elementmomentdiagram(f, L)` — Plots.jl bending moment diagram
-
-### 2D Plane Frame (`d2_planeframe`)
-- `d2_planeframe_elementlength(x1, y1, x2, y2)` — element length
-- `d2_planeframe_elementstiffness(E, A, I, L, theta)` — 6×6 matrix (axial + bending; validates `L > 0`)
-- `d2_planeframe_assemble(K, k, i, j)` — DOF mapping: 3
-- `d2_planeframe_elementforces(E, A, I, L, theta, u)` — 6-element vector
-- `d2_planeframe_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
-- `d2_planeframe_elementsheardiagram(f, L)` — Plots.jl shear force diagram
-- `d2_planeframe_elementmomentdiagram(f, L)` — Plots.jl bending moment diagram
-
-### 3D Spring (`d3_spring`)
-- `d3_spring_elementstiffness(k, thetax, thetay, thetaz)` — 6×6 matrix
-- `d3_spring_assemble(K, k, i, j)` — DOF mapping: 3
-- `d3_spring_elementforce(k, thetax, thetay, thetaz, u)` — scalar force
-
-### 3D Truss (`d3_truss`)
-- `d3_truss_elementstiffness(E, A, L, thetax, thetay, thetaz)` — 6×6 matrix (validates `L > 0`)
-- `d3_truss_assemble(K, k, i, j)` — DOF mapping: 3
-- `d3_truss_elementforces(E, A, L, thetax, thetay, thetaz, u)` — scalar force
-- `d3_truss_elementstress(E, L, thetax, thetay, thetaz, u)` — scalar stress
-- `d3_truss_elementstrain(L, thetax, thetay, thetaz, u)` — scalar strain (validates `L > 0`)
-- `d3_truss_elementlength(x1, y1, z1, x2, y2, z2)` — element length
-
-### 3D Space Frame (`d3_spaceframe`)
-- `d3_spaceframe_elementlength(x1, y1, z1, x2, y2, z2)` — 3D Euclidean distance (validates `L > 0`)
-- `d3_spaceframe_elementstiffness(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2)` — 12×12 matrix (validates `L > 0`)
-- `d3_spaceframe_assemble(K, k, i, j)` — DOF mapping: 6
-- `d3_spaceframe_elementforces(E, G, A, Iy, Iz, J, x1, y1, z1, x2, y2, z2, u)` — 12-element force vector
-- `d3_spaceframe_elementaxialdiagram(f, L)` — Plots.jl axial force diagram
-- `d3_spaceframe_elementshearydiagram(f, L)` — Plots.jl shear force (Y) diagram
-- `d3_spaceframe_elementshearzdiagram(f, L)` — Plots.jl shear force (Z) diagram
-- `d3_spaceframe_elementmomentydiagram(f, L)` — Plots.jl bending moment (Y) diagram
-- `d3_spaceframe_elementmomentzdiagram(f, L)` — Plots.jl bending moment (Z) diagram
-- `d3_spaceframe_elementtorsiondiagram(f, L)` — Plots.jl torsion diagram
-
-  **Note**: The 3D space frame uses a 12×12 local stiffness matrix with an embedded 3×3 rotation matrix `Λ` built from node coordinates (not angle parameters). `Iy` governs bending about the y-axis (δz, θy), `Iz` governs bending about the z-axis (δy, θz). The vertical-element degenerate case (`D = y₂ - y₁ = 0` and `z₂ - z₁ = 0`) is handled automatically.
-
 ### Deprecated Aliases (v0.3.0+)
 The 1D linear bar was renamed from `d1_truss_*` to `d1_bar_*` to match the MATLAB `LinearBar` naming convention. Deprecated aliases with `@deprecate`:
 - `d1_truss_elementstiffness` → `d1_bar_elementstiffness`
@@ -423,12 +413,16 @@ The 1D linear bar was renamed from `d1_truss_*` to `d1_bar_*` to match the MATLA
 ## Testing
 
 Tests are in `test/`:
-- **`runtests.jl`** — Main test suite (~1054 lines). Uses `Test` standard library plus `LinearAlgebra`. Covers all 10 element types (including `d3_spaceframe` and `d1_quadraticbar`) with stiffness matrix shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, and MATLAB reference comparison for Problem 10.1. Includes `include` of `property_tests.jl` and `golden_regression.jl`. The new validation contracts (zero `k`, zero `L`) are asserted via `@test_throws ElementParameterError` (e.g. `d2_spring_elementstiffness(0, 30)`, `d3_truss_elementlength(0,0,0,0,0,0)`, `d3_spaceframe_elementlength(0,0,0,0,0,0)`). Several testsets wrap bodies in `Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(stderr, Base.CoreLogging.Error)) do ... end` to suppress the `@warn` emitted by `_direction_cosines` for valid-but-non-unit random triples.
-- **`property_tests.jl`** — Property-based tests using `PropCheck.jl` (added to test `[extras]` in commit fea71d7). Asserts symmetry, translational invariance, and zero-stiffness behavior across randomized inputs. The 3D spring/truss section uses a `_rand_3d_angles()` helper that generates spherical-polar samples on the unit sphere (so `Cx²+Cy²+Cz² = 1` by construction) rather than independent uniform angles, because the validation logic auto-normalizes off-unit triples.
-- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (12 benchmarks). Covers stiffness construction (10 element types), assembly (500-element d2_truss chain + 500-element d3_spaceframe chain), solve (random SPD system), and d3_spaceframe element forces. Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
-- **`golden_regression.jl`** — Regression test runner that diffs current outputs against `test/golden/v1/`. Binary fixtures in `test/golden/v1/d{2,3}_{spring,truss,spaceframe}_*.bin` are paired with a `manifests.toml` specifying parameters and tolerances; the binary content was regenerated in commit 4f7582f after the 3D direction-cosine normalization fix to track the new (mathematically correct) outputs.
-- **`octave_runner.jl`** — Octave runner module for MATLAB validation (used by `scripts/validate-matlab.jl`).
-- **`matlab_adapters.jl`** — MATLAB↔Julia argument/result adapters used by the Octave verification harness.
+- **`runtests.jl`** — Main test suite (~2758 lines). Uses `Test` plus `LinearAlgebra`; pulls in `lib/problem_wrapper.jl` for Kattan-problem integration tests. Covers all 17 element types with stiffness shape/symmetry checks, force/stress/strain numeric validation, assembly correctness, deprecation-alias tests (`d1_truss_*` → `d1_bar_*`), and 28 Kattan problem integration testsets (problems 2.1, 2.2, 3.1, 3.2, 3.3, 4.1, 4.2, 5.1, 5.2, 6.1, 7.1, 7.2, 7.3, 8.1, 8.2, 8.3, 9.1, 10.1, 11.1, 11.2, 11.3, 12.1, 13.1, 13.2, 13.3, 14.1, 15.1, 16.1). Two custom test macros enforce physical invariants across element types: `@test_physical_invariants` (symmetry + PSD) and `@test_translational_invariants` (symmetry + PSD + zero row-sum for translational-DOF elements). Parameter validation contracts are asserted via `@test_throws ElementParameterError`. Several testsets wrap bodies in `Base.CoreLogging.with_logger` to suppress the `@warn` emitted by `_direction_cosines` for valid-but-non-unit random triples.
+- **`property_tests.jl`** — Property-based tests using `PropCheck.jl`. Asserts stiffness symmetry, zero row-sum (rigid body modes), and assembly linearity across randomized inputs. The 3D spring/truss section uses a `_rand_3d_angles()` helper that generates spherical-polar samples on the unit sphere (so `Cx²+Cy²+Cz² = 1` by construction) rather than independent uniform angles, because the validation logic auto-normalizes off-unit triples.
+- **`benchmark.jl`** — Standalone `BenchmarkTools.jl` suite (~240 lines, 22 benchmarks: stiffness for 10 element types, assembly for 8 element types, a dense SPD solve, and d3_spaceframe element forces). Run manually with `julia --project=. test/benchmark.jl`. Not part of CI.
+- **`golden_regression.jl`** — Regression test runner that diffs current outputs against `test/golden/v1/`. 28 binary fixtures in `test/golden/v1/` are paired with a `manifests.toml` that specifies each function, parameter ordering, and tolerances; the manifest is consumed via `test/golden/params_common.jl`. Error-marker golden files (rows=0, cols=0) record expected `ElementParameterError` throws. Regenerate with `test/golden/generate_golden.jl` after a verified mathematical change.
+- **`octave_runner.jl`** — `OctaveRunner` module: subprocess bridge that runs MATLAB scripts via GNU Octave ≥ 8.0 (requires `jsonencode`/`jsondecode`). Returns parsed JSON output, structured `OctaveResult`/`OctaveError` types, and a `run_script` entrypoint. Used by both `lib/problem_wrapper.jl` and `scripts/validate-matlab.jl`.
+- **`matlab_adapters.jl`** — MATLAB↔Julia argument/result adapters used by the Octave verification harness (`scripts/validate-matlab.jl`); normalizes 1-element vectors vs. scalars and reshapes to match MATLAB column-major conventions.
+- **Three-layer verification** (from `CONTEXT.md`):
+  1. **Unit tests** (`runtests.jl`) — per-element correctness.
+  2. **Octave validation** (`scripts/validate-matlab.jl`) — runs original Kattan `.m` files through Octave and compares against Julia; tolerances `rtol=1e-8`, `atol=1e-10`.
+  3. **Golden regression** — function-level binary snapshots for detecting refactoring regressions. Not a replacement for the other two layers.
 
 Test-only deps (`Project.toml` `[extras]` `[targets].test`): `BenchmarkTools`, `PropCheck`, `Test`. The `test/Project.toml` workspace holds the test project.
 
@@ -436,10 +430,15 @@ To run tests:
 ```julia
 julia --project=. -e 'using Pkg; Pkg.test()'
 # or manually:
-# julia --project=. test/runtests.jl
+# julia --project=test/ test/runtests.jl
 ```
 
-**CI**: GitHub Actions (`.github/workflows/ci.yml`) has two jobs: `test` runs unit tests, property tests, and golden regression on Julia 1.12; `validate` runs Octave validation. Other workflows: `benchmarks.yml`, `ocr-review.yml`, `openwiki-update.yml`, `super-linter.yml`.
+To regenerate goldens after a verified math change:
+```bash
+julia --project=test/ test/golden/generate_golden.jl
+```
+
+**CI**: GitHub Actions (`.github/workflows/ci.yml`) has two jobs: `test` runs unit, property, and golden-regression tests on Julia 1.12; `validate` installs Octave and runs `scripts/validate-matlab.jl all`. Other workflows: `benchmarks.yml` (BenchmarkTools CI), `ocr-review.yml` (open-code review), `openwiki-update.yml` (scheduled OpenWiki refresh), `openwiki-stale-check.yml` (stale-wiki detection), `opencode.yml` (open-code runner), `super-linter.yml`.
 
 ## Extension Points
 
